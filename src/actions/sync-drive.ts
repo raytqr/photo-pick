@@ -34,19 +34,21 @@ export async function syncPhotosFromDrive(eventId: string, driveFolderUrl: strin
         let pageToken: string | undefined = undefined;
 
         // Fetch ALL files using pagination (Google limits to 1000 per page max)
-        do {
-            const apiUrl = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+(mimeType+contains+'image/')&fields=nextPageToken,files(id,name,mimeType,thumbnailLink)&pageSize=1000&key=${apiKey}${pageToken ? `&pageToken=${pageToken}` : ''}`;
+        while (true) {
+            const url: string = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+(mimeType+contains+'image/')&fields=nextPageToken,files(id,name,mimeType,thumbnailLink)&pageSize=1000&key=${apiKey}${pageToken ? `&pageToken=${pageToken}` : ''}`;
 
-            const response = await fetch(apiUrl);
-            const data = await response.json();
+            const res: Response = await fetch(url);
+            const json: { files?: DriveFile[]; nextPageToken?: string; error?: { message?: string } } = await res.json();
 
-            if (data.error) {
-                return { success: false, error: data.error.message || "Failed to fetch from Google Drive." };
+            if (json.error) {
+                return { success: false, error: json.error.message || "Failed to fetch from Google Drive." };
             }
 
-            allFiles = allFiles.concat(data.files || []);
-            pageToken = data.nextPageToken;
-        } while (pageToken);
+            allFiles = allFiles.concat(json.files || []);
+            pageToken = json.nextPageToken;
+
+            if (!pageToken) break;
+        }
 
         if (allFiles.length === 0) {
             return { success: false, error: "No images found in the folder. Make sure it's public." };
