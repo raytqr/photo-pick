@@ -4,11 +4,33 @@ create table public.profiles (
   email text,
   logo_url text,
   bio text,
-  whatsapp_number text, -- Centralized WhatsApp for all events
-  portfolio_urls text[], -- Array of strings
+  whatsapp_number text,
+  portfolio_urls text[],
+  -- Subscription fields
+  subscription_tier text default 'free', -- 'free', 'starter', 'pro', 'business'
+  subscription_expires_at timestamptz,
+  events_remaining int default 0,
   created_at timestamptz default now(),
   primary key (id)
 );
+
+-- 2. Create Redeem Codes Table
+create table public.redeem_codes (
+  id uuid not null default gen_random_uuid(),
+  code text unique not null,
+  tier text not null default 'starter',
+  events_granted int default 2,
+  duration_days int default 30,
+  is_active boolean default true,
+  max_uses int default 1,
+  times_used int default 0,
+  created_at timestamptz default now(),
+  primary key (id)
+);
+
+-- Insert default redeem code
+insert into public.redeem_codes (code, tier, events_granted, duration_days, max_uses)
+values ('rayhanganteng', 'starter', 2, 30, 999);
 
 -- 2. Create Events Table
 create table public.events (
