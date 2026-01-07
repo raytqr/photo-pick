@@ -163,34 +163,6 @@ export function ClientSelectionApp() {
                     </div>
                 )}
             </main>
-
-            {/* Floating WhatsApp Button (Always visible when selections exist) */}
-            <AnimatePresence>
-                {selectedCount > 0 && !isDeckEmpty && (
-                    <motion.div
-                        className="fixed bottom-6 right-6 z-50"
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0, opacity: 0 }}
-                        transition={{ type: "spring", bounce: 0.4 }}
-                    >
-                        <Link href={generateWhatsAppLink()} target="_blank">
-                            <div className={`relative flex items-center gap-2 px-5 py-3 rounded-full shadow-2xl text-white font-semibold transition-all hover:scale-105 active:scale-95 ${isOverLimit
-                                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 shadow-orange-500/30'
-                                    : 'bg-gradient-to-r from-green-500 to-emerald-600 shadow-green-500/30'
-                                }`}>
-                                <MessageCircle size={20} />
-                                <span>Send to WA</span>
-
-                                {/* Badge */}
-                                <span className="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center text-xs font-bold text-gray-900 shadow-lg">
-                                    {selectedCount}
-                                </span>
-                            </div>
-                        </Link>
-                    </motion.div>
-                )}
-            </AnimatePresence>
         </div>
     );
 }
