@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
-import { isRestricted } from "@/lib/subscription-utils";
+import { isRestricted, getPlanLimits, PLAN_LIMITS } from "@/lib/subscription-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Cloud, Sparkles, Lock, Crown } from "lucide-react";
+import { ArrowLeft, Cloud, Sparkles, Lock, Crown, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -16,6 +16,9 @@ export default function CreateEventPage() {
     const [loading, setLoading] = useState(false);
     const [checking, setChecking] = useState(true);
     const [hasSubscription, setHasSubscription] = useState(false);
+    const [eventsCount, setEventsCount] = useState(0);
+    const [tierLimits, setTierLimits] = useState<typeof PLAN_LIMITS['free']>(PLAN_LIMITS['free']);
+    const [subscriptionTier, setSubscriptionTier] = useState<string | null>(null);
 
     // Form State
     const [name, setName] = useState("");
@@ -23,7 +26,7 @@ export default function CreateEventPage() {
     const [photoLimit, setPhotoLimit] = useState("50");
     const [slug, setSlug] = useState("");
 
-    // Check subscription status
+    // Check subscription status & limits
     useEffect(() => {
         const checkSubscription = async () => {
             const { data: { user } } = await supabase.auth.getUser();
@@ -32,6 +35,7 @@ export default function CreateEventPage() {
                 return;
             }
 
+            // 1. Get Profile & Subscription
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('subscription_expires_at, subscription_tier')
@@ -45,6 +49,29 @@ export default function CreateEventPage() {
                     return;
                 }
                 setHasSubscription(true);
+                setSubscriptionTier(profile.subscription_tier);
+
+                // 2. Get Limits
+                const limits = getPlanLimits(profile.subscription_tier);
+                setTierLimits(limits);
+
+                // Adjust default photo limit if current value exceeds new limit
+                if (parseInt(photoLimit) > limits.maxPhotos) {
+                    setPhotoLimit(limits.maxPhotos.toString());
+                }
+
+                // 3. Check Event Count (Current Month)
+                const now = new Date();
+                const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+                const { count } = await supabase
+                    .from('events')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('photographer_id', user.id)
+                    .gte('created_at', firstDayOfMonth);
+
+                setEventsCount(count || 0);
+
             } else {
                 setHasSubscription(false);
                 router.push("/dashboard/pricing");
@@ -58,6 +85,19 @@ export default function CreateEventPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Final Validation
+        if (eventsCount >= tierLimits.maxEvents) {
+            alert(`You have reached your limit of ${tierLimits.maxEvents} events this month. Please upgrade to create more.`);
+            return;
+        }
+
+        const limitInt = parseInt(photoLimit);
+        if (limitInt > tierLimits.maxPhotos) {
+            alert(`Your plan allows a maximum of ${tierLimits.maxPhotos} photos per event. Please upgrade for more.`);
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -69,7 +109,7 @@ export default function CreateEventPage() {
                 name,
                 slug: slug || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
                 drive_link: driveLink,
-                photo_limit: parseInt(photoLimit),
+                photo_limit: limitInt,
             }).select().single();
 
             if (error) throw error;
@@ -92,8 +132,11 @@ export default function CreateEventPage() {
         );
     }
 
-    // Subscription Wall
-    if (!hasSubscription) {
+    // Subscription Wall (Already handled by redirect, but double check)
+    if (!hasSubscription) return null;
+
+    // Limit Wall
+    if (eventsCount >= tierLimits.maxEvents) {
         return (
             <div className="min-h-screen bg-[#030014] text-white flex items-center justify-center p-6">
                 <motion.div
@@ -102,18 +145,19 @@ export default function CreateEventPage() {
                     className="max-w-md w-full text-center"
                 >
                     <div className="glass rounded-[40px] p-10 border-white/10">
-                        <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-purple-600/20 to-pink-600/20 flex items-center justify-center mb-8 border border-purple-500/30">
-                            <Lock size={40} className="text-purple-400" />
+                        <div className="w-20 h-20 mx-auto rounded-full bg-amber-500/20 flex items-center justify-center mb-8 border border-amber-500/30">
+                            <AlertTriangle size={40} className="text-amber-400" />
                         </div>
 
-                        <h2 className="text-3xl font-black mb-4">Subscription Required</h2>
+                        <h2 className="text-3xl font-black mb-4">Monthly Limit Reached</h2>
                         <p className="text-gray-400 mb-8">
-                            You need an active subscription to create new events. Unlock unlimited creativity with a SatSetPic plan.
+                            You've used <strong>{eventsCount} / {tierLimits.maxEvents}</strong> events for this month.
+                            Upgrade your plan to keep creating.
                         </p>
 
-                        <Link href="/pricing">
+                        <Link href="/dashboard/pricing">
                             <Button className="w-full h-14 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-lg hover:scale-105 transition-all">
-                                <Crown className="mr-2" size={20} /> View Pricing Plans
+                                <Crown className="mr-2" size={20} /> Upgrade Plan
                             </Button>
                         </Link>
 
@@ -130,9 +174,14 @@ export default function CreateEventPage() {
         <div className="min-h-screen bg-[#030014] text-white">
             <div className="p-6 md:p-8 max-w-2xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-                <Link href="/dashboard" className="flex items-center text-sm font-medium text-gray-500 hover:text-white transition">
-                    <ArrowLeft size={16} className="mr-1" /> Back to Overview
-                </Link>
+                <div className="flex items-center justify-between">
+                    <Link href="/dashboard" className="flex items-center text-sm font-medium text-gray-500 hover:text-white transition">
+                        <ArrowLeft size={16} className="mr-1" /> Back to Overview
+                    </Link>
+                    <div className="text-xs font-bold px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-400">
+                        {eventsCount} / {tierLimits.maxEvents === Infinity ? '∞' : tierLimits.maxEvents} Events used
+                    </div>
+                </div>
 
                 <div className="space-y-2">
                     <h1 className="text-3xl font-black tracking-tight">Create New Gallery</h1>
@@ -180,10 +229,13 @@ export default function CreateEventPage() {
                                     type="number"
                                     value={photoLimit}
                                     onChange={(e) => setPhotoLimit(e.target.value)}
+                                    max={tierLimits.maxPhotos}
                                     required
                                     className="h-14 bg-white/5 border-white/10 rounded-2xl px-6 text-white placeholder:text-gray-600"
                                 />
-                                <p className="text-xs text-gray-500">Maximum photos client can select.</p>
+                                <p className="text-xs text-gray-500">
+                                    Max {tierLimits.maxPhotos === Infinity ? 'Unlimited' : tierLimits.maxPhotos} photos allowed on your plan.
+                                </p>
                             </div>
                         </div>
                     </div>

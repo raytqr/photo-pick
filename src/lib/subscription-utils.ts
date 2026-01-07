@@ -4,13 +4,23 @@ export interface SubscriptionInfo {
     eventsRemaining: number | null;
 }
 
-export function isSubscriptionExpired(expiresAt: string | null): boolean {
-    if (!expiresAt) return true; // No expiry date usually means no plan, or unlimited? 
-    // Actually for 'free' trial it has expiry. 'unlimited' might be null? 
-    // Let's assume if it has expiry, we check it. If null, we might need to check tier.
-    // If tier is 'unlimited'/'pro' etc with auto-renew, does it have expiry? Usually yes.
+export const PLAN_LIMITS: Record<string, { maxEvents: number; maxPhotos: number }> = {
+    'free': { maxEvents: 2, maxPhotos: 100 },
+    'Starter': { maxEvents: 10, maxPhotos: 300 },
+    'Basic': { maxEvents: 20, maxPhotos: 500 },
+    'Pro': { maxEvents: 50, maxPhotos: Infinity },
+    'Unlimited': { maxEvents: Infinity, maxPhotos: Infinity },
+};
 
-    // Safer check:
+export function getPlanLimits(tier: string | null) {
+    if (!tier) return PLAN_LIMITS['free'];
+    // Handle case sensitivity just in case
+    const normalizedTier = Object.keys(PLAN_LIMITS).find(k => k.toLowerCase() === tier.toLowerCase());
+    return PLAN_LIMITS[normalizedTier || 'free'];
+}
+
+export function isSubscriptionExpired(expiresAt: string | null): boolean {
+    if (!expiresAt) return true;
     const date = new Date(expiresAt);
     const now = new Date();
     return date.getTime() < now.getTime();
@@ -25,7 +35,6 @@ export function isRestricted(tier: string | null, expiresAt: string | null): boo
         return isSubscriptionExpired(expiresAt);
     }
 
-    // For paid tiers, if expired, also restricted (grace period logic?)
-    // For now, assume strict expiry.
+    // For paid tiers, if expired, also restricted
     return isSubscriptionExpired(expiresAt);
 }
