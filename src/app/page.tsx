@@ -126,11 +126,11 @@ export default function LandingPage() {
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-black/20 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-pink-600 flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
-              <Camera size={20} className="text-white" />
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-12 h-12 rounded-xl glass border-white/10 flex items-center justify-center p-2 group-hover:scale-110 transition-transform duration-500 shadow-lg shadow-purple-500/20">
+              <Image src="/logo-premium.png" alt="VibeSelect" width={40} height={40} className="rounded-lg object-contain" />
             </div>
-            <span className="text-xl font-bold tracking-tight">VibeSelect</span>
+            <span className="text-xl font-black tracking-tighter">VibeSelect</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
@@ -350,11 +350,11 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-20 text-sm">
 
             <div className="col-span-2 lg:col-span-2 space-y-6">
-              <Link href="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-pink-600 flex items-center justify-center">
-                  <Camera size={16} className="text-white" />
+              <Link href="/" className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl glass border-white/10 flex items-center justify-center p-1.5 shadow-lg shadow-purple-500/10">
+                  <Image src="/logo-premium.png" alt="VibeSelect" width={32} height={32} className="rounded-lg object-contain" />
                 </div>
-                <span className="text-xl font-bold">VibeSelect</span>
+                <span className="text-xl font-black tracking-tighter">VibeSelect</span>
               </Link>
               <p className="text-gray-500 max-w-sm leading-relaxed">
                 The modern standard for photo selection. We help professional photographers

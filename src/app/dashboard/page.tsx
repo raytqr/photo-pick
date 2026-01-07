@@ -79,24 +79,20 @@ export default async function DashboardPage() {
                 <div className="absolute bottom-0 left-0 w-[50%] h-[50%] bg-blue-900/10 blur-[120px]" />
             </div>
 
-            {/* Top Navigation / Dashboard Header */}
-            <header className="sticky top-0 z-40 w-full border-b border-white/5 bg-black/40 backdrop-blur-xl">
-                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-3 group">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
-                            <Camera size={20} className="text-white" />
-                        </div>
-                        <h1 className="text-xl font-bold tracking-tight hidden sm:block">VibeSelect Dashboard</h1>
+            {/* Dashboard Content Header */}
+            <header className="w-full h-20 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <div className="text-gray-500 font-medium text-sm flex items-center gap-2">
+                        <span>Pages</span>
+                        <ChevronRight size={14} />
+                        <span className="text-white font-bold">Overview</span>
                     </div>
+                </div>
 
-                    <div className="flex items-center gap-4">
-                        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full glass border-white/10">
-                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                            <span className="text-xs font-semibold text-gray-400">System Online</span>
-                        </div>
-                        <div className="w-10 h-10 rounded-full glass border-white/10 flex items-center justify-center hover:border-purple-500/50 transition-colors cursor-pointer group">
-                            <User size={18} className="text-gray-400 group-hover:text-purple-400 transition-colors" />
-                        </div>
+                <div className="flex items-center gap-4">
+                    <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full glass border-white/10">
+                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        <span className="text-xs font-semibold text-gray-400">System Online</span>
                     </div>
                 </div>
             </header>
