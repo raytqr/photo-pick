@@ -1,7 +1,24 @@
 import { createClient } from "@/lib/supabase-server";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Plus, FolderOpen, Calendar, ArrowRight, Image as ImageIcon, Crown, Lock, Sparkles, AlertTriangle, Clock } from "lucide-react";
+import {
+    Plus,
+    FolderOpen,
+    Calendar,
+    ArrowRight,
+    Image as ImageIcon,
+    Crown,
+    Lock,
+    Sparkles,
+    AlertTriangle,
+    Clock,
+    TrendingUp,
+    Layers,
+    User,
+    Settings,
+    ChevronRight,
+    Camera
+} from "lucide-react";
 import { redirect } from "next/navigation";
 
 export const dynamic = 'force-dynamic';
@@ -50,216 +67,241 @@ export default async function DashboardPage() {
         .eq('photographer_id', user.id)
         .order('created_at', { ascending: false });
 
+    const totalEvents = events?.length || 0;
+    const eventsRemaining = isSubscribed ? (profile?.events_remaining || '∞') : '0';
+
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen bg-[#030014] text-white selection:bg-purple-500/30">
 
-            {/* Expired Subscription Banner (RED) */}
-            {isExpired && expiresAt && (
-                <div className="bg-gradient-to-r from-red-600 to-rose-600 text-white px-6 py-4">
-                    <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                                <AlertTriangle size={20} />
-                            </div>
-                            <div>
-                                <p className="font-semibold">Subscription Expired</p>
-                                <p className="text-sm text-white/80">Your subscription ended on {expiresAt.toLocaleDateString()}. Renew to continue creating events.</p>
-                            </div>
+            {/* Mesh Background */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+                <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-purple-900/10 blur-[120px]" />
+                <div className="absolute bottom-0 left-0 w-[50%] h-[50%] bg-blue-900/10 blur-[120px]" />
+            </div>
+
+            {/* Top Navigation / Dashboard Header */}
+            <header className="sticky top-0 z-40 w-full border-b border-white/5 bg-black/40 backdrop-blur-xl">
+                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+                    <div className="flex items-center gap-3 group">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                            <Camera size={20} className="text-white" />
                         </div>
-                        <Link href="/pricing">
-                            <Button className="bg-white text-red-600 hover:bg-gray-100 rounded-full px-6">
-                                Renew Now <ArrowRight size={16} className="ml-2" />
-                            </Button>
-                        </Link>
+                        <h1 className="text-xl font-bold tracking-tight hidden sm:block">VibeSelect Dashboard</h1>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full glass border-white/10">
+                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                            <span className="text-xs font-semibold text-gray-400">System Online</span>
+                        </div>
+                        <div className="w-10 h-10 rounded-full glass border-white/10 flex items-center justify-center hover:border-purple-500/50 transition-colors cursor-pointer group">
+                            <User size={18} className="text-gray-400 group-hover:text-purple-400 transition-colors" />
+                        </div>
                     </div>
                 </div>
-            )}
+            </header>
 
-            {/* Expiring Soon Warning Banner (ORANGE) */}
-            {isExpiringSoon && !isExpired && (
-                <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-4">
-                    <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                                <Clock size={20} />
-                            </div>
-                            <div>
-                                <p className="font-semibold">Subscription Expiring Soon</p>
-                                <p className="text-sm text-white/90">
-                                    Your subscription will expire in <strong>{daysUntilExpiry} day{daysUntilExpiry !== 1 ? 's' : ''}</strong>. Renew now to avoid interruption.
-                                </p>
-                            </div>
-                        </div>
-                        <Link href="/pricing">
-                            <Button className="bg-white text-orange-600 hover:bg-gray-100 rounded-full px-6">
-                                Extend Now <ArrowRight size={16} className="ml-2" />
-                            </Button>
-                        </Link>
-                    </div>
-                </div>
-            )}
+            <main className="max-w-7xl mx-auto px-6 py-10 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
-            {/* New User / Never Subscribed Banner (PURPLE) */}
-            {!expiresAt && (
-                <div className="bg-gradient-to-r from-purple-600/90 to-pink-600/90 text-white px-6 py-4">
-                    <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                                <Sparkles size={20} />
-                            </div>
-                            <div>
-                                <p className="font-semibold">Unlock Full Access</p>
-                                <p className="text-sm text-white/80">Subscribe to create unlimited galleries for your clients</p>
+                {/* Status Banners */}
+                <div className="space-y-4">
+                    {isExpired && expiresAt && (
+                        <div className="glass rounded-2xl border-red-500/30 overflow-hidden">
+                            <div className="bg-red-500/10 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center border border-red-500/30">
+                                        <AlertTriangle className="text-red-500" size={24} />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-red-100">Subscription Expired</p>
+                                        <p className="text-sm text-red-400">Your pro features were disabled on {expiresAt.toLocaleDateString()}.</p>
+                                    </div>
+                                </div>
+                                <Button asChild className="bg-red-500 hover:bg-red-600 text-white rounded-full px-8 font-bold">
+                                    <Link href="/pricing">Renew Subscription</Link>
+                                </Button>
                             </div>
                         </div>
-                        <Link href="/pricing">
-                            <Button className="bg-white text-purple-600 hover:bg-gray-100 rounded-full px-6">
-                                View Plans <ArrowRight size={16} className="ml-2" />
-                            </Button>
-                        </Link>
-                    </div>
+                    )}
+
+                    {isExpiringSoon && !isExpired && (
+                        <div className="glass rounded-2xl border-amber-500/30 overflow-hidden">
+                            <div className="bg-amber-500/10 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center border border-amber-500/30">
+                                        <Clock className="text-amber-500" size={24} />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-amber-100">Expiring in {daysUntilExpiry} days</p>
+                                        <p className="text-sm text-amber-400">Renew now to keep your unlimited event access.</p>
+                                    </div>
+                                </div>
+                                <Button asChild className="bg-amber-500 hover:bg-amber-600 text-black rounded-full px-8 font-bold">
+                                    <Link href="/pricing">Extend Plan</Link>
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {!expiresAt && (
+                        <div className="glass rounded-2xl border-purple-500/30 overflow-hidden">
+                            <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-6">
+                                <div className="flex items-center gap-5">
+                                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                                        <Crown className="text-white" size={28} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xl font-black text-white">Go Unlimited with Pro</p>
+                                        <p className="text-gray-400">Unlock custom branding, higher photo limits, and priority sync.</p>
+                                    </div>
+                                </div>
+                                <Button asChild className="bg-white text-black hover:bg-gray-200 rounded-full px-8 h-12 font-bold shadow-xl shadow-white/5">
+                                    <Link href="/pricing">Explore Plans <ArrowRight className="ml-2" size={18} /></Link>
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </div>
-            )}
 
-            <div className="p-8 space-y-8 animate-in fade-in duration-500">
-
-                {/* Header Section */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                {/* Dashboard Header */}
+                <div className="flex flex-col md:flex-row justify-between items-end gap-6">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Overview</h1>
-                        <p className="text-gray-500 dark:text-gray-400 mt-1">
-                            Welcome back, {profile?.email?.split('@')[0] || 'Photographer'}. Here is what's happening with your galleries.
-                        </p>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass border-white/5 text-[10px] font-black uppercase tracking-widest text-purple-400 mb-3">
+                            <Sparkles size={12} /> Photographer Hub
+                        </div>
+                        <h2 className="text-4xl font-black tracking-tight text-white mb-2">Welcome Back, <span className="text-gradient">{profile?.email?.split('@')[0]}</span></h2>
+                        <p className="text-gray-500 font-medium">Manage your event galleries and client selections.</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                        {isSubscribed && (
-                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 text-purple-600 dark:text-purple-400 text-sm font-medium">
-                                <Crown size={14} />
-                                {tier.charAt(0).toUpperCase() + tier.slice(1)}
-                            </div>
-                        )}
 
-                        {/* Locked/Unlocked New Event Button */}
+                    <div className="flex items-center gap-3">
                         {isSubscribed ? (
-                            <Button asChild size="lg" className="rounded-full shadow-lg shadow-blue-500/20">
+                            <Button asChild size="lg" className="rounded-2xl h-14 px-8 bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-105 transition-all font-bold shadow-xl shadow-purple-500/20 border-none">
                                 <Link href="/dashboard/create">
-                                    <Plus className="mr-2" size={18} /> New Event
+                                    <Plus className="mr-2" size={20} /> Create New Event
                                 </Link>
                             </Button>
                         ) : (
                             <Link href="/pricing">
-                                <Button size="lg" className="rounded-full bg-gray-200 dark:bg-gray-800 text-gray-500 hover:bg-gray-300 dark:hover:bg-gray-700 cursor-pointer">
-                                    <Lock className="mr-2" size={16} /> New Event
+                                <Button size="lg" className="rounded-2xl h-14 px-8 glass border-white/10 text-gray-400 hover:text-white hover:border-purple-500/50 transition-all font-bold">
+                                    <Lock className="mr-2" size={18} /> Unlock New Event
                                 </Button>
                             </Link>
                         )}
                     </div>
                 </div>
 
-                {/* Quick Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border dark:border-gray-800 shadow-sm">
-                        <h3 className="text-sm font-medium text-gray-500">Total Events</h3>
-                        <div className="text-3xl font-bold mt-2">{events?.length || 0}</div>
-                    </div>
-                    <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border dark:border-gray-800 shadow-sm">
-                        <h3 className="text-sm font-medium text-gray-500">Events Remaining</h3>
-                        <div className="text-3xl font-bold mt-2">{isSubscribed ? (profile?.events_remaining || '∞') : '0'}</div>
-                    </div>
-                    <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border dark:border-gray-800 shadow-sm">
-                        <h3 className="text-sm font-medium text-gray-500">Subscription</h3>
-                        <div className="text-lg font-bold mt-2">
-                            {isSubscribed ? (
-                                <span className={isExpiringSoon ? "text-orange-500" : "text-green-600"}>
-                                    {isExpiringSoon
-                                        ? `Expires in ${daysUntilExpiry} day${daysUntilExpiry !== 1 ? 's' : ''}`
-                                        : `Active until ${expiresAt?.toLocaleDateString()}`
-                                    }
-                                </span>
-                            ) : isExpired ? (
-                                <span className="text-red-500">Expired</span>
-                            ) : (
-                                <Link href="/pricing" className="text-purple-600 hover:underline flex items-center gap-1">
-                                    Upgrade Now <ArrowRight size={14} />
-                                </Link>
-                            )}
+                {/* Metrics Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[
+                        { label: "Active Events", value: totalEvents, icon: Layers, color: "text-blue-500", bg: "bg-blue-500/10" },
+                        { label: "Quota Left", value: eventsRemaining, icon: TrendingUp, color: "text-purple-500", bg: "bg-purple-500/10" },
+                        { label: "Current Tier", value: tier.toUpperCase(), icon: Crown, color: "text-amber-500", bg: "bg-amber-500/10" },
+                        { label: "Account Score", value: "98%", icon: Sparkles, color: "text-green-500", bg: "bg-green-500/10" },
+                    ].map((stat, i) => (stat.label !== "Hidden" &&
+                        <div key={i} className="glass rounded-[32px] p-6 border-white/5 hover:border-white/10 transition-all group overflow-hidden relative">
+                            <div className="absolute -right-4 -top-4 opacity-[0.03] group-hover:opacity-[0.07] group-hover:scale-110 transition-all duration-700">
+                                <stat.icon size={120} />
+                            </div>
+                            <div className={`w-12 h-12 rounded-2xl ${stat.bg} flex items-center justify-center mb-4 border border-white/5`}>
+                                <stat.icon size={22} className={stat.color} />
+                            </div>
+                            <p className="text-sm font-bold text-gray-500 uppercase tracking-widest">{stat.label}</p>
+                            <div className="text-3xl font-black mt-1">{stat.value}</div>
                         </div>
-                    </div>
+                    ))}
                 </div>
 
-                <div className="space-y-4">
-                    <h2 className="text-xl font-bold tracking-tight">Recent Events</h2>
+                {/* Events Section */}
+                <div className="space-y-6 pt-6">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-2xl font-black tracking-tight">Recent Galleries</h3>
+                        <div className="flex gap-2">
+                            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-white rounded-xl">View All</Button>
+                        </div>
+                    </div>
 
                     {/* Empty State */}
                     {(!events || events.length === 0) && (
-                        <div className="text-center py-24 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900/50">
-                            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-                                <FolderOpen size={32} />
+                        <div className="relative group overflow-hidden">
+                            <div className="p-20 border-2 border-dashed border-white/5 rounded-[40px] glass bg-white/[0.02] text-center">
+                                <div className="w-24 h-24 bg-gradient-to-tr from-purple-500/10 to-pink-500/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-purple-500/20 animate-pulse">
+                                    <FolderOpen size={40} className="text-purple-500" />
+                                </div>
+                                <h3 className="text-2xl font-black mb-4">No Galleries Found</h3>
+                                <p className="text-gray-500 max-w-sm mx-auto mb-10 font-medium">
+                                    Your dashboard is empty. Ready to wow your first client? 🚀
+                                </p>
+                                {isSubscribed ? (
+                                    <Button asChild size="lg" className="rounded-full px-12 h-14 bg-white text-black hover:bg-gray-200 font-black shadow-2xl">
+                                        <Link href="/dashboard/create">Launch First Event</Link>
+                                    </Button>
+                                ) : (
+                                    <Button asChild size="lg" className="rounded-full px-12 h-14 bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-105 transition-all font-black border-none">
+                                        <Link href="/pricing">Select Your Plan</Link>
+                                    </Button>
+                                )}
                             </div>
-                            <h3 className="text-lg font-medium">No events yet</h3>
-                            <p className="text-gray-500 mb-6 max-w-sm mx-auto">
-                                {isSubscribed
-                                    ? "Create your first event gallery to start sharing photos with clients."
-                                    : "Subscribe to start creating beautiful galleries for your clients."
-                                }
-                            </p>
-                            {isSubscribed ? (
-                                <Button asChild variant="outline">
-                                    <Link href="/dashboard/create">Create Event</Link>
-                                </Button>
-                            ) : (
-                                <Button asChild className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-                                    <Link href="/pricing">
-                                        <Sparkles size={16} className="mr-2" /> View Plans
-                                    </Link>
-                                </Button>
-                            )}
                         </div>
                     )}
 
-                    {/* Event Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {/* Event Cards Modern */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {events?.map(event => (
-                            <Link href={`/dashboard/event/${event.id}`} key={event.id} className="group relative block h-full">
-                                <div className="bg-white dark:bg-gray-900 border dark:border-gray-800 rounded-2xl p-5 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col justify-between">
+                            <Link href={`/dashboard/event/${event.id}`} key={event.id} className="group flex flex-col">
+                                <div className="glass rounded-[40px] p-8 border-white/5 group-hover:border-purple-500/40 group-hover:bg-white/[0.04] transition-all duration-500 flex flex-col h-full relative overflow-hidden">
 
-                                    <div>
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-md">
-                                                {event.name.substring(0, 1).toUpperCase()}
-                                            </div>
-                                            <div className="px-2.5 py-1 rounded-full bg-green-50 dark:bg-green-900/20 text-xs text-green-600 font-bold border border-green-100 dark:border-green-800">
-                                                Active
-                                            </div>
+                                    {/* Background decoration */}
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-600/10 to-transparent blur-3xl group-hover:opacity-100 opacity-0 transition-opacity duration-500" />
+
+                                    <div className="flex justify-between items-start mb-10">
+                                        <div className="w-16 h-16 rounded-[24px] bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center font-black text-2xl shadow-xl shadow-purple-500/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                                            {event.name.substring(0, 1).toUpperCase()}
                                         </div>
-
-                                        <h3 className="font-bold text-lg text-gray-900 dark:text-white group-hover:text-blue-600 transition truncate">
-                                            {event.name}
-                                        </h3>
-                                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-4">
-                                            <span className="flex items-center gap-1">
-                                                <Calendar size={14} className="text-gray-400" />
-                                                {new Date(event.created_at).toLocaleDateString()}
-                                            </span>
+                                        <div className="px-4 py-1.5 rounded-full bg-green-500/10 text-[10px] text-green-400 font-black tracking-widest uppercase border border-green-500/20 group-hover:bg-green-500 group-hover:text-black transition-colors duration-500">
+                                            Active
                                         </div>
                                     </div>
 
-                                    <div className="mt-6 pt-4 border-t dark:border-gray-800 flex justify-between items-center text-sm">
-                                        <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 font-medium">
-                                            <ImageIcon size={14} /> {event.photos[0]?.count || 0} Photos
+                                    <h3 className="text-2xl font-black mb-2 text-white group-hover:text-purple-400 transition-colors duration-500 truncate pr-4">
+                                        {event.name}
+                                    </h3>
+
+                                    <div className="flex items-center gap-4 text-xs font-bold text-gray-500">
+                                        <span className="flex items-center gap-1.5">
+                                            <Calendar size={14} className="opacity-50" />
+                                            {new Date(event.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                                         </span>
-                                        <span className="text-blue-600 group-hover:translate-x-1 transition-transform inline-flex items-center text-xs font-bold uppercase tracking-wider">
-                                            Open <ArrowRight size={12} className="ml-1" />
+                                        <span className="w-1 h-1 rounded-full bg-white/10" />
+                                        <span className="flex items-center gap-1.5">
+                                            <ImageIcon size={14} className="opacity-50" />
+                                            {event.photos[0]?.count || 0} Photos
                                         </span>
                                     </div>
 
+                                    <div className="mt-12 pt-8 border-t border-white/5 flex items-center justify-between">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 group-hover:text-white transition-colors">Manage Gallery</p>
+                                        <div className="w-10 h-10 rounded-full glass border-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all">
+                                            <ChevronRight size={18} />
+                                        </div>
+                                    </div>
                                 </div>
                             </Link>
                         ))}
                     </div>
                 </div>
 
-            </div>
+                {/* Bottom Tip */}
+                <div className="pt-10 flex items-center justify-center">
+                    <div className="px-6 py-4 glass rounded-full border-white/5 flex items-center gap-4 group cursor-help">
+                        <div className="w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400 border border-purple-500/20">
+                            <Sparkles size={16} />
+                        </div>
+                        <p className="text-sm font-medium text-gray-400">Pro Tip: Share your gallery link directly to WhatsApp for 30% higher engagement.</p>
+                        <Settings size={16} className="text-gray-600 group-hover:rotate-90 transition-transform duration-500" />
+                    </div>
+                </div>
+
+            </main>
         </div>
     );
 }
