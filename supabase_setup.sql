@@ -28,9 +28,16 @@ create table public.redeem_codes (
   primary key (id)
 );
 
--- Insert default redeem code
+-- Insert default redeem codes
+-- Code 1: Trial code (2 events, 30 days)
 insert into public.redeem_codes (code, tier, events_granted, duration_days, max_uses)
-values ('rayhanganteng', 'starter', 2, 30, 999);
+values ('rayhanganteng', 'starter', 2, 30, 999)
+on conflict (code) do nothing;
+
+-- Code 2: Lifetime access (unlimited events, ~100 years)
+insert into public.redeem_codes (code, tier, events_granted, duration_days, max_uses)
+values ('rayhangantengbanget', 'business', 999999, 36500, 999)
+on conflict (code) do nothing;
 
 -- 2. Create Events Table
 create table public.events (
