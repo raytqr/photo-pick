@@ -209,14 +209,14 @@ export default function LandingPage() {
           >
             <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-transparent to-transparent z-10 pointer-events-none" />
             <div className="relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl shadow-purple-500/10 mx-auto max-w-4xl">
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 p-8 aspect-video flex items-center justify-center">
-                <div className="text-center space-y-4">
-                  <div className="w-20 h-20 mx-auto bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center">
-                    <Camera size={40} />
-                  </div>
-                  <p className="text-gray-400">Interactive Demo Coming Soon</p>
-                </div>
-              </div>
+              <Image
+                src="/hero-mockup.png"
+                alt="VibeSelect App Interface"
+                width={1200}
+                height={675}
+                className="w-full h-auto"
+                priority
+              />
             </div>
           </motion.div>
         </div>
@@ -292,8 +292,8 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className={`relative p-8 rounded-3xl border ${plan.popular
-                    ? 'border-purple-500 bg-gradient-to-br from-purple-500/10 to-pink-500/10'
-                    : 'border-white/10 bg-white/5'
+                  ? 'border-purple-500 bg-gradient-to-br from-purple-500/10 to-pink-500/10'
+                  : 'border-white/10 bg-white/5'
                   }`}
               >
                 {plan.popular && (
@@ -322,8 +322,8 @@ export default function LandingPage() {
                 <Link href="/register">
                   <Button
                     className={`w-full h-12 rounded-full ${plan.popular
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
-                        : 'bg-white/10 hover:bg-white/20'
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
+                      : 'bg-white/10 hover:bg-white/20'
                       }`}
                   >
                     {plan.cta}
