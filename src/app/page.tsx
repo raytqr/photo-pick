@@ -14,10 +14,8 @@ import {
   Check,
   ArrowRight,
   Star,
-  Users,
   Shield,
   Instagram,
-  Twitter,
   Linkedin,
   Mail,
   Smartphone,
@@ -25,9 +23,7 @@ import {
   Workflow,
   Menu,
   X,
-  Heart,
-  Image as ImageIcon,
-  Send
+  AtSign
 } from "lucide-react";
 
 const fadeInUp = {
@@ -35,14 +31,6 @@ const fadeInUp = {
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true },
   transition: { duration: 0.6 }
-};
-
-const staggerContainer = {
-  animate: {
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
 };
 
 const features = [
@@ -137,7 +125,6 @@ function MobileNav() {
 
   return (
     <>
-      {/* Mobile Menu Overlay */}
       {isOpen && (
         <div className="fixed inset-0 z-[60] bg-black/95 backdrop-blur-xl md:hidden">
           <div className="flex flex-col h-full p-6">
@@ -166,93 +153,72 @@ function MobileNav() {
           </div>
         </div>
       )}
-
-      {/* Global Mobile Menu Toggle Trigger */}
       <div id="mobile-nav-trigger" className="hidden" onClick={() => setIsOpen(true)} />
     </>
   );
 }
 
-// Floating animated icons for hero
-function FloatingIcons() {
+// Improved hero background with animated gradient orbs
+function HeroBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Floating hearts */}
+      {/* Main gradient orbs - slow morphing animation */}
       <motion.div
-        animate={{ y: [0, -30, 0], rotate: [0, 10, -10, 0] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-[20%] left-[10%]"
-      >
-        <div className="w-16 h-16 rounded-2xl bg-pink-500/20 backdrop-blur-sm border border-pink-500/30 flex items-center justify-center">
-          <Heart size={28} className="text-pink-400" />
-        </div>
-      </motion.div>
-
-      {/* Floating star */}
+        animate={{
+          scale: [1, 1.2, 1],
+          x: [0, 30, 0],
+          y: [0, -20, 0],
+        }}
+        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-purple-600/30 to-pink-600/20 blur-[100px]"
+      />
       <motion.div
-        animate={{ y: [0, 20, 0], rotate: [0, -15, 15, 0] }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-        className="absolute top-[15%] right-[15%]"
-      >
-        <div className="w-14 h-14 rounded-2xl bg-amber-500/20 backdrop-blur-sm border border-amber-500/30 flex items-center justify-center">
-          <Star size={24} className="text-amber-400" />
-        </div>
-      </motion.div>
-
-      {/* Floating camera */}
+        animate={{
+          scale: [1, 1.1, 1],
+          x: [0, -20, 0],
+          y: [0, 30, 0],
+        }}
+        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 5 }}
+        className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-br from-blue-600/20 to-cyan-500/20 blur-[100px]"
+      />
       <motion.div
-        animate={{ y: [0, -25, 0], x: [0, 10, 0] }}
-        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        className="absolute bottom-[30%] left-[5%]"
-      >
-        <div className="w-20 h-20 rounded-3xl bg-purple-500/20 backdrop-blur-sm border border-purple-500/30 flex items-center justify-center">
-          <Camera size={36} className="text-purple-400" />
-        </div>
-      </motion.div>
+        animate={{
+          scale: [1, 1.3, 1],
+          opacity: [0.3, 0.5, 0.3],
+        }}
+        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        className="absolute top-[30%] right-[10%] w-[30%] h-[30%] rounded-full bg-gradient-to-br from-violet-500/15 to-fuchsia-500/15 blur-[80px]"
+      />
 
-      {/* Floating image icon */}
-      <motion.div
-        animate={{ y: [0, 15, 0], rotate: [0, 5, -5, 0] }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-        className="absolute bottom-[25%] right-[10%]"
-      >
-        <div className="w-12 h-12 rounded-xl bg-blue-500/20 backdrop-blur-sm border border-blue-500/30 flex items-center justify-center">
-          <ImageIcon size={20} className="text-blue-400" />
-        </div>
-      </motion.div>
+      {/* Subtle grid overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.02]"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+          backgroundSize: '50px 50px'
+        }}
+      />
 
-      {/* Floating send */}
-      <motion.div
-        animate={{ y: [0, -20, 0], x: [0, -10, 0] }}
-        transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        className="absolute top-[40%] right-[8%]"
-      >
-        <div className="w-10 h-10 rounded-lg bg-green-500/20 backdrop-blur-sm border border-green-500/30 flex items-center justify-center">
-          <Send size={16} className="text-green-400" />
-        </div>
-      </motion.div>
-
-      {/* Animated particles */}
-      {[...Array(6)].map((_, i) => (
+      {/* Floating subtle dots */}
+      {[...Array(5)].map((_, i) => (
         <motion.div
           key={i}
           animate={{
-            y: [0, -100],
-            opacity: [0, 1, 0],
+            y: [0, -30, 0],
+            opacity: [0.2, 0.5, 0.2],
           }}
           transition={{
-            duration: 3 + i,
+            duration: 8 + i * 2,
             repeat: Infinity,
-            delay: i * 0.8,
+            delay: i * 1.5,
+            ease: "easeInOut"
           }}
-          className="absolute"
+          className="absolute w-1 h-1 rounded-full bg-white/30"
           style={{
-            left: `${15 + i * 15}%`,
-            bottom: '10%',
+            left: `${20 + i * 15}%`,
+            top: `${30 + (i % 3) * 20}%`,
           }}
-        >
-          <div className="w-2 h-2 rounded-full bg-purple-400/50" />
-        </motion.div>
+        />
       ))}
     </div>
   );
@@ -275,9 +241,9 @@ export default function LandingPage() {
   const getPrice = (monthlyPrice: number) => {
     switch (billingCycle) {
       case '3month':
-        return Math.round(monthlyPrice * 3 * 0.9); // 10% discount
+        return Math.round(monthlyPrice * 3 * 0.9);
       case 'yearly':
-        return Math.round(monthlyPrice * 12 * 0.75); // 25% discount
+        return Math.round(monthlyPrice * 12 * 0.75);
       default:
         return monthlyPrice;
     }
@@ -285,29 +251,22 @@ export default function LandingPage() {
 
   const getPeriodLabel = () => {
     switch (billingCycle) {
-      case '3month': return '/3 bulan';
-      case 'yearly': return '/tahun';
-      default: return '/bulan';
+      case '3month': return '/3 months';
+      case 'yearly': return '/year';
+      default: return '/month';
     }
   };
 
   const getDiscount = () => {
     switch (billingCycle) {
-      case '3month': return 'Hemat 10%';
-      case 'yearly': return 'Hemat 25%';
+      case '3month': return 'Save 10%';
+      case 'yearly': return 'Save 25%';
       default: return null;
     }
   };
 
   return (
     <div className="min-h-screen bg-[#030014] text-white selection:bg-purple-500/30">
-
-      {/* Dynamic Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-purple-900/20 blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-900/20 blur-[120px] animate-pulse delay-700" />
-        <div className="absolute top-[30%] right-[20%] w-[20%] h-[20%] rounded-full bg-pink-900/10 blur-[100px]" />
-      </div>
 
       {/* Nav */}
       <MobileNav />
@@ -335,7 +294,6 @@ export default function LandingPage() {
                 Start Free
               </Button>
             </Link>
-            {/* Mobile Menu Button */}
             <button
               onClick={() => document.getElementById('mobile-nav-trigger')?.click()}
               className="md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors"
@@ -349,8 +307,7 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section ref={targetRef} className="relative pt-44 pb-32 px-6">
-        {/* Floating Icons */}
-        <FloatingIcons />
+        <HeroBackground />
 
         <motion.div style={{ opacity, scale, y }} className="max-w-5xl mx-auto text-center relative z-10">
           <motion.div
@@ -393,12 +350,12 @@ export default function LandingPage() {
           >
             <Link href="/register">
               <Button size="lg" className="h-14 sm:h-16 px-8 sm:px-10 text-base sm:text-lg rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-105 transition-all shadow-2xl shadow-purple-500/25 font-bold">
-                Coba Gratis 7 Hari <ArrowRight className="ml-2" size={20} />
+                Start 7-Day Free Trial <ArrowRight className="ml-2" size={20} />
               </Button>
             </Link>
             <Link href="#how-it-works">
               <Button variant="outline" size="lg" className="h-14 sm:h-16 px-8 sm:px-10 text-base sm:text-lg rounded-full border-white/10 hover:bg-white/5 font-semibold transition-all">
-                Lihat Cara Kerja
+                See How It Works
               </Button>
             </Link>
           </motion.div>
@@ -412,7 +369,7 @@ export default function LandingPage() {
           className="mt-24 relative max-w-6xl mx-auto"
         >
           <div className="absolute inset-0 bg-gradient-to-t from-[#030014] via-transparent to-transparent z-10 pointer-events-none" />
-          <div className="glass rounded-[40px] p-4 sm:p-8 animate-float shadow-[0_0_80px_rgba(168,85,247,0.15)]">
+          <div className="glass rounded-[40px] p-4 sm:p-8 shadow-[0_0_80px_rgba(168,85,247,0.15)]">
             <img
               src="https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&q=80&w=2070"
               alt="Dashboard Preview"
@@ -476,7 +433,7 @@ export default function LandingPage() {
             >
               <h2 className="text-4xl md:text-6xl font-black mb-12">The 4-Step<br />Magic.</h2>
               <div className="space-y-12">
-                {steps.map((step, i) => (
+                {steps.map((step) => (
                   <motion.div key={step.number} className="flex gap-6 items-start">
                     <span className="text-4xl font-black text-white/10">{step.number}</span>
                     <div>
@@ -503,7 +460,6 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Floating elements */}
               <motion.div
                 animate={{ y: [0, -20, 0] }}
                 transition={{ duration: 4, repeat: Infinity }}
@@ -531,7 +487,7 @@ export default function LandingPage() {
               Simple, Honest <span className="text-gradient">Pricing.</span>
             </h2>
             <p className="text-gray-400 text-lg max-w-xl mx-auto">
-              Pick a plan that matches your workflow. All plans include 7-day free trial.
+              Pick a plan that matches your workflow. All plans include a 7-day free trial.
             </p>
           </motion.div>
 
@@ -539,9 +495,9 @@ export default function LandingPage() {
           <div className="flex justify-center mb-12">
             <div className="inline-flex bg-white/5 rounded-full p-1.5 border border-white/10">
               {[
-                { key: 'monthly', label: 'Bulanan' },
-                { key: '3month', label: '3 Bulan' },
-                { key: 'yearly', label: 'Tahunan' }
+                { key: 'monthly', label: 'Monthly' },
+                { key: '3month', label: '3 Months' },
+                { key: 'yearly', label: 'Yearly' }
               ].map((option) => (
                 <button
                   key={option.key}
@@ -603,7 +559,7 @@ export default function LandingPage() {
 
                 <Link href="/register">
                   <Button className={`w-full h-14 rounded-full font-bold ${plan.popular ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'bg-white/10 hover:bg-white/20'}`}>
-                    Mulai Gratis
+                    Get Started
                   </Button>
                 </Link>
               </motion.div>
@@ -611,7 +567,7 @@ export default function LandingPage() {
           </div>
 
           <motion.p {...fadeInUp} className="text-center text-gray-500 mt-12">
-            Punya kode promo? Masukkan setelah registrasi untuk unlock benefit Anda!
+            Have a promo code? Enter it after registration to unlock your benefits!
           </motion.p>
         </div>
       </section>
@@ -628,14 +584,14 @@ export default function LandingPage() {
           <h2 className="text-4xl sm:text-5xl md:text-7xl font-black mb-8">Ready to transform your client experience?</h2>
           <p className="text-gray-400 text-lg sm:text-xl mb-12 max-w-2xl mx-auto">
             Join photographers who value their time and their client's joy.
-            Coba gratis 7 hari - tidak perlu kartu kredit.
+            Try it free for 7 days - no credit card required.
           </p>
           <Link href="/register">
             <Button size="lg" className="h-16 sm:h-20 px-10 sm:px-12 text-lg sm:text-xl rounded-full bg-white text-black hover:bg-gray-200 font-bold shadow-2xl transition-all hover:scale-105 active:scale-95">
-              Mulai Gratis Sekarang <ArrowRight className="ml-2" size={24} />
+              Start Free Trial <ArrowRight className="ml-2" size={24} />
             </Button>
           </Link>
-          <p className="mt-8 text-gray-500 text-sm font-medium">Tanpa kartu kredit • 7 hari gratis • Bisa cancel kapan saja</p>
+          <p className="mt-8 text-gray-500 text-sm font-medium">No credit card required • 7-day free trial • Cancel anytime</p>
         </motion.div>
       </section>
 
@@ -656,9 +612,15 @@ export default function LandingPage() {
                 deliver stunning, interactive galleries that clients love swiping through.
               </p>
               <div className="flex gap-4">
-                <Link href="https://twitter.com" target="_blank"><Twitter size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" /></Link>
-                <Link href="https://instagram.com" target="_blank"><Instagram size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" /></Link>
-                <Link href="https://linkedin.com" target="_blank"><Linkedin size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" /></Link>
+                <Link href="https://instagram.com/ray_tqr" target="_blank">
+                  <Instagram size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" />
+                </Link>
+                <Link href="https://threads.net/@ray_tqr" target="_blank">
+                  <AtSign size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" />
+                </Link>
+                <Link href="https://www.linkedin.com/in/rayhanwt/" target="_blank">
+                  <Linkedin size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" />
+                </Link>
               </div>
             </div>
 
@@ -667,7 +629,7 @@ export default function LandingPage() {
               <ul className="space-y-4">
                 <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
                 <li><a href="#how-it-works" className="hover:text-white transition-colors">Process</a></li>
-                <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
+                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
                 <li><Link href="/guide" className="hover:text-white transition-colors">Guide</Link></li>
               </ul>
             </div>
@@ -694,7 +656,7 @@ export default function LandingPage() {
                   <Mail size={16} />
                 </Button>
               </div>
-              <p className="text-[10px] text-gray-600 uppercase tracking-widest font-black">Join 5,000+ Subscribers</p>
+              <p className="text-[10px] text-gray-600 uppercase tracking-widest font-black">Join 1,000+ Subscribers</p>
             </div>
           </div>
 
@@ -702,7 +664,7 @@ export default function LandingPage() {
             <p>© 2026 VibeSelect Team. All rights reserved.</p>
             <div className="flex gap-8">
               <span>Designed for Creatives</span>
-              <span>v1.0.5-stable</span>
+              <span>v1.0.6-stable</span>
             </div>
           </div>
         </div>

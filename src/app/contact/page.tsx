@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Mail, MessageCircle, Instagram, MapPin, Phone } from "lucide-react";
+import { ArrowLeft, Mail, MessageCircle, Instagram, MapPin, Linkedin } from "lucide-react";
 import { useState } from "react";
 
 export default function ContactPage() {
@@ -44,7 +44,9 @@ export default function ContactPage() {
                                 </div>
                                 <div>
                                     <h3 className="font-bold mb-1">Email</h3>
-                                    <p className="text-gray-400">support@vibeselect.id</p>
+                                    <a href="mailto:rayhanwahyut27@gmail.com" className="text-gray-400 hover:text-white transition-colors">
+                                        rayhanwahyut27@gmail.com
+                                    </a>
                                 </div>
                             </div>
 
@@ -54,7 +56,9 @@ export default function ContactPage() {
                                 </div>
                                 <div>
                                     <h3 className="font-bold mb-1">WhatsApp</h3>
-                                    <p className="text-gray-400">+62 812-xxxx-xxxx</p>
+                                    <a href="https://wa.me/6285159993427" target="_blank" className="text-gray-400 hover:text-white transition-colors">
+                                        +62 851-5999-3427
+                                    </a>
                                 </div>
                             </div>
 
@@ -64,17 +68,31 @@ export default function ContactPage() {
                                 </div>
                                 <div>
                                     <h3 className="font-bold mb-1">Instagram</h3>
-                                    <p className="text-gray-400">@vibeselect.id</p>
+                                    <a href="https://instagram.com/ray_tqr" target="_blank" className="text-gray-400 hover:text-white transition-colors">
+                                        @ray_tqr
+                                    </a>
                                 </div>
                             </div>
 
                             <div className="flex items-start gap-4">
                                 <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center shrink-0">
-                                    <MapPin className="text-blue-400" size={20} />
+                                    <Linkedin className="text-blue-400" size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold mb-1">LinkedIn</h3>
+                                    <a href="https://www.linkedin.com/in/rayhanwt/" target="_blank" className="text-gray-400 hover:text-white transition-colors">
+                                        Rayhan WT
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-gray-500/20 flex items-center justify-center shrink-0">
+                                    <MapPin className="text-gray-400" size={20} />
                                 </div>
                                 <div>
                                     <h3 className="font-bold mb-1">Location</h3>
-                                    <p className="text-gray-400">Jakarta, Indonesia</p>
+                                    <p className="text-gray-400">Malang, Indonesia</p>
                                 </div>
                             </div>
                         </div>
