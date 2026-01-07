@@ -131,7 +131,7 @@ function MobileNav() {
             <div className="flex justify-between items-center mb-12">
               <Link href="/" className="flex items-center gap-3">
                 <Image src="/logo-premium.png" alt="SatSetPic" width={40} height={40} className="rounded-lg" />
-                <span className="text-xl font-black tracking-tighter text-white">SatSetPic</span>
+                <span className="text-xl font-bold tracking-tight text-white">SatSetPic</span>
               </Link>
               <button onClick={() => setIsOpen(false)} className="p-2 rounded-lg hover:bg-white/10">
                 <X size={24} className="text-white" />
@@ -273,10 +273,8 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-black/20 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-12 h-12 rounded-xl glass border-white/10 flex items-center justify-center p-2 group-hover:scale-110 transition-transform duration-500 shadow-lg shadow-purple-500/20">
-              <Image src="/logo-premium.png" alt="SatSetPic" width={40} height={40} className="rounded-lg object-contain" />
-            </div>
-            <span className="text-xl font-black tracking-tighter">SatSetPic</span>
+            <Image src="/logo-premium.png" alt="SatSetPic" width={48} height={48} className="rounded-xl group-hover:scale-110 transition-transform duration-500 shadow-lg shadow-purple-500/20" />
+            <span className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">SatSetPic</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">

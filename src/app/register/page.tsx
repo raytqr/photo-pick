@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import Image from "next/image";
 import { Camera, Sparkles, ArrowRight, Zap, Mail, Eye, EyeOff, ShieldAlert } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -162,9 +163,8 @@ export default function RegisterPage() {
                 <div className="glass rounded-[32px] sm:rounded-[40px] p-6 sm:p-8 lg:p-12 border-white/5 shadow-2xl">
                     {/* Header */}
                     <div className="text-center space-y-3 sm:space-y-4 mb-6 sm:mb-10">
-                        <Link href="/" className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-600 shadow-xl shadow-purple-500/20 mb-4 sm:mb-6 group transition-transform hover:rotate-12">
-                            <Camera size={28} className="text-white sm:hidden" />
-                            <Camera size={32} className="text-white hidden sm:block" />
+                        <Link href="/" className="inline-block mb-4 sm:mb-6 hover:scale-110 transition-transform duration-300">
+                            <Image src="/logo.png" alt="SatSetPic" width={80} height={80} className="w-16 h-16 sm:w-20 sm:h-20 rounded-[20px] shadow-2xl shadow-purple-500/20" />
                         </Link>
                         <h1 className="text-3xl sm:text-4xl font-black tracking-tighter">Join VibeSelect.</h1>
                         <p className="text-gray-500 font-medium text-sm">Start delivering photo galleries that wow.</p>
