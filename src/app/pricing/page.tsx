@@ -5,78 +5,99 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import Image from "next/image";
-import { Check, ArrowLeft, Gift, Sparkles, Crown, Zap } from "lucide-react";
+import { Check, ArrowLeft, Gift, Sparkles, Crown, Zap, Globe } from "lucide-react";
 import { redeemCode } from "@/actions/subscription";
 import { useRouter } from "next/navigation";
 
-type BillingCycle = 'monthly' | '3-month' | 'yearly';
+type BillingCycle = 'monthly' | 'yearly';
 
-const getPricingPlans = (cycle: BillingCycle) => {
-    const multiplier = cycle === 'monthly' ? 1 : cycle === '3-month' ? 3 : 12;
-    const discount = cycle === 'monthly' ? 0 : cycle === '3-month' ? 0.1 : 0.25; // 10% for 3-month, 25% for yearly
-
-    const formatPrice = (basePrice: number) => {
-        const total = basePrice * multiplier * (1 - discount);
-        return new Intl.NumberFormat('id-ID').format(total);
-    };
-
-    return [
-        {
-            name: "Starter",
-            basePrice: 50000,
-            price: formatPrice(50000),
-            period: cycle === 'monthly' ? '/bulan' : cycle === '3-month' ? '/3 bulan' : '/tahun',
-            description: "Perfect for beginner photographers",
-            icon: Sparkles,
-            color: "from-blue-500 to-cyan-500",
-            features: [
-                "10 Events per month",
-                "Google Drive Sync",
-                "WhatsApp Integration",
-                "Custom Branding",
-                "Email Support"
-            ],
-            cta: "Get Started",
-            popular: false
+// Psychological Pricing Data
+const pricingTiers = [
+    {
+        name: "Starter",
+        tagline: "Perfect for getting started",
+        icon: Sparkles,
+        color: "from-blue-500 to-cyan-500",
+        popular: false,
+        monthly: {
+            price: 49000,
+            originalPrice: 79000, // Fake original
         },
-        {
-            name: "Pro",
-            basePrice: 99000,
-            price: formatPrice(99000),
-            period: cycle === 'monthly' ? '/bulan' : cycle === '3-month' ? '/3 bulan' : '/tahun',
-            description: "For professional photographers",
-            icon: Crown,
-            color: "from-purple-500 to-pink-500",
-            features: [
-                "50 Events per month",
-                "Everything in Starter",
-                "Priority Support",
-                "Analytics Dashboard",
-                "Custom Domain"
-            ],
-            cta: "Get Started",
-            popular: true
+        yearly: {
+            pricePerMonth: 29000, // What we show
+            originalPerMonth: 49000, // Crossed out
+            totalPrice: 348000, // 29k x 12
+            bonusMonths: 2,
         },
-        {
-            name: "Business",
-            basePrice: 199000,
-            price: formatPrice(199000),
-            period: cycle === 'monthly' ? '/bulan' : cycle === '3-month' ? '/3 bulan' : '/tahun',
-            description: "For studios and agencies",
-            icon: Zap,
-            color: "from-orange-500 to-red-500",
-            features: [
-                "Unlimited Events",
-                "Everything in Pro",
-                "Team Collaboration",
-                "White Label",
-                "Dedicated Support"
-            ],
-            cta: "Contact Sales",
-            popular: false
-        }
-    ];
+        features: [
+            "5 Events per month",
+            "Up to 500 photos/event",
+            "Google Drive Sync",
+            "WhatsApp Integration",
+            "Basic Branding",
+            "Email Support",
+        ],
+        cta: "Get Started",
+    },
+    {
+        name: "Pro",
+        tagline: "Most popular for professionals",
+        icon: Crown,
+        color: "from-purple-500 to-pink-500",
+        popular: true,
+        monthly: {
+            price: 99000,
+            originalPrice: 149000,
+        },
+        yearly: {
+            pricePerMonth: 59000,
+            originalPerMonth: 99000,
+            totalPrice: 708000,
+            bonusMonths: 3,
+        },
+        features: [
+            "Unlimited Events",
+            "Unlimited Photos",
+            "Everything in Starter",
+            "Priority Sync Speed",
+            "Advanced Analytics",
+            "Remove Watermark",
+            "Priority Support",
+            "Custom Domain (Soon)",
+        ],
+        cta: "Go Pro",
+    },
+    {
+        name: "Studio",
+        tagline: "For studios and agencies",
+        icon: Zap,
+        color: "from-orange-500 to-red-500",
+        popular: false,
+        hasPortfolio: true, // Unlock Portfolio Website!
+        monthly: {
+            price: 199000,
+            originalPrice: 299000,
+        },
+        yearly: {
+            pricePerMonth: 119000,
+            originalPerMonth: 199000,
+            totalPrice: 1428000,
+            bonusMonths: 4,
+        },
+        features: [
+            "Everything in Pro",
+            "Team Management (3 users)",
+            "API Access",
+            "White Label",
+            "Dedicated Account Manager",
+        ],
+        portfolioFeature: "Portfolio Website Included",
+        cta: "Contact Sales",
+    },
+];
+
+const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('id-ID').format(price);
 };
 
 export default function PricingPage() {
@@ -84,10 +105,8 @@ export default function PricingPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
-    const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
+    const [billingCycle, setBillingCycle] = useState<BillingCycle>('yearly'); // Default to yearly!
     const router = useRouter();
-
-    const pricingPlans = getPricingPlans(billingCycle);
 
     const handleRedeem = async () => {
         if (!code.trim()) {
@@ -142,13 +161,13 @@ export default function PricingPage() {
             </div>
 
             {/* Hero */}
-            <div className="text-center pt-48 pb-12 px-6">
+            <div className="text-center pt-24 pb-12 px-6">
                 <motion.h1
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="text-4xl md:text-5xl font-bold mb-4"
                 >
-                    Choose Your Plan
+                    Simple, Transparent Pricing
                 </motion.h1>
                 <motion.p
                     initial={{ opacity: 0, y: 20 }}
@@ -156,7 +175,7 @@ export default function PricingPage() {
                     transition={{ delay: 0.1 }}
                     className="text-gray-400 text-lg max-w-xl mx-auto mb-10"
                 >
-                    Unlock all features and start delivering beautiful galleries to your clients.
+                    Start free, upgrade when you're ready. No hidden fees.
                 </motion.p>
 
                 {/* Billing Cycle Toggle */}
@@ -166,27 +185,27 @@ export default function PricingPage() {
                     transition={{ delay: 0.15 }}
                     className="inline-flex items-center gap-2 p-2 bg-white/5 rounded-full border border-white/10"
                 >
-                    {[
-                        { value: 'monthly', label: 'Bulanan' },
-                        { value: '3-month', label: '3 Bulan', badge: '-10%' },
-                        { value: 'yearly', label: 'Tahunan', badge: '-25%' }
-                    ].map((option) => (
-                        <button
-                            key={option.value}
-                            onClick={() => setBillingCycle(option.value as BillingCycle)}
-                            className={`px-6 py-3 rounded-full font-bold text-sm transition-all flex items-center gap-2 ${billingCycle === option.value
-                                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
-                                : 'text-gray-400 hover:text-white'
-                                }`}
-                        >
-                            {option.label}
-                            {option.badge && billingCycle !== option.value && (
-                                <span className="text-[10px] px-2 py-0.5 bg-green-500/20 text-green-400 rounded-full">
-                                    {option.badge}
-                                </span>
-                            )}
-                        </button>
-                    ))}
+                    <button
+                        onClick={() => setBillingCycle('monthly')}
+                        className={`px-6 py-3 rounded-full font-bold text-sm transition-all ${billingCycle === 'monthly'
+                            ? 'bg-white/10 text-white'
+                            : 'text-gray-400 hover:text-white'
+                            }`}
+                    >
+                        Monthly
+                    </button>
+                    <button
+                        onClick={() => setBillingCycle('yearly')}
+                        className={`px-6 py-3 rounded-full font-bold text-sm transition-all flex items-center gap-2 ${billingCycle === 'yearly'
+                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
+                            : 'text-gray-400 hover:text-white'
+                            }`}
+                    >
+                        Yearly
+                        <span className="text-[10px] px-2 py-0.5 bg-green-500/20 text-green-400 rounded-full">
+                            Save 40%
+                        </span>
+                    </button>
                 </motion.div>
             </div>
 
@@ -227,55 +246,102 @@ export default function PricingPage() {
             {/* Pricing Cards */}
             <div className="max-w-7xl mx-auto px-6 pb-24">
                 <div className="grid md:grid-cols-3 gap-8">
-                    {pricingPlans.map((plan, index) => (
-                        <motion.div
-                            key={plan.name}
-                            initial={{ opacity: 0, y: 40 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 * index + 0.3 }}
-                            className={`relative p-8 rounded-3xl border ${plan.popular
-                                ? 'border-purple-500 bg-gradient-to-br from-purple-500/10 to-pink-500/10'
-                                : 'border-white/10 bg-white/5'
-                                }`}
-                        >
-                            {plan.popular && (
-                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full text-sm font-medium">
-                                    Most Popular
-                                </div>
-                            )}
+                    {pricingTiers.map((plan, index) => {
+                        const isYearly = billingCycle === 'yearly';
+                        const displayPrice = isYearly ? plan.yearly.pricePerMonth : plan.monthly.price;
+                        const originalPrice = isYearly ? plan.yearly.originalPerMonth : plan.monthly.originalPrice;
+                        const yearlyData = plan.yearly;
 
-                            <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${plan.color} flex items-center justify-center mb-6`}>
-                                <plan.icon size={28} className="text-white" />
-                            </div>
-
-                            <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
-                            <p className="text-gray-400 text-sm mb-6">{plan.description}</p>
-
-                            <div className="mb-8">
-                                <span className="text-4xl font-bold">Rp {plan.price}</span>
-                                <span className="text-gray-400">{plan.period}</span>
-                            </div>
-
-                            <ul className="space-y-4 mb-8">
-                                {plan.features.map((feature) => (
-                                    <li key={feature} className="flex items-center gap-3 text-sm">
-                                        <Check size={18} className="text-green-400 shrink-0" />
-                                        <span className="text-gray-300">{feature}</span>
-                                    </li>
-                                ))}
-                            </ul>
-
-                            <Button
-                                className={`w-full h-12 rounded-full ${plan.popular
-                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
-                                    : 'bg-white/10 hover:bg-white/20'
+                        return (
+                            <motion.div
+                                key={plan.name}
+                                initial={{ opacity: 0, y: 40 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 * index + 0.3 }}
+                                className={`relative p-8 rounded-3xl border ${plan.popular
+                                    ? 'border-purple-500 bg-gradient-to-br from-purple-500/10 to-pink-500/10 scale-105'
+                                    : 'border-white/10 bg-white/5'
                                     }`}
                             >
-                                {plan.cta}
-                            </Button>
-                        </motion.div>
-                    ))}
+                                {plan.popular && (
+                                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full text-sm font-bold">
+                                        MOST POPULAR
+                                    </div>
+                                )}
+
+                                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${plan.color} flex items-center justify-center mb-6`}>
+                                    <plan.icon size={28} className="text-white" />
+                                </div>
+
+                                <h3 className="text-2xl font-bold mb-1">{plan.name}</h3>
+                                <p className="text-gray-400 text-sm mb-6">{plan.tagline}</p>
+
+                                {/* Price Display with Psychology */}
+                                <div className="mb-2">
+                                    <span className="text-gray-500 line-through text-lg">
+                                        Rp {formatPrice(originalPrice)}
+                                    </span>
+                                </div>
+                                <div className="mb-2">
+                                    <span className="text-4xl font-black">Rp {formatPrice(displayPrice)}</span>
+                                    <span className="text-gray-400">/month</span>
+                                </div>
+
+                                {/* Bonus for Yearly */}
+                                {isYearly && (
+                                    <div className="mb-6">
+                                        <span className="inline-block px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-bold">
+                                            +{yearlyData.bonusMonths} months FREE
+                                        </span>
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            Billed Rp {formatPrice(yearlyData.totalPrice)}/year
+                                        </p>
+                                    </div>
+                                )}
+
+                                {billingCycle === 'monthly' && (
+                                    <div className="mb-6 h-[52px]" /> // Spacer for alignment
+                                )}
+
+                                <ul className="space-y-3 mb-8">
+                                    {plan.features.map((feature) => (
+                                        <li key={feature} className="flex items-center gap-3 text-sm">
+                                            <Check size={18} className="text-green-400 shrink-0" />
+                                            <span className="text-gray-300">{feature}</span>
+                                        </li>
+                                    ))}
+
+                                    {/* Portfolio Feature Highlight */}
+                                    {plan.hasPortfolio && plan.portfolioFeature && (
+                                        <li className="flex items-center gap-3 text-sm">
+                                            <Globe size={18} className="text-purple-400 shrink-0" />
+                                            <span className="text-purple-400 font-bold">{plan.portfolioFeature}</span>
+                                        </li>
+                                    )}
+                                </ul>
+
+                                <Button
+                                    className={`w-full h-12 rounded-full font-bold ${plan.popular
+                                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
+                                        : 'bg-white/10 hover:bg-white/20'
+                                        }`}
+                                >
+                                    {plan.cta}
+                                </Button>
+                            </motion.div>
+                        );
+                    })}
                 </div>
+
+                {/* Trust Badge */}
+                <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.8 }}
+                    className="text-center text-gray-500 text-sm mt-12"
+                >
+                    🔒 Secure payment · Cancel anytime · 7-day money-back guarantee
+                </motion.p>
             </div>
         </div>
     );
