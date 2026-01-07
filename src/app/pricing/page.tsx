@@ -142,7 +142,7 @@ export default function PricingPage() {
             </div>
 
             {/* Hero */}
-            <div className="text-center pt-32 pb-12 px-6">
+            <div className="text-center pt-48 pb-12 px-6">
                 <motion.h1
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -225,8 +225,8 @@ export default function PricingPage() {
             </div>
 
             {/* Pricing Cards */}
-            <div className="max-w-6xl mx-auto px-6 pb-24">
-                <div className="grid md:grid-cols-3 gap-6">
+            <div className="max-w-7xl mx-auto px-6 pb-24">
+                <div className="grid md:grid-cols-3 gap-8">
                     {pricingPlans.map((plan, index) => (
                         <motion.div
                             key={plan.name}
