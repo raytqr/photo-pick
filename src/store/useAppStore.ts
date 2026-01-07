@@ -43,8 +43,7 @@ interface AppState {
     initializeWithCache: (photos: Photo[], eventDetails: Partial<AppState>) => void;
     movePhoto: (photoId: string, from: PhotoStatus, to: PhotoStatus) => void;
     undoLastAction: () => void;
-    movePhoto: (photoId: string, from: PhotoStatus, to: PhotoStatus) => void;
-    undoLastAction: () => void;
+
     resetClientState: () => void;
 
     // Re-swipe Feature
@@ -110,6 +109,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
     superLikedPhotos: [], // New
     history: [],
 
+    // Re-swipe Feature
+    restartingFrom: null,
+
     setEventDetails: (details) => set((state) => ({ ...state, ...details })),
 
     initializeMockData: () => {
@@ -121,7 +123,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
             rejectedPhotos: [],
             superLikedPhotos: [],
             history: [],
-            isSetupComplete: true
+            isSetupComplete: true,
+            restartingFrom: null
         });
     },
 
@@ -134,6 +137,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
             superLikedPhotos: [],
             history: [],
             isSetupComplete: true,
+            restartingFrom: null,
             ...eventDetails
         });
     },
@@ -316,6 +320,57 @@ export const useAppStore = create<AppState>()((set, get) => ({
         });
     },
 
+    restartCategory: (category: PhotoStatus) => {
+        const state = get();
+        let photosToRestart: Photo[] = [];
+        let newSelected = state.selectedPhotos;
+        let newMaybe = state.maybePhotos;
+        let newRejected = state.rejectedPhotos;
+        let newSuperLiked = state.superLikedPhotos;
+
+        // Extract photos based on category
+        if (category === 'selected') {
+            photosToRestart = [...state.selectedPhotos];
+            newSelected = [];
+        } else if (category === 'maybe') {
+            photosToRestart = [...state.maybePhotos];
+            newMaybe = [];
+        } else if (category === 'rejected') {
+            photosToRestart = [...state.rejectedPhotos];
+            newRejected = [];
+        } else if (category === 'superLiked') {
+            photosToRestart = [...state.superLikedPhotos];
+            newSuperLiked = [];
+        }
+
+        if (photosToRestart.length === 0) return;
+
+        // Add to source images (at the beginning so they are swiped first)
+        const newSource = [...photosToRestart, ...state.sourceImages];
+
+        set({
+            sourceImages: newSource,
+            selectedPhotos: newSelected,
+            maybePhotos: newMaybe,
+            rejectedPhotos: newRejected,
+            superLikedPhotos: newSuperLiked,
+            restartingFrom: category,
+            // Clear history related to these photos? Ideally yes, but for now simplify.
+        });
+
+        // Save
+        const eventSlug = state.eventSlug;
+        if (eventSlug) {
+            saveSelections(eventSlug, {
+                selectedPhotos: newSelected,
+                maybePhotos: newMaybe,
+                rejectedPhotos: newRejected,
+                superLikedPhotos: newSuperLiked,
+                sourceImages: newSource
+            });
+        }
+    },
+
     resetClientState: () => set({
         sourceImages: [],
         selectedPhotos: [],
@@ -323,6 +378,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
         rejectedPhotos: [],
         superLikedPhotos: [],
         history: [],
-        isSetupComplete: false
+        isSetupComplete: false,
+        restartingFrom: null
     })
 }));
