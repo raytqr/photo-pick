@@ -1,9 +1,8 @@
 import { createClient } from "@/lib/supabase-server";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Plus, FolderOpen, Calendar, ArrowRight, Image as ImageIcon, Crown } from "lucide-react";
+import { Plus, FolderOpen, Calendar, ArrowRight, Image as ImageIcon, Crown, Lock, Sparkles } from "lucide-react";
 import { redirect } from "next/navigation";
-import { SubscriptionWall } from "@/components/subscription-wall";
 
 export const dynamic = 'force-dynamic';
 
@@ -40,15 +39,28 @@ export default async function DashboardPage() {
         .order('created_at', { ascending: false });
 
     return (
-        <div className="relative min-h-screen">
+        <div className="min-h-screen">
 
-            {/* Subscription Wall Overlay */}
+            {/* Subscription Banner (Non-blocking) */}
             {!isSubscribed && (
-                <SubscriptionWall
-                    tier={tier}
-                    eventsRemaining={profile?.events_remaining || 0}
-                    expiresAt={profile?.subscription_expires_at}
-                />
+                <div className="bg-gradient-to-r from-purple-600/90 to-pink-600/90 text-white px-6 py-4">
+                    <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                                <Sparkles size={20} />
+                            </div>
+                            <div>
+                                <p className="font-semibold">Unlock Full Access</p>
+                                <p className="text-sm text-white/80">Subscribe to create unlimited galleries for your clients</p>
+                            </div>
+                        </div>
+                        <Link href="/pricing">
+                            <Button className="bg-white text-purple-600 hover:bg-gray-100 rounded-full px-6">
+                                View Plans <ArrowRight size={16} className="ml-2" />
+                            </Button>
+                        </Link>
+                    </div>
+                </div>
             )}
 
             <div className="p-8 space-y-8 animate-in fade-in duration-500">
@@ -68,11 +80,21 @@ export default async function DashboardPage() {
                                 {tier.charAt(0).toUpperCase() + tier.slice(1)}
                             </div>
                         )}
-                        <Button asChild size="lg" className="rounded-full shadow-lg shadow-blue-500/20">
-                            <Link href="/dashboard/create">
-                                <Plus className="mr-2" size={18} /> New Event
+
+                        {/* Locked/Unlocked New Event Button */}
+                        {isSubscribed ? (
+                            <Button asChild size="lg" className="rounded-full shadow-lg shadow-blue-500/20">
+                                <Link href="/dashboard/create">
+                                    <Plus className="mr-2" size={18} /> New Event
+                                </Link>
+                            </Button>
+                        ) : (
+                            <Link href="/pricing">
+                                <Button size="lg" className="rounded-full bg-gray-200 dark:bg-gray-800 text-gray-500 hover:bg-gray-300 dark:hover:bg-gray-700 cursor-pointer">
+                                    <Lock className="mr-2" size={16} /> New Event
+                                </Button>
                             </Link>
-                        </Button>
+                        )}
                     </div>
                 </div>
 
@@ -84,7 +106,7 @@ export default async function DashboardPage() {
                     </div>
                     <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border dark:border-gray-800 shadow-sm">
                         <h3 className="text-sm font-medium text-gray-500">Events Remaining</h3>
-                        <div className="text-3xl font-bold mt-2">{profile?.events_remaining || 0}</div>
+                        <div className="text-3xl font-bold mt-2">{isSubscribed ? (profile?.events_remaining || '∞') : '0'}</div>
                     </div>
                     <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border dark:border-gray-800 shadow-sm">
                         <h3 className="text-sm font-medium text-gray-500">Subscription</h3>
@@ -92,7 +114,9 @@ export default async function DashboardPage() {
                             {isSubscribed ? (
                                 <span className="text-green-600">Active until {expiresAt?.toLocaleDateString()}</span>
                             ) : (
-                                <span className="text-gray-400">Not Active</span>
+                                <Link href="/pricing" className="text-purple-600 hover:underline flex items-center gap-1">
+                                    Upgrade Now <ArrowRight size={14} />
+                                </Link>
                             )}
                         </div>
                     </div>
@@ -108,10 +132,23 @@ export default async function DashboardPage() {
                                 <FolderOpen size={32} />
                             </div>
                             <h3 className="text-lg font-medium">No events yet</h3>
-                            <p className="text-gray-500 mb-6 max-w-sm mx-auto">Create your first event gallery to start sharing photos with clients.</p>
-                            <Button asChild variant="outline">
-                                <Link href="/dashboard/create">Create Event</Link>
-                            </Button>
+                            <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+                                {isSubscribed
+                                    ? "Create your first event gallery to start sharing photos with clients."
+                                    : "Subscribe to start creating beautiful galleries for your clients."
+                                }
+                            </p>
+                            {isSubscribed ? (
+                                <Button asChild variant="outline">
+                                    <Link href="/dashboard/create">Create Event</Link>
+                                </Button>
+                            ) : (
+                                <Button asChild className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+                                    <Link href="/pricing">
+                                        <Sparkles size={16} className="mr-2" /> View Plans
+                                    </Link>
+                                </Button>
+                            )}
                         </div>
                     )}
 
