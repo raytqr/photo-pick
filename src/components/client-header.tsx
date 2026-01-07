@@ -104,8 +104,8 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
                 <div className="flex items-center gap-1.5 sm:gap-2">
                     {/* Counter */}
                     <div className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${isOverLimit
-                            ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                            : "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-200"
+                        ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+                        : "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-200"
                         }`}>
                         {count}/{photoLimit}
                     </div>
@@ -116,8 +116,8 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
                             size="sm"
                             onClick={() => setShowSendModal(true)}
                             className={`h-8 px-3 rounded-full text-xs font-medium ${isOverLimit
-                                    ? 'bg-amber-500 hover:bg-amber-600'
-                                    : 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700'
+                                ? 'bg-amber-500 hover:bg-amber-600'
+                                : 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700'
                                 }`}
                         >
                             <Send size={14} className="mr-1" />
@@ -235,11 +235,39 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
                             </Link>
                         </div>
 
-                        {/* Help Text */}
-                        <div className="pt-2 border-t dark:border-gray-800">
-                            <p className="text-xs text-gray-500 text-center">
-                                💡 Use "Copy Filenames Only" to filter photos in Lightroom or Finder
-                            </p>
+                        {/* Help Guide */}
+                        <div className="pt-3 border-t dark:border-gray-800 space-y-3">
+                            <details className="group">
+                                <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    <Hash size={14} />
+                                    How to use in Lightroom / Finder
+                                    <span className="text-xs text-gray-400 group-open:hidden">Click to expand</span>
+                                </summary>
+                                <div className="mt-3 space-y-3 text-xs text-gray-600 dark:text-gray-400">
+                                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                                        <p className="font-medium text-gray-800 dark:text-gray-200 mb-2">📁 For Finder / Explorer:</p>
+                                        <ol className="list-decimal list-inside space-y-1">
+                                            <li>Copy filenames using "Copy Filenames Only"</li>
+                                            <li>Open your photo folder</li>
+                                            <li>Search each filename to find & select photos</li>
+                                            <li>Copy selected photos to new folder</li>
+                                        </ol>
+                                    </div>
+                                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
+                                        <p className="font-medium text-blue-800 dark:text-blue-300 mb-2">📷 For Adobe Lightroom:</p>
+                                        <ol className="list-decimal list-inside space-y-1">
+                                            <li>Copy filenames using "Copy Filenames Only"</li>
+                                            <li>In Lightroom, go to Library → Filter Bar (\ key)</li>
+                                            <li>Click "Text" → select "Filename" → "Contains"</li>
+                                            <li>Paste one filename at a time to find</li>
+                                            <li>Or use Smart Collection with filename rules</li>
+                                        </ol>
+                                    </div>
+                                    <p className="text-center text-gray-500">
+                                        💡 Pro tip: Create a Smart Collection in Lightroom for faster filtering!
+                                    </p>
+                                </div>
+                            </details>
                         </div>
                     </div>
                 </div>
