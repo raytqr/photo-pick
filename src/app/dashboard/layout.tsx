@@ -32,7 +32,7 @@ export default async function DashboardLayout({
             />
 
             {/* Add padding top on mobile for fixed header */}
-            <div className="flex-1 md:ml-64 pt-16 md:pt-0 transition-all duration-300">
+            <div className="flex-1 md:ml-64 pt-16 md:pt-0 transition-all duration-300 p-4 md:p-8">
                 {children}
             </div>
         </div>

@@ -133,7 +133,7 @@ export default function PricingPage() {
     };
 
     return (
-        <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="max-w-7xl mx-auto space-y-10 pt-8 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
             <div className="text-center space-y-4">
                 <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white">
