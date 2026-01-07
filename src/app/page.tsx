@@ -95,27 +95,46 @@ const steps = [
   }
 ];
 
-// Pricing data with billing cycles
+// Pricing data with billing cycles and psychological pricing
 const pricingPlans = [
   {
     name: "Starter",
-    monthlyPrice: 50000,
-    description: "Perfect for beginner photographers",
-    features: ["10 Events per month", "Google Drive Sync", "WhatsApp Integration", "Custom Branding"],
+    events: "10 Events",
+    monthly: { price: 30000, originalPrice: 50000 },
+    threeMonth: { pricePerMonth: 27000, originalPerMonth: 30000, totalPrice: 81000, bonusWeeks: 2 },
+    yearly: { pricePerMonth: 20000, originalPerMonth: 30000, totalPrice: 240000, bonusMonths: 2 },
+    description: "Perfect for beginners",
+    features: ["10 Events/month", "300 photos/event", "Google Drive Sync", "WhatsApp Integration"],
+    popular: false
+  },
+  {
+    name: "Basic",
+    events: "20 Events",
+    monthly: { price: 50000, originalPrice: 79000 },
+    threeMonth: { pricePerMonth: 45000, originalPerMonth: 50000, totalPrice: 135000, bonusWeeks: 2 },
+    yearly: { pricePerMonth: 35000, originalPerMonth: 50000, totalPrice: 420000, bonusMonths: 2 },
+    description: "For growing photographers",
+    features: ["20 Events/month", "500 photos/event", "Custom Branding", "Priority Support"],
     popular: false
   },
   {
     name: "Pro",
-    monthlyPrice: 99000,
-    description: "For professional photographers",
-    features: ["50 Events per month", "Everything in Starter", "Priority Support", "Analytics Dashboard"],
+    events: "50 Events",
+    monthly: { price: 100000, originalPrice: 149000 },
+    threeMonth: { pricePerMonth: 85000, originalPerMonth: 100000, totalPrice: 255000, bonusWeeks: 3 },
+    yearly: { pricePerMonth: 65000, originalPerMonth: 100000, totalPrice: 780000, bonusMonths: 3 },
+    description: "Most popular choice",
+    features: ["50 Events/month", "Unlimited photos", "Advanced Analytics", "Remove Watermark"],
     popular: true
   },
   {
-    name: "Business",
-    monthlyPrice: 199000,
-    description: "For studios and agencies",
-    features: ["Unlimited Events", "Everything in Pro", "Team Collaboration", "White Label"],
+    name: "Unlimited",
+    events: "Unlimited",
+    monthly: { price: 200000, originalPrice: 299000 },
+    threeMonth: { pricePerMonth: 170000, originalPerMonth: 200000, totalPrice: 510000, bonusWeeks: 4 },
+    yearly: { pricePerMonth: 130000, originalPerMonth: 200000, totalPrice: 1560000, bonusMonths: 4 },
+    description: "For studios & agencies",
+    features: ["Unlimited Events", "Team Management", "API Access", "Portfolio Website"],
     popular: false
   }
 ];
@@ -235,35 +254,22 @@ export default function LandingPage() {
   const scale = useTransform(scrollYProgress, [0, 0.5], [1, 0.8]);
   const y = useTransform(scrollYProgress, [0, 0.5], [0, -100]);
 
-  // Pricing billing cycle state
-  const [billingCycle, setBillingCycle] = useState<'monthly' | '3month' | 'yearly'>('monthly');
+  // Pricing billing cycle state - default to yearly
+  const [billingCycle, setBillingCycle] = useState<'monthly' | '3month' | 'yearly'>('yearly');
 
-  const getPrice = (monthlyPrice: number) => {
-    switch (billingCycle) {
-      case '3month':
-        return Math.round(monthlyPrice * 3 * 0.9);
-      case 'yearly':
-        return Math.round(monthlyPrice * 12 * 0.75);
-      default:
-        return monthlyPrice;
-    }
+  const getDisplayPrice = (plan: typeof pricingPlans[0]) => {
+    if (billingCycle === 'yearly') return plan.yearly.pricePerMonth;
+    if (billingCycle === '3month') return plan.threeMonth.pricePerMonth;
+    return plan.monthly.price;
   };
 
-  const getPeriodLabel = () => {
-    switch (billingCycle) {
-      case '3month': return '/3 months';
-      case 'yearly': return '/year';
-      default: return '/month';
-    }
+  const getOriginalPrice = (plan: typeof pricingPlans[0]) => {
+    if (billingCycle === 'yearly') return plan.yearly.originalPerMonth;
+    if (billingCycle === '3month') return plan.threeMonth.originalPerMonth;
+    return plan.monthly.originalPrice;
   };
 
-  const getDiscount = () => {
-    switch (billingCycle) {
-      case '3month': return 'Save 10%';
-      case 'yearly': return 'Save 25%';
-      default: return null;
-    }
-  };
+  const formatPrice = (price: number) => new Intl.NumberFormat('id-ID').format(price);
 
   return (
     <div className="min-h-screen bg-[#030014] text-white selection:bg-purple-500/30">
@@ -512,17 +518,17 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {getDiscount() && (
+          {billingCycle !== 'monthly' && (
             <motion.p
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               className="text-center text-green-400 font-bold mb-8"
             >
-              🎉 {getDiscount()}
+              🎉 Save up to {billingCycle === 'yearly' ? '35%' : '15%'}
             </motion.p>
           )}
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {pricingPlans.map((plan, index) => (
               <motion.div
                 key={plan.name}
@@ -530,33 +536,57 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className={`relative p-8 rounded-[40px] glass border ${plan.popular ? 'border-purple-500/50' : 'border-white/10'}`}
+                className={`relative p-6 rounded-[32px] glass border ${plan.popular ? 'border-purple-500/50 scale-[1.02]' : 'border-white/10'}`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full text-sm font-bold">
-                    Most Popular
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full text-xs font-bold">
+                    BEST VALUE
                   </div>
                 )}
 
-                <h3 className="text-2xl font-black mb-2">{plan.name}</h3>
-                <p className="text-gray-400 text-sm mb-6">{plan.description}</p>
+                <h3 className="text-xl font-black mb-1">{plan.name}</h3>
+                <p className="text-purple-400 text-sm font-bold mb-1">{plan.events}</p>
+                <p className="text-gray-400 text-xs mb-4">{plan.description}</p>
 
-                <div className="mb-8">
-                  <span className="text-4xl font-black">Rp {getPrice(plan.monthlyPrice).toLocaleString('id-ID')}</span>
-                  <span className="text-gray-400">{getPeriodLabel()}</span>
+                {/* Crossed out price */}
+                <div className="mb-1">
+                  <span className="text-gray-500 line-through text-sm">
+                    Rp {formatPrice(getOriginalPrice(plan))}
+                  </span>
+                </div>
+                <div className="mb-2">
+                  <span className="text-3xl font-black">Rp {formatPrice(getDisplayPrice(plan))}</span>
+                  <span className="text-gray-400 text-sm">/mo</span>
                 </div>
 
-                <ul className="space-y-4 mb-8">
+                {/* Bonus badge */}
+                {billingCycle === 'yearly' && (
+                  <div className="mb-4">
+                    <span className="inline-block px-2 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-bold">
+                      +{plan.yearly.bonusMonths} months FREE
+                    </span>
+                  </div>
+                )}
+                {billingCycle === '3month' && (
+                  <div className="mb-4">
+                    <span className="inline-block px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-bold">
+                      +{plan.threeMonth.bonusWeeks} weeks FREE
+                    </span>
+                  </div>
+                )}
+                {billingCycle === 'monthly' && <div className="mb-4 h-[28px]" />}
+
+                <ul className="space-y-3 mb-6">
                   {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-3 text-sm">
-                      <Check size={18} className="text-green-400 shrink-0" />
+                    <li key={feature} className="flex items-center gap-2 text-xs">
+                      <Check size={14} className="text-green-400 shrink-0" />
                       <span className="text-gray-300">{feature}</span>
                     </li>
                   ))}
                 </ul>
 
                 <Link href="/register">
-                  <Button className={`w-full h-14 rounded-full font-bold ${plan.popular ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'bg-white/10 hover:bg-white/20'}`}>
+                  <Button className={`w-full h-12 rounded-full font-bold ${plan.popular ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'bg-white/10 hover:bg-white/20'}`}>
                     Get Started
                   </Button>
                 </Link>
