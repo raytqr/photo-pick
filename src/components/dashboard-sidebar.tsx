@@ -44,7 +44,7 @@ export function DashboardSidebar({
         { href: "/dashboard", label: "Overview", icon: Grid },
         { href: "/dashboard/create", label: "New Event", icon: PlusCircle },
         { href: "/dashboard/profile", label: "Profile & Branding", icon: User },
-        { href: "/pricing", label: "Pricing", icon: CreditCard },
+        { href: "/dashboard/pricing", label: "Pricing", icon: CreditCard },
     ];
 
     const displayName = photographerName || "Photographer";

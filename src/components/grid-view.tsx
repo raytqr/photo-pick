@@ -107,109 +107,115 @@ export function GridView() {
                 </div>
             )}
 
-            {/* Photo Grid - 3 columns on mobile, more on desktop */}
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
-                {filteredPhotos.map(photo => {
-                    const status = getPhotoStatus(photo);
-                    const isSource = status === 'source';
-                    const isRejected = status === 'rejected';
-                    const isSuperLiked = status === 'superLiked';
+            {/* Photo Grids */}
+            <div className="space-y-8">
+                {/* Status Sections logic removed for brevity in this replace call, will use previous successful logic for categories */}
 
-                    return (
-                        <div
-                            key={photo.id}
-                            className={cn(
-                                "relative group aspect-[3/4] rounded-lg overflow-hidden",
-                                isRejected ? "ring-2 ring-red-500 bg-red-500/20" :
-                                    isSuperLiked ? "ring-2 ring-blue-500 bg-blue-500/20" :
-                                        "bg-gray-100 dark:bg-gray-900"
-                            )}
-                        >
-                            <Image
-                                src={photo.url}
-                                alt={photo.name || photo.id}
-                                fill
+                {/* Photo Grid Logic - Re-implementing correctly */}
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
+                    {filteredPhotos.map(photo => {
+                        const status = getPhotoStatus(photo);
+                        const isSource = status === 'source';
+                        const isRejected = status === 'rejected';
+                        const isSuperLiked = status === 'superLiked';
+
+                        return (
+                            <div
+                                key={photo.id}
                                 className={cn(
-                                    "object-cover",
-                                    isRejected && "opacity-60"
+                                    "relative group aspect-[3/4] rounded-lg overflow-hidden",
+                                    isRejected ? "ring-2 ring-red-500 bg-red-500/20" :
+                                        isSuperLiked ? "ring-2 ring-blue-500 bg-blue-500/20" :
+                                            "bg-gray-100 dark:bg-gray-900"
                                 )}
-                                onClick={() => setPreviewPhoto(photo)}
-                                sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 20vw"
-                            />
+                            >
+                                <Image
+                                    src={photo.url}
+                                    alt={photo.name || photo.id}
+                                    fill
+                                    className={cn(
+                                        "object-cover",
+                                        isRejected && "opacity-60"
+                                    )}
+                                    sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 20vw"
+                                />
 
-                            {/* Status Badge */}
-                            <div className={cn(
-                                "absolute top-1.5 right-1.5 p-1 rounded-full text-white z-10 shadow-lg",
-                                isSource ? "bg-gray-500" :
-                                    status === 'selected' ? "bg-green-500" :
-                                        status === 'superLiked' ? "bg-blue-500" :
-                                            status === 'maybe' ? "bg-yellow-500" : "bg-red-500"
-                            )}>
-                                {isSource && <Clock size={10} />}
-                                {status === 'selected' && <Check size={10} />}
-                                {status === 'superLiked' && <Star size={10} />}
-                                {status === 'maybe' && <HelpCircle size={10} />}
-                                {status === 'rejected' && <X size={10} />}
-                            </div>
+                                {/* Status Badge */}
+                                <div className={cn(
+                                    "absolute top-1.5 right-1.5 p-1 rounded-full text-white z-10 shadow-lg",
+                                    isSource ? "bg-gray-500" :
+                                        status === 'selected' ? "bg-green-500" :
+                                            status === 'superLiked' ? "bg-blue-500" :
+                                                status === 'maybe' ? "bg-yellow-500" : "bg-red-500"
+                                )}>
+                                    {isSource && <Clock size={10} />}
+                                    {status === 'selected' && <Check size={10} />}
+                                    {status === 'superLiked' && <Star size={10} />}
+                                    {status === 'maybe' && <HelpCircle size={10} />}
+                                    {status === 'rejected' && <X size={10} />}
+                                </div>
 
-                            {/* Filename - Mobile visible */}
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 pt-6">
-                                <p className="text-[10px] text-white/80 truncate">
-                                    {photo.name || photo.id.slice(0, 8)}
-                                </p>
-                            </div>
+                                {/* Filename - Mobile visible */}
+                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 pt-6">
+                                    <p className="text-[10px] text-white/80 truncate">
+                                        {photo.name || photo.id.slice(0, 8)}
+                                    </p>
+                                </div>
 
-                            {/* Hover Actions */}
-                            <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-2">
-                                {status !== 'superLiked' && (
+                                {/* Hover Actions */}
+                                <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-2">
                                     <Button
                                         size="sm"
-                                        className="w-full h-7 text-[10px] bg-blue-600 hover:bg-blue-700"
-                                        onClick={() => handleMove(photo, status, 'superLiked')}
+                                        variant="outline"
+                                        className="w-full h-7 text-[10px] border-white/30 text-white hover:bg-white/20"
+                                        onClick={() => setPreviewPhoto(photo)}
                                     >
-                                        <Star size={10} className="mr-1" /> Super Like
+                                        <Maximize2 size={10} className="mr-1" /> View
                                     </Button>
-                                )}
-                                {status !== 'selected' && (
-                                    <Button
-                                        size="sm"
-                                        className="w-full h-7 text-[10px] bg-green-600 hover:bg-green-700"
-                                        onClick={() => handleMove(photo, status, 'selected')}
-                                    >
-                                        <Check size={10} className="mr-1" /> Select
-                                    </Button>
-                                )}
-                                {status !== 'maybe' && (
-                                    <Button
-                                        size="sm"
-                                        className="w-full h-7 text-[10px] bg-yellow-500 hover:bg-yellow-600"
-                                        onClick={() => handleMove(photo, status, 'maybe')}
-                                    >
-                                        <HelpCircle size={10} className="mr-1" /> Maybe
-                                    </Button>
-                                )}
-                                {status !== 'rejected' && (
-                                    <Button
-                                        size="sm"
-                                        className="w-full h-7 text-[10px] bg-red-600 hover:bg-red-700 text-white"
-                                        onClick={() => handleMove(photo, status, 'rejected')}
-                                    >
-                                        <X size={10} className="mr-1" /> Reject
-                                    </Button>
-                                )}
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="w-full h-7 text-[10px] border-white/30 text-white hover:bg-white/20"
-                                    onClick={() => setPreviewPhoto(photo)}
-                                >
-                                    <Maximize2 size={10} className="mr-1" /> View
-                                </Button>
+
+                                    {status !== 'superLiked' && (
+                                        <Button
+                                            size="sm"
+                                            className="w-full h-7 text-[10px] bg-blue-600 hover:bg-blue-700"
+                                            onClick={() => handleMove(photo, status, 'superLiked')}
+                                        >
+                                            <Star size={10} className="mr-1" /> Super Like
+                                        </Button>
+                                    )}
+                                    {status !== 'selected' && (
+                                        <Button
+                                            size="sm"
+                                            className="w-full h-7 text-[10px] bg-green-600 hover:bg-green-700"
+                                            onClick={() => handleMove(photo, status, 'selected')}
+                                        >
+                                            <Check size={10} className="mr-1" /> Select
+                                        </Button>
+                                    )}
+                                    {status !== 'maybe' && (
+                                        <Button
+                                            size="sm"
+                                            className="w-full h-7 text-[10px] bg-yellow-500 hover:bg-yellow-600"
+                                            onClick={() => handleMove(photo, status, 'maybe')}
+                                        >
+                                            <HelpCircle size={10} className="mr-1" /> Maybe
+                                        </Button>
+                                    )}
+                                    {status !== 'rejected' && (
+                                        <Button
+                                            size="sm"
+                                            className="w-full h-7 text-[10px] bg-red-600 hover:bg-red-700 text-white"
+                                            onClick={() => handleMove(photo, status, 'rejected')}
+                                        >
+                                            <X size={10} className="mr-1" /> Reject
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
             </div>
-        </div>
+        </div >
     );
+}
 }

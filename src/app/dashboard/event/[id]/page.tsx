@@ -92,129 +92,60 @@ export default async function EventDetailPage({ params }: { params: { id: string
                     <p className="text-gray-500 text-xs font-medium mb-1">Limit</p>
                     <p className="text-2xl font-bold">{event.photo_limit || 50}</p>
                 </div>
-                <div className="glass rounded-2xl p-4 border-white/5">
-                    <p className="text-gray-500 text-xs font-medium mb-1">Submissions</p>
-                    <p className="text-2xl font-bold text-purple-400">{submissions.length}</p>
-                </div>
-                <div className="glass rounded-2xl p-4 border-white/5">
-                    <p className="text-gray-500 text-xs font-medium mb-1">WhatsApp</p>
-                    <p className="text-sm font-medium truncate">{event.whatsapp_number || '-'}</p>
-                </div>
             </div>
-
-            {/* Google Drive Sync Section */}
-            <div className="glass rounded-2xl p-4 sm:p-6 border-white/5">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
-                            <Cloud size={20} />
-                        </div>
-                        <div>
-                            <h2 className="font-bold">Google Drive Source</h2>
-                            <p className="text-sm text-gray-500 truncate max-w-[200px] sm:max-w-sm">{event.drive_link || "No link set"}</p>
-                        </div>
-                    </div>
-
-                    <SyncDriveButton eventId={id} driveLink={event.drive_link} />
-                </div>
-            </div>
-
-            {/* Submission Codes Section */}
-            {submissions.length > 0 && (
-                <div className="glass rounded-2xl p-4 sm:p-6 border-white/5 space-y-4">
-                    <h2 className="text-lg font-bold flex items-center gap-2">
-                        <MessageSquare size={20} className="text-purple-400" />
-                        Client Submissions ({submissions.length})
-                    </h2>
-
-                    <div className="space-y-3">
-                        {submissions.map((sub: any) => (
-                            <div key={sub.id} className="bg-white/5 rounded-xl p-4 border border-white/10">
-                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
-                                    <div className="flex items-center gap-2">
-                                        <Hash size={16} className="text-purple-400" />
-                                        <span className="font-mono font-bold text-purple-300">{sub.submission_code}</span>
-                                    </div>
-                                    <span className="text-xs text-gray-500">
-                                        {new Date(sub.submitted_at).toLocaleString('id-ID')}
-                                    </span>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-                                    {sub.super_liked_photos?.length > 0 && (
-                                        <div className="bg-blue-500/10 rounded-lg p-3 border border-blue-500/20">
-                                            <p className="text-blue-400 font-medium text-xs mb-1">⭐ Super Like</p>
-                                            <p className="text-white font-bold">{sub.super_liked_photos.length} photos</p>
-                                        </div>
-                                    )}
-                                    <div className="bg-green-500/10 rounded-lg p-3 border border-green-500/20">
-                                        <p className="text-green-400 font-medium text-xs mb-1">✅ Selected</p>
-                                        <p className="text-white font-bold">{sub.selected_photos?.length || 0} photos</p>
-                                    </div>
-                                    {sub.maybe_photos?.length > 0 && (
-                                        <div className="bg-yellow-500/10 rounded-lg p-3 border border-yellow-500/20">
-                                            <p className="text-yellow-400 font-medium text-xs mb-1">🤔 Maybe</p>
-                                            <p className="text-white font-bold">{sub.maybe_photos.length} photos</p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Photo Names Preview */}
-                                <details className="mt-3">
-                                    <summary className="text-xs text-gray-400 cursor-pointer hover:text-white">
-                                        View photo filenames
-                                    </summary>
-                                    <div className="mt-2 bg-black/30 rounded-lg p-3 text-xs font-mono text-gray-400 max-h-32 overflow-y-auto">
-                                        {[...(sub.super_liked_photos || []), ...(sub.selected_photos || [])].join('\n')}
-                                    </div>
-                                </details>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Empty Submissions State */}
-            {submissions.length === 0 && (
-                <div className="glass rounded-2xl p-6 border-white/5 text-center">
-                    <MessageSquare size={32} className="mx-auto mb-3 text-gray-600" />
-                    <p className="text-gray-400 font-medium">No client submissions yet</p>
-                    <p className="text-gray-600 text-sm">Submissions will appear here when clients send their selections.</p>
-                </div>
-            )}
-
-            {/* Photo Grid */}
-            <div className="space-y-4">
-                <h2 className="text-lg font-bold flex items-center gap-2">
-                    <ImageIcon size={20} /> Gallery Photos ({photos?.length || 0})
-                </h2>
-
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
-                    {photos?.map((photo: any) => (
-                        <div key={photo.id} className="relative aspect-[3/4] bg-gray-900 rounded-xl overflow-hidden group ring-1 ring-white/10">
-                            <Image
-                                src={photo.url}
-                                alt={photo.name || "photo"}
-                                fill
-                                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                sizes="(max-width: 640px) 33vw, (max-width: 1024px) 20vw, 16vw"
-                            />
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <p className="text-[10px] text-white/80 truncate">{photo.name}</p>
-                            </div>
-                        </div>
-                    ))}
-
-                    {(!photos || photos.length === 0) && (
-                        <div className="col-span-full py-16 text-center text-gray-500 border-2 border-dashed border-gray-800 rounded-2xl bg-gray-900/50">
-                            <Cloud size={40} className="mx-auto mb-3 opacity-50" />
-                            <p className="font-medium">No photos synced yet.</p>
-                            <p className="text-sm">Click "Sync from Drive" to import your photos.</p>
-                        </div>
-                    )}
-                </div>
-            </div>
-
         </div>
+
+            {/* Google Drive Sync Section */ }
+    <div className="glass rounded-2xl p-4 sm:p-6 border-white/5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
+                    <Cloud size={20} />
+                </div>
+                <div>
+                    <h2 className="font-bold">Google Drive Source</h2>
+                    <p className="text-sm text-gray-500 truncate max-w-[200px] sm:max-w-sm">{event.drive_link || "No link set"}</p>
+                </div>
+            </div>
+
+            <SyncDriveButton eventId={id} driveLink={event.drive_link} />
+        </div>
+    </div>
+
+    {/* Client Submissions Removed as requested */ }
+
+    {/* Photo Grid */ }
+    <div className="space-y-4">
+        <h2 className="text-lg font-bold flex items-center gap-2">
+            <ImageIcon size={20} /> Gallery Photos ({photos?.length || 0})
+        </h2>
+
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
+            {photos?.map((photo: any) => (
+                <div key={photo.id} className="relative aspect-[3/4] bg-gray-900 rounded-xl overflow-hidden group ring-1 ring-white/10">
+                    <Image
+                        src={photo.url}
+                        alt={photo.name || "photo"}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        sizes="(max-width: 640px) 33vw, (max-width: 1024px) 20vw, 16vw"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <p className="text-[10px] text-white/80 truncate">{photo.name}</p>
+                    </div>
+                </div>
+            ))}
+
+            {(!photos || photos.length === 0) && (
+                <div className="col-span-full py-16 text-center text-gray-500 border-2 border-dashed border-gray-800 rounded-2xl bg-gray-900/50">
+                    <Cloud size={40} className="mx-auto mb-3 opacity-50" />
+                    <p className="font-medium">No photos synced yet.</p>
+                    <p className="text-sm">Click "Sync from Drive" to import your photos.</p>
+                </div>
+            )}
+        </div>
+    </div>
+
+        </div >
     );
 }

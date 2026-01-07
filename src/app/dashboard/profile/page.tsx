@@ -306,13 +306,15 @@ export default function ProfilePage() {
                         </div>
                     </div>
 
-                    <Button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full h-14 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-lg hover:scale-105 transition-all"
-                    >
-                        {loading ? "Saving..." : "Save Profile"}
-                    </Button>
+                    <div className="sticky bottom-0 -mx-6 -mb-6 p-6 bg-[#030014]/80 backdrop-blur-xl border-t border-white/10 mt-8 z-10 flex justify-end rounded-b-[32px]">
+                        <Button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full md:w-auto px-8 h-14 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-lg hover:scale-105 transition-all shadow-lg shadow-purple-500/20"
+                        >
+                            {loading ? "Saving..." : "Save Profile"}
+                        </Button>
+                    </div>
 
                 </form>
             </div>

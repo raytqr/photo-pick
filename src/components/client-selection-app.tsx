@@ -55,12 +55,6 @@ export function ClientSelectionApp() {
             text += `✅ Selected (${selectedPhotos.length}):\n✅ ${selectedNames}\n\n`;
         }
 
-        // Maybe (optional)
-        if (maybePhotos.length > 0) {
-            const maybeNames = maybePhotos.map(p => p.name || p.id).join('\n🤔 ');
-            text += `🤔 Maybe (${maybePhotos.length}):\n🤔 ${maybeNames}\n\n`;
-        }
-
         text += `Total: ${totalSelected} photos selected\n\nThank you! 📸`;
 
         const phone = whatsappNumber.replace(/\D/g, '');

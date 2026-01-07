@@ -80,13 +80,9 @@ export default async function DashboardPage() {
             </div>
 
             {/* Dashboard Content Header */}
-            <header className="w-full h-20 flex items-center justify-between">
+            <header className="w-full h-16 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <div className="text-gray-500 font-medium text-sm flex items-center gap-2">
-                        <span>Pages</span>
-                        <ChevronRight size={14} />
-                        <span className="text-white font-bold">Overview</span>
-                    </div>
+                    {/* Breadcrumb removed as requested */}
                 </div>
 
                 <div className="flex items-center gap-4">
@@ -97,7 +93,7 @@ export default async function DashboardPage() {
                 </div>
             </header>
 
-            <main className="max-w-7xl mx-auto px-6 py-10 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <main className="max-w-7xl mx-auto px-6 py-6 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
                 {/* Status Banners */}
                 <div className="space-y-4">
@@ -165,7 +161,7 @@ export default async function DashboardPage() {
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass border-white/5 text-[10px] font-black uppercase tracking-widest text-purple-400 mb-3">
                             <Sparkles size={12} /> Photographer Hub
                         </div>
-                        <h2 className="text-4xl font-black tracking-tight text-white mb-2">Welcome Back, <span className="text-gradient">{profile?.email?.split('@')[0]}</span></h2>
+                        <h2 className="text-4xl font-black tracking-tight text-white mb-2">Welcome Back, <span className="text-gradient">{profile?.photographer_name || profile?.email}</span></h2>
                         <p className="text-gray-500 font-medium">Manage your event galleries and client selections.</p>
                     </div>
 
@@ -193,7 +189,7 @@ export default async function DashboardPage() {
                         { label: "Quota Left", value: eventsRemaining, icon: TrendingUp, color: "text-purple-500", bg: "bg-purple-500/10" },
                         { label: "Current Tier", value: tier.toUpperCase(), icon: Crown, color: "text-amber-500", bg: "bg-amber-500/10" },
                     ].map((stat, i) => (
-                        <div key={i} className="glass rounded-[32px] p-6 border-white/5 hover:border-white/10 transition-all group overflow-hidden relative">
+                        <div key={i} className="glass rounded-[32px] p-5 border-white/5 hover:border-white/10 transition-all group overflow-hidden relative">
                             <div className="absolute -right-4 -top-4 opacity-[0.03] group-hover:opacity-[0.07] group-hover:scale-110 transition-all duration-700">
                                 <stat.icon size={120} />
                             </div>
@@ -243,7 +239,7 @@ export default async function DashboardPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {events?.map(event => (
                             <Link href={`/dashboard/event/${event.id}`} key={event.id} className="group flex flex-col">
-                                <div className="glass rounded-[40px] p-8 border-white/5 group-hover:border-purple-500/40 group-hover:bg-white/[0.04] transition-all duration-500 flex flex-col h-full relative overflow-hidden">
+                                <div className="glass rounded-[40px] p-6 border-white/5 group-hover:border-purple-500/40 group-hover:bg-white/[0.04] transition-all duration-500 flex flex-col h-full relative overflow-hidden">
 
                                     {/* Background decoration */}
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-600/10 to-transparent blur-3xl group-hover:opacity-100 opacity-0 transition-opacity duration-500" />

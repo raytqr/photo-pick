@@ -1,9 +1,9 @@
 "use client";
 
 import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
-import { Photo } from "@/store/useAppStore";
+import { Photo, useAppStore } from "@/store/useAppStore";
 import Image from "next/image";
-import { X, Heart, Star, HelpCircle } from "lucide-react";
+import { X, Heart, Star, HelpCircle, RotateCcw } from "lucide-react";
 
 interface SwipeCardProps {
     photo: Photo;
@@ -98,6 +98,18 @@ export function SwipeCard({ photo, onSwipe, index }: SwipeCardProps) {
 
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/60 pointer-events-none" />
+
+                {/* Re-Swipe Indicator */}
+                {isFront && useAppStore.getState().restartingFrom && (
+                    <div className="absolute top-4 inset-x-0 flex justify-center z-40">
+                        <div className="bg-white/10 backdrop-blur-md border border-white/20 px-4 py-1.5 rounded-full text-xs font-bold text-white shadow-xl flex items-center gap-1.5">
+                            <RotateCcw size={12} className="text-yellow-400" />
+                            Swiping from {useAppStore.getState().restartingFrom === 'superLiked' ? 'Super Like' :
+                                useAppStore.getState().restartingFrom === 'selected' ? 'Selected' :
+                                    useAppStore.getState().restartingFrom === 'maybe' ? 'Maybe' : 'Rejected'}
+                        </div>
+                    </div>
+                )}
 
                 {/* Photo Name */}
                 <div className="absolute bottom-6 left-6 right-6 text-white z-20">

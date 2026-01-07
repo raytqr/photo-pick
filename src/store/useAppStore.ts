@@ -43,7 +43,13 @@ interface AppState {
     initializeWithCache: (photos: Photo[], eventDetails: Partial<AppState>) => void;
     movePhoto: (photoId: string, from: PhotoStatus, to: PhotoStatus) => void;
     undoLastAction: () => void;
+    movePhoto: (photoId: string, from: PhotoStatus, to: PhotoStatus) => void;
+    undoLastAction: () => void;
     resetClientState: () => void;
+
+    // Re-swipe Feature
+    restartingFrom: PhotoStatus | null;
+    restartCategory: (category: PhotoStatus) => void;
 }
 
 // Mock Data Generator
@@ -164,6 +170,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
                 superLikedPhotos: validSuperLiked,
                 history: [],
                 isSetupComplete: true,
+                restartingFrom: null,
                 ...eventDetails
             });
         } else {
@@ -176,6 +183,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
                 superLikedPhotos: [],
                 history: [],
                 isSetupComplete: true,
+                restartingFrom: null,
                 ...eventDetails
             });
         }

@@ -24,29 +24,35 @@ function generateSubmissionCode(photoIds: string[]): string {
 }
 
 export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
-    const { eventName, eventSlug, logoUrl, selectedPhotos, maybePhotos, rejectedPhotos, sourceImages, photoLimit, whatsappNumber } = useAppStore();
+    const { eventName, eventSlug, logoUrl, selectedPhotos, maybePhotos, rejectedPhotos, superLikedPhotos, sourceImages, photoLimit, whatsappNumber } = useAppStore();
     const [showRestartConfirm, setShowRestartConfirm] = useState(false);
     const [showSendModal, setShowSendModal] = useState(false);
     const [copiedType, setCopiedType] = useState<string | null>(null);
 
-    const count = selectedPhotos.length;
+    const count = selectedPhotos.length + superLikedPhotos.length;
     const isOverLimit = count > photoLimit;
-    const totalPhotos = sourceImages.length + selectedPhotos.length + maybePhotos.length + rejectedPhotos.length;
-    const reviewedCount = selectedPhotos.length + maybePhotos.length + rejectedPhotos.length;
+    const totalPhotos = sourceImages.length + selectedPhotos.length + maybePhotos.length + rejectedPhotos.length + superLikedPhotos.length;
+    const reviewedCount = selectedPhotos.length + maybePhotos.length + rejectedPhotos.length + superLikedPhotos.length;
 
     // Generate unique code
     const submissionCode = useMemo(() => {
-        return generateSubmissionCode(selectedPhotos.map(p => p.id));
-    }, [selectedPhotos]);
+        return generateSubmissionCode([...selectedPhotos, ...superLikedPhotos].map(p => p.id));
+    }, [selectedPhotos, superLikedPhotos]);
 
     // Filename only list (for Lightroom/Finder filter)
     const filenameList = useMemo(() => {
-        return selectedPhotos.map(p => p.name || p.id).join('\n');
-    }, [selectedPhotos]);
+        return [...superLikedPhotos, ...selectedPhotos].map(p => p.name || p.id).join('\n');
+    }, [selectedPhotos, superLikedPhotos]);
 
     const generateMessage = () => {
-        const names = selectedPhotos.map(p => p.name || p.id).join('\n• ');
-        return `Hi! 👋\n\nCode: ${submissionCode}\nTotal: ${count} photos\n\n• ${names}\n\nThank you!`;
+        const superLikeNames = superLikedPhotos.map(p => `⭐ ${p.name || p.id}`).join('\n');
+        const selectedNames = selectedPhotos.map(p => `✅ ${p.name || p.id}`).join('\n');
+
+        let names = '';
+        if (superLikedPhotos.length > 0) names += `${superLikeNames}\n`;
+        if (selectedPhotos.length > 0) names += `${selectedNames}`;
+
+        return `Hi! 👋\n\nCode: ${submissionCode}\nTotal: ${count} photos\n\n${names}\n\nThank you!`;
     };
 
     const generateWhatsAppLink = () => {
@@ -78,12 +84,14 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
         window.location.reload();
     };
 
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
     return (
         <>
-            <div className="fixed top-0 left-0 right-0 h-16 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl z-50 px-3 flex items-center justify-between border-b dark:border-gray-800">
+            <div className="fixed top-0 left-0 right-0 h-16 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl z-50 px-4 flex items-center justify-between border-b dark:border-gray-800">
                 {/* Left: Branding */}
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden relative border dark:border-gray-700 shrink-0">
+                <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden relative border dark:border-gray-700 shrink-0">
                         {logoUrl ? (
                             <Image src={logoUrl} alt="Logo" fill className="object-cover" />
                         ) : (
@@ -91,74 +99,144 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
                         )}
                     </div>
                     <div className="flex flex-col">
-                        <span className="font-semibold text-sm truncate max-w-[80px] sm:max-w-[120px] dark:text-gray-100 leading-tight">
+                        <span className="font-bold text-sm truncate max-w-[100px] sm:max-w-[150px] dark:text-gray-100 leading-tight">
                             {eventName}
                         </span>
-                        <span className="text-[10px] text-gray-500">
+                        <span className="text-[10px] text-gray-500 font-medium">
                             {reviewedCount}/{totalPhotos} reviewed
                         </span>
                     </div>
                 </div>
 
                 {/* Right: Controls */}
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                    {/* Counter */}
-                    <div className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${isOverLimit
+                <div className="flex items-center gap-2 sm:gap-3">
+                    {/* Counter - Always Visible */}
+                    <div className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${isOverLimit
                         ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
                         : "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-200"
                         }`}>
                         {count}/{photoLimit}
                     </div>
 
-                    {/* Send Button */}
-                    {count > 0 && (
-                        <Button
-                            size="sm"
-                            onClick={() => setShowSendModal(true)}
-                            className={`h-8 px-3 rounded-full text-xs font-medium ${isOverLimit
-                                ? 'bg-amber-500 hover:bg-amber-600'
-                                : 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700'
-                                }`}
-                        >
-                            <Send size={14} className="mr-1" />
-                            Send
-                        </Button>
-                    )}
+                    {/* Desktop Controls (Hidden on Mobile) */}
+                    <div className="hidden md:flex items-center gap-2">
+                        {/* Send Button */}
+                        {count > 0 && (
+                            <Button
+                                size="sm"
+                                onClick={() => setShowSendModal(true)}
+                                className={`h-9 px-4 rounded-full text-sm font-bold shadow-lg transition-transform hover:scale-105 ${isOverLimit
+                                    ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20'
+                                    : 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 shadow-purple-500/25'
+                                    }`}
+                            >
+                                <Send size={16} className="mr-2" />
+                                Send
+                            </Button>
+                        )}
 
-                    {/* Restart Button */}
-                    {reviewedCount > 0 && (
+                        {/* Restart Button */}
+                        {reviewedCount > 0 && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowRestartConfirm(true)}
+                                className="text-gray-600 dark:text-gray-300 h-9 px-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+                            >
+                                <RotateCcw size={16} className="mr-2" />
+                                Restart
+                            </Button>
+                        )}
+
+                        {/* Grid Toggle */}
                         <Button
                             variant="ghost"
-                            size="icon"
-                            onClick={() => setShowRestartConfirm(true)}
-                            className="text-gray-600 dark:text-gray-300 h-8 w-8"
-                            title="Restart"
+                            size="sm"
+                            onClick={() => setViewMode(viewMode === 'swipe' ? 'grid' : 'swipe')}
+                            className="text-gray-600 dark:text-gray-300 h-9 px-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
                         >
-                            <RotateCcw size={16} />
+                            {viewMode === 'swipe' ? <Grip size={16} className="mr-2" /> : <Layers size={16} className="mr-2" />}
+                            {viewMode === 'swipe' ? 'Grid' : 'Swipe'}
                         </Button>
-                    )}
 
-                    {/* Grid Toggle */}
+                        {/* Info Button */}
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onInfoClick}
+                            className="text-gray-600 dark:text-gray-300 h-9 px-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+                        >
+                            <Info size={16} className="mr-2" />
+                            Info
+                        </Button>
+                    </div>
+
+                    {/* Mobile Menu Toggle */}
                     <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setViewMode(viewMode === 'swipe' ? 'grid' : 'swipe')}
-                        className="text-gray-600 dark:text-gray-300 h-8 w-8"
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        className="md:hidden text-gray-600 dark:text-gray-300"
                     >
-                        {viewMode === 'swipe' ? <Grip size={18} /> : <Layers size={18} />}
-                    </Button>
-
-                    {/* Info Button */}
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={onInfoClick}
-                        className="text-gray-600 dark:text-gray-300 h-8 w-8"
-                    >
-                        <Info size={18} />
+                        {isMobileMenuOpen ? <X size={24} /> : <Grip size={24} />}
                     </Button>
                 </div>
             </div>
+
+            {/* Mobile Menu Dropdown */}
+            {isMobileMenuOpen && (
+                <>
+                    <div
+                        className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm md:hidden"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    />
+                    <div className="fixed top-20 right-4 z-50 w-56 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-2 border border-white/20 dark:border-gray-800 md:hidden animate-in slide-in-from-top-4 duration-200">
+                        <div className="flex flex-col gap-1">
+                            {count > 0 && (
+                                <Button
+                                    onClick={() => { setShowSendModal(true); setIsMobileMenuOpen(false); }}
+                                    className={`justify-start h-12 rounded-xl text-base font-bold ${isOverLimit
+                                        ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                                        : 'bg-gradient-to-r from-purple-500 to-pink-600 text-white'
+                                        }`}
+                                >
+                                    <Send size={18} className="mr-3" />
+                                    Send Selections
+                                </Button>
+                            )}
+
+                            <Button
+                                variant="ghost"
+                                onClick={() => { setViewMode(viewMode === 'swipe' ? 'grid' : 'swipe'); setIsMobileMenuOpen(false); }}
+                                className="justify-start h-12 rounded-xl text-base font-medium"
+                            >
+                                {viewMode === 'swipe' ? <Grip size={18} className="mr-3" /> : <Layers size={18} className="mr-3" />}
+                                Switch to {viewMode === 'swipe' ? 'Grid' : 'Swipe'}
+                            </Button>
+
+                            {reviewedCount > 0 && (
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => { setShowRestartConfirm(true); setIsMobileMenuOpen(false); }}
+                                    className="justify-start h-12 rounded-xl text-base font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600"
+                                >
+                                    <RotateCcw size={18} className="mr-3" />
+                                    Restart
+                                </Button>
+                            )}
+
+                            <Button
+                                variant="ghost"
+                                onClick={() => { onInfoClick(); setIsMobileMenuOpen(false); }}
+                                className="justify-start h-12 rounded-xl text-base font-medium"
+                            >
+                                <Info size={18} className="mr-3" />
+                                Event Info
+                            </Button>
+                        </div>
+                    </div>
+                </>
+            )}
 
             {/* Send Options Modal */}
             {showSendModal && (
@@ -174,23 +252,7 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
                             </Button>
                         </div>
 
-                        {/* Unique Code */}
-                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-800">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-xs text-purple-600 dark:text-purple-400 font-medium">Submission Code</p>
-                                    <p className="text-2xl font-mono font-bold text-purple-700 dark:text-purple-300">{submissionCode}</p>
-                                </div>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleCopy('code')}
-                                    className="border-purple-300 text-purple-600 hover:bg-purple-100 dark:border-purple-700 dark:text-purple-400"
-                                >
-                                    {copiedType === 'code' ? <Check size={14} /> : <Copy size={14} />}
-                                </Button>
-                            </div>
-                        </div>
+                        {/* Note: Submission Code section removed as requested */}
 
                         <div className="space-y-2">
                             {/* Copy Full Message */}
@@ -298,7 +360,7 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
                                 Cancel
                             </Button>
                             <Button
-                                className="flex-1 bg-red-600 hover:bg-red-700"
+                                className="flex-1 bg-red-500 hover:bg-red-600 text-white"
                                 onClick={handleRestart}
                             >
                                 Restart
