@@ -95,14 +95,15 @@ const steps = [
   }
 ];
 
-// Pricing data with billing cycles and psychological pricing
+// Correct pricing: Yearly per-month is the BASE (discounted), Monthly/3-Month are MORE expensive
 const pricingPlans = [
   {
     name: "Starter",
     events: "10 Events",
-    monthly: { price: 30000, originalPrice: 50000 },
-    threeMonth: { pricePerMonth: 27000, originalPerMonth: 30000, totalPrice: 81000, bonusWeeks: 2 },
-    yearly: { pricePerMonth: 20000, originalPerMonth: 30000, totalPrice: 240000, bonusMonths: 2 },
+    yearly: { pricePerMonth: 30000, totalPrice: 360000, bonusMonths: 2 },
+    threeMonth: { pricePerMonth: 35000, totalPrice: 105000, bonusWeeks: 1 },
+    monthly: { price: 40000 },
+    originalMonthly: 50000,
     description: "Perfect for beginners",
     features: ["10 Events/month", "300 photos/event", "Google Drive Sync", "WhatsApp Integration"],
     popular: false
@@ -110,9 +111,10 @@ const pricingPlans = [
   {
     name: "Basic",
     events: "20 Events",
-    monthly: { price: 50000, originalPrice: 79000 },
-    threeMonth: { pricePerMonth: 45000, originalPerMonth: 50000, totalPrice: 135000, bonusWeeks: 2 },
-    yearly: { pricePerMonth: 35000, originalPerMonth: 50000, totalPrice: 420000, bonusMonths: 2 },
+    yearly: { pricePerMonth: 50000, totalPrice: 600000, bonusMonths: 2 },
+    threeMonth: { pricePerMonth: 60000, totalPrice: 180000, bonusWeeks: 1 },
+    monthly: { price: 70000 },
+    originalMonthly: 89000,
     description: "For growing photographers",
     features: ["20 Events/month", "500 photos/event", "Custom Branding", "Priority Support"],
     popular: false
@@ -120,9 +122,10 @@ const pricingPlans = [
   {
     name: "Pro",
     events: "50 Events",
-    monthly: { price: 100000, originalPrice: 149000 },
-    threeMonth: { pricePerMonth: 85000, originalPerMonth: 100000, totalPrice: 255000, bonusWeeks: 3 },
-    yearly: { pricePerMonth: 65000, originalPerMonth: 100000, totalPrice: 780000, bonusMonths: 3 },
+    yearly: { pricePerMonth: 100000, totalPrice: 1200000, bonusMonths: 3 },
+    threeMonth: { pricePerMonth: 120000, totalPrice: 360000, bonusWeeks: 2 },
+    monthly: { price: 150000 },
+    originalMonthly: 199000,
     description: "Most popular choice",
     features: ["50 Events/month", "Unlimited photos", "Advanced Analytics", "Remove Watermark"],
     popular: true
@@ -130,9 +133,10 @@ const pricingPlans = [
   {
     name: "Unlimited",
     events: "Unlimited",
-    monthly: { price: 200000, originalPrice: 299000 },
-    threeMonth: { pricePerMonth: 170000, originalPerMonth: 200000, totalPrice: 510000, bonusWeeks: 4 },
-    yearly: { pricePerMonth: 130000, originalPerMonth: 200000, totalPrice: 1560000, bonusMonths: 4 },
+    yearly: { pricePerMonth: 200000, totalPrice: 2400000, bonusMonths: 4 },
+    threeMonth: { pricePerMonth: 240000, totalPrice: 720000, bonusWeeks: 2 },
+    monthly: { price: 300000 },
+    originalMonthly: 399000,
     description: "For studios & agencies",
     features: ["Unlimited Events", "Team Management", "API Access", "Portfolio Website"],
     popular: false
@@ -264,9 +268,7 @@ export default function LandingPage() {
   };
 
   const getOriginalPrice = (plan: typeof pricingPlans[0]) => {
-    if (billingCycle === 'yearly') return plan.yearly.originalPerMonth;
-    if (billingCycle === '3month') return plan.threeMonth.originalPerMonth;
-    return plan.monthly.originalPrice;
+    return plan.originalMonthly; // Always show crossed-out original
   };
 
   const formatPrice = (price: number) => new Intl.NumberFormat('id-ID').format(price);

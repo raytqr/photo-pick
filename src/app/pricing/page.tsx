@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 
 type BillingCycle = 'monthly' | '3-month' | 'yearly';
 
-// New Pricing Structure with Psychology
+// Correct pricing: Yearly per-month is the BASE (discounted), Monthly/3-Month are MORE expensive
 const pricingTiers = [
     {
         name: "Starter",
@@ -20,22 +20,11 @@ const pricingTiers = [
         color: "from-gray-500 to-gray-600",
         popular: false,
         events: "10 Events/month",
-        monthly: {
-            price: 30000,
-            originalPrice: 50000,
-        },
-        threeMonth: {
-            pricePerMonth: 27000,
-            originalPerMonth: 30000,
-            totalPrice: 81000,
-            bonusWeeks: 2,
-        },
-        yearly: {
-            pricePerMonth: 20000,
-            originalPerMonth: 30000,
-            totalPrice: 240000,
-            bonusMonths: 2,
-        },
+        // Yearly is BASE: 30k/mo, Monthly is MORE expensive
+        yearly: { pricePerMonth: 30000, totalPrice: 360000, bonusMonths: 2 },
+        threeMonth: { pricePerMonth: 35000, totalPrice: 105000, bonusWeeks: 1 },
+        monthly: { price: 40000 },
+        originalMonthly: 50000, // Crossed out "original" price
         features: [
             "10 Events per month",
             "Up to 300 photos/event",
@@ -52,22 +41,10 @@ const pricingTiers = [
         color: "from-blue-500 to-cyan-500",
         popular: false,
         events: "20 Events/month",
-        monthly: {
-            price: 50000,
-            originalPrice: 79000,
-        },
-        threeMonth: {
-            pricePerMonth: 45000,
-            originalPerMonth: 50000,
-            totalPrice: 135000,
-            bonusWeeks: 2,
-        },
-        yearly: {
-            pricePerMonth: 35000,
-            originalPerMonth: 50000,
-            totalPrice: 420000,
-            bonusMonths: 2,
-        },
+        yearly: { pricePerMonth: 50000, totalPrice: 600000, bonusMonths: 2 },
+        threeMonth: { pricePerMonth: 60000, totalPrice: 180000, bonusWeeks: 1 },
+        monthly: { price: 70000 },
+        originalMonthly: 89000,
         features: [
             "20 Events per month",
             "Up to 500 photos/event",
@@ -84,22 +61,10 @@ const pricingTiers = [
         color: "from-purple-500 to-pink-500",
         popular: true,
         events: "50 Events/month",
-        monthly: {
-            price: 100000,
-            originalPrice: 149000,
-        },
-        threeMonth: {
-            pricePerMonth: 85000,
-            originalPerMonth: 100000,
-            totalPrice: 255000,
-            bonusWeeks: 3,
-        },
-        yearly: {
-            pricePerMonth: 65000,
-            originalPerMonth: 100000,
-            totalPrice: 780000,
-            bonusMonths: 3,
-        },
+        yearly: { pricePerMonth: 100000, totalPrice: 1200000, bonusMonths: 3 },
+        threeMonth: { pricePerMonth: 120000, totalPrice: 360000, bonusWeeks: 2 },
+        monthly: { price: 150000 },
+        originalMonthly: 199000,
         features: [
             "50 Events per month",
             "Unlimited photos/event",
@@ -118,22 +83,10 @@ const pricingTiers = [
         popular: false,
         events: "Unlimited Events",
         hasPortfolio: true,
-        monthly: {
-            price: 200000,
-            originalPrice: 299000,
-        },
-        threeMonth: {
-            pricePerMonth: 170000,
-            originalPerMonth: 200000,
-            totalPrice: 510000,
-            bonusWeeks: 4,
-        },
-        yearly: {
-            pricePerMonth: 130000,
-            originalPerMonth: 200000,
-            totalPrice: 1560000,
-            bonusMonths: 4,
-        },
+        yearly: { pricePerMonth: 200000, totalPrice: 2400000, bonusMonths: 4 },
+        threeMonth: { pricePerMonth: 240000, totalPrice: 720000, bonusWeeks: 2 },
+        monthly: { price: 300000 },
+        originalMonthly: 399000,
         features: [
             "Unlimited Events",
             "Unlimited Photos",
@@ -209,9 +162,7 @@ export default function PricingPage() {
     };
 
     const getOriginalPrice = (plan: typeof pricingTiers[0]) => {
-        if (billingCycle === 'yearly') return plan.yearly.originalPerMonth;
-        if (billingCycle === '3-month') return plan.threeMonth.originalPerMonth;
-        return plan.monthly.originalPrice;
+        return plan.originalMonthly; // Always show the same crossed-out "original" price
     };
 
     const getSavingsPercent = () => {

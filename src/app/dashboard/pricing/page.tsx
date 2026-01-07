@@ -4,88 +4,109 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import Link from "next/link";
-import { Check, Gift, Sparkles, Crown, Zap } from "lucide-react";
+import { Check, Gift, Sparkles, Crown, Zap, Rocket, Globe } from "lucide-react";
 import { redeemCode } from "@/actions/subscription";
 import { useRouter } from "next/navigation";
 
 type BillingCycle = 'monthly' | '3-month' | 'yearly';
 
-const getPricingPlans = (cycle: BillingCycle) => {
-    const multiplier = cycle === 'monthly' ? 1 : cycle === '3-month' ? 3 : 12;
-    const discount = cycle === 'monthly' ? 0 : cycle === '3-month' ? 0.1 : 0.25; // 10% for 3-month, 25% for yearly
+// Correct pricing: Yearly per-month is the BASE (discounted), Monthly/3-Month are MORE expensive
+const pricingTiers = [
+    {
+        name: "Starter",
+        tagline: "Perfect for beginners",
+        icon: Sparkles,
+        color: "from-gray-500 to-gray-600",
+        popular: false,
+        events: "10 Events/month",
+        // Yearly is BASE: 30k/mo, Monthly is MORE expensive
+        yearly: { pricePerMonth: 30000, totalPrice: 360000, bonusMonths: 2 },
+        threeMonth: { pricePerMonth: 35000, totalPrice: 105000, bonusWeeks: 1 },
+        monthly: { price: 40000 },
+        originalMonthly: 50000, // Crossed out "original" price
+        features: [
+            "10 Events per month",
+            "Up to 300 photos/event",
+            "Google Drive Sync",
+            "WhatsApp Integration",
+            "Email Support",
+        ],
+        cta: "Get Started",
+    },
+    {
+        name: "Basic",
+        tagline: "For growing photographers",
+        icon: Crown,
+        color: "from-blue-500 to-cyan-500",
+        popular: false,
+        events: "20 Events/month",
+        yearly: { pricePerMonth: 50000, totalPrice: 600000, bonusMonths: 2 },
+        threeMonth: { pricePerMonth: 60000, totalPrice: 180000, bonusWeeks: 1 },
+        monthly: { price: 70000 },
+        originalMonthly: 89000,
+        features: [
+            "20 Events per month",
+            "Up to 500 photos/event",
+            "Everything in Starter",
+            "Custom Branding",
+            "Priority Support",
+        ],
+        cta: "Get Started",
+    },
+    {
+        name: "Pro",
+        tagline: "Most popular choice",
+        icon: Zap,
+        color: "from-purple-500 to-pink-500",
+        popular: true,
+        events: "50 Events/month",
+        yearly: { pricePerMonth: 100000, totalPrice: 1200000, bonusMonths: 3 },
+        threeMonth: { pricePerMonth: 120000, totalPrice: 360000, bonusWeeks: 2 },
+        monthly: { price: 150000 },
+        originalMonthly: 199000,
+        features: [
+            "50 Events per month",
+            "Unlimited photos/event",
+            "Everything in Basic",
+            "Advanced Analytics",
+            "Remove Watermark",
+            "Custom Domain (Soon)",
+        ],
+        cta: "Go Pro",
+    },
+    {
+        name: "Unlimited",
+        tagline: "For studios & agencies",
+        icon: Rocket,
+        color: "from-orange-500 to-red-500",
+        popular: false,
+        events: "Unlimited Events",
+        hasPortfolio: true,
+        yearly: { pricePerMonth: 200000, totalPrice: 2400000, bonusMonths: 4 },
+        threeMonth: { pricePerMonth: 240000, totalPrice: 720000, bonusWeeks: 2 },
+        monthly: { price: 300000 },
+        originalMonthly: 399000,
+        features: [
+            "Unlimited Events",
+            "Unlimited Photos",
+            "Everything in Pro",
+            "Team Management",
+            "API Access",
+            "White Label",
+            "Dedicated Support",
+        ],
+        portfolioFeature: "Portfolio Website Included",
+        cta: "Contact Sales",
+    },
+];
 
-    const formatPrice = (basePrice: number) => {
-        const total = basePrice * multiplier * (1 - discount);
-        return new Intl.NumberFormat('id-ID').format(total);
-    };
-
-    return [
-        {
-            name: "Starter",
-            basePrice: 50000,
-            price: formatPrice(50000),
-            period: cycle === 'monthly' ? '/bulan' : cycle === '3-month' ? '/3 bulan' : '/tahun',
-            description: "Perfect for beginner photographers",
-            icon: Sparkles,
-            color: "from-blue-500 to-cyan-500",
-            features: [
-                "10 Events per month",
-                "Google Drive Sync",
-                "WhatsApp Integration",
-                "Custom Branding",
-                "Email Support"
-            ],
-            cta: "Get Started",
-            popular: false
-        },
-        {
-            name: "Pro",
-            basePrice: 99000,
-            price: formatPrice(99000),
-            period: cycle === 'monthly' ? '/bulan' : cycle === '3-month' ? '/3 bulan' : '/tahun',
-            description: "For professional photographers",
-            icon: Crown,
-            color: "from-purple-500 to-pink-500",
-            features: [
-                "Unlimited Events",
-                "Priority Sync Speed",
-                "Advanced Analytics",
-                "Remove Watermark",
-                "Priority Support",
-                "Custom Domain (Soon)"
-            ],
-            cta: "Go Pro",
-            popular: true
-        },
-        {
-            name: "Business",
-            basePrice: 199000,
-            price: formatPrice(199000),
-            period: cycle === 'monthly' ? '/bulan' : cycle === '3-month' ? '/3 bulan' : '/tahun',
-            description: "For studios and agencies",
-            icon: Zap,
-            color: "from-amber-500 to-orange-500",
-            features: [
-                "Everything in Pro",
-                "Team Management",
-                "API Access",
-                "White Label",
-                "Dedicated Account Manager"
-            ],
-            cta: "Contact Sales",
-            popular: false
-        }
-    ];
-};
+const formatPrice = (price: number) => new Intl.NumberFormat('id-ID').format(price);
 
 export default function PricingPage() {
-    const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
+    const [billingCycle, setBillingCycle] = useState<BillingCycle>('yearly'); // Default yearly
     const [promoCode, setPromoCode] = useState("");
     const [redeemLoading, setRedeemLoading] = useState(false);
     const router = useRouter();
-
-    const plans = getPricingPlans(billingCycle);
 
     const handleRedeem = async () => {
         if (!promoCode) return;
@@ -98,11 +119,23 @@ export default function PricingPage() {
             } else {
                 alert(result.error);
             }
-        } catch (error) {
+        } catch {
             alert("Something went wrong");
         } finally {
             setRedeemLoading(false);
         }
+    };
+
+    const getDisplayPrice = (plan: typeof pricingTiers[0]) => {
+        if (billingCycle === 'yearly') return plan.yearly.pricePerMonth;
+        if (billingCycle === '3-month') return plan.threeMonth.pricePerMonth;
+        return plan.monthly.price;
+    };
+
+    const getSavingsPercent = (plan: typeof pricingTiers[0]) => {
+        const monthlyPrice = plan.monthly.price;
+        const currentPrice = getDisplayPrice(plan);
+        return Math.round((1 - currentPrice / monthlyPrice) * 100);
     };
 
     return (
@@ -120,20 +153,35 @@ export default function PricingPage() {
             {/* Billing Cycle Toggle */}
             <div className="flex justify-center">
                 <div className="glass p-1.5 rounded-full border-white/10 flex items-center gap-1">
-                    {(['monthly', '3-month', 'yearly'] as const).map((cycle) => (
-                        <button
-                            key={cycle}
-                            onClick={() => setBillingCycle(cycle)}
-                            className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${billingCycle === cycle
-                                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                                : 'text-gray-400 hover:text-white hover:bg-white/5'
-                                }`}
-                        >
-                            {cycle === 'monthly' ? 'Bulanan' : cycle === '3-month' ? '3 Bulan' : 'Tahunan'}
-                            {cycle === '3-month' && <span className="ml-2 text-[10px] bg-green-500 text-black px-1.5 py-0.5 rounded-full">-10%</span>}
-                            {cycle === 'yearly' && <span className="ml-2 text-[10px] bg-green-500 text-black px-1.5 py-0.5 rounded-full">-25%</span>}
-                        </button>
-                    ))}
+                    <button
+                        onClick={() => setBillingCycle('monthly')}
+                        className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${billingCycle === 'monthly'
+                            ? 'bg-white/10 text-white'
+                            : 'text-gray-400 hover:text-white'
+                            }`}
+                    >
+                        Monthly
+                    </button>
+                    <button
+                        onClick={() => setBillingCycle('3-month')}
+                        className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${billingCycle === '3-month'
+                            ? 'bg-blue-500 text-white'
+                            : 'text-gray-400 hover:text-white'
+                            }`}
+                    >
+                        3 Months
+                        {billingCycle !== '3-month' && <span className="text-[10px] px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full">-20%</span>}
+                    </button>
+                    <button
+                        onClick={() => setBillingCycle('yearly')}
+                        className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${billingCycle === 'yearly'
+                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
+                            : 'text-gray-400 hover:text-white'
+                            }`}
+                    >
+                        Yearly
+                        {billingCycle !== 'yearly' && <span className="text-[10px] px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded-full">-35%</span>}
+                    </button>
                 </div>
             </div>
 
@@ -163,59 +211,98 @@ export default function PricingPage() {
             </div>
 
             {/* Pricing Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {plans.map((plan, i) => (
-                    <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                        className={`relative glass rounded-[40px] p-8 border-white/5 flex flex-col h-full ${plan.popular ? 'border-purple-500/50 shadow-2xl shadow-purple-500/10 scale-105 z-10' : 'hover:border-white/10'
-                            }`}
-                    >
-                        {plan.popular && (
-                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-lg">
-                                Most Popular
-                            </div>
-                        )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {pricingTiers.map((plan, i) => {
+                    const displayPrice = getDisplayPrice(plan);
+                    const savings = getSavingsPercent(plan);
 
-                        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${plan.color} flex items-center justify-center mb-6 shadow-lg`}>
-                            <plan.icon size={28} className="text-white" />
-                        </div>
-
-                        <h3 className="text-2xl font-black mb-2">{plan.name}</h3>
-                        <p className="text-gray-400 text-sm mb-6 min-h-[40px]">{plan.description}</p>
-
-                        <div className="mb-8">
-                            <span className="text-4xl font-black">Rp {plan.price}</span>
-                            <span className="text-gray-500 text-sm font-bold">{plan.period}</span>
-                            {billingCycle !== 'monthly' && (
-                                <div className="text-xs text-green-400 font-bold mt-1">
-                                    {(billingCycle === '3-month' ? 'Save 10%' : 'Save 25%')}
+                    return (
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.1 }}
+                            className={`relative glass rounded-[32px] p-6 border-white/5 flex flex-col h-full ${plan.popular ? 'border-purple-500/50 shadow-2xl shadow-purple-500/10 scale-[1.02] z-10' : 'hover:border-white/10'
+                                }`}
+                        >
+                            {plan.popular && (
+                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-lg">
+                                    BEST VALUE
                                 </div>
                             )}
-                        </div>
 
-                        <div className="space-y-4 flex-1 mb-8">
-                            {plan.features.map((feature, j) => (
-                                <div key={j} className="flex items-center gap-3 text-sm font-medium text-gray-300">
-                                    <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 text-green-400">
-                                        <Check size={10} strokeWidth={4} />
-                                    </div>
-                                    {feature}
+                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${plan.color} flex items-center justify-center mb-4 shadow-lg`}>
+                                <plan.icon size={24} className="text-white" />
+                            </div>
+
+                            <h3 className="text-xl font-black mb-1">{plan.name}</h3>
+                            <p className="text-purple-400 text-sm font-bold mb-1">{plan.events}</p>
+                            <p className="text-gray-400 text-xs mb-4">{plan.tagline}</p>
+
+                            {/* Crossed out original price */}
+                            <div className="mb-1">
+                                <span className="text-gray-500 line-through text-sm">
+                                    Rp {formatPrice(plan.originalMonthly)}
+                                </span>
+                            </div>
+                            <div className="mb-2">
+                                <span className="text-3xl font-black">Rp {formatPrice(displayPrice)}</span>
+                                <span className="text-gray-400 text-sm">/mo</span>
+                            </div>
+
+                            {/* Savings badge */}
+                            {billingCycle === 'yearly' && (
+                                <div className="mb-4">
+                                    <span className="inline-block px-2 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-bold">
+                                        +{plan.yearly.bonusMonths} months FREE
+                                    </span>
+                                    <p className="text-[10px] text-gray-500 mt-1">
+                                        Billed Rp {formatPrice(plan.yearly.totalPrice)}/year
+                                    </p>
                                 </div>
-                            ))}
-                        </div>
+                            )}
+                            {billingCycle === '3-month' && (
+                                <div className="mb-4">
+                                    <span className="inline-block px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-bold">
+                                        Save {savings}%
+                                    </span>
+                                    <p className="text-[10px] text-gray-500 mt-1">
+                                        Billed Rp {formatPrice(plan.threeMonth.totalPrice)}/3mo
+                                    </p>
+                                </div>
+                            )}
+                            {billingCycle === 'monthly' && <div className="mb-4 h-[44px]" />}
 
-                        <Button className={`w-full h-12 rounded-xl font-bold ${plan.popular
-                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-105 shadow-lg shadow-purple-500/25'
-                            : 'bg-white text-black hover:bg-gray-200'
-                            } transition-all`}>
-                            {plan.cta}
-                        </Button>
-                    </motion.div>
-                ))}
+                            <div className="space-y-2 flex-1 mb-6">
+                                {plan.features.slice(0, 5).map((feature, j) => (
+                                    <div key={j} className="flex items-start gap-2 text-xs font-medium text-gray-300">
+                                        <Check size={14} className="text-green-400 shrink-0 mt-0.5" />
+                                        {feature}
+                                    </div>
+                                ))}
+                                {plan.hasPortfolio && plan.portfolioFeature && (
+                                    <div className="flex items-start gap-2 text-xs font-bold text-purple-400">
+                                        <Globe size={14} className="shrink-0 mt-0.5" />
+                                        {plan.portfolioFeature}
+                                    </div>
+                                )}
+                            </div>
+
+                            <Button className={`w-full h-10 rounded-xl font-bold text-sm ${plan.popular
+                                ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-105 shadow-lg shadow-purple-500/25'
+                                : 'bg-white/10 hover:bg-white/20'
+                                } transition-all`}>
+                                {plan.cta}
+                            </Button>
+                        </motion.div>
+                    );
+                })}
             </div>
+
+            {/* Trust Badge */}
+            <p className="text-center text-gray-500 text-sm">
+                🔒 Secure payment · Cancel anytime · 7-day money-back guarantee
+            </p>
         </div>
     );
 }
