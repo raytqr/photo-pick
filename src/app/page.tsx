@@ -24,7 +24,10 @@ import {
   MousePointer2,
   Workflow,
   Menu,
-  X
+  X,
+  Heart,
+  Image as ImageIcon,
+  Send
 } from "lucide-react";
 
 const fadeInUp = {
@@ -104,6 +107,31 @@ const steps = [
   }
 ];
 
+// Pricing data with billing cycles
+const pricingPlans = [
+  {
+    name: "Starter",
+    monthlyPrice: 50000,
+    description: "Perfect for beginner photographers",
+    features: ["10 Events per month", "Google Drive Sync", "WhatsApp Integration", "Custom Branding"],
+    popular: false
+  },
+  {
+    name: "Pro",
+    monthlyPrice: 99000,
+    description: "For professional photographers",
+    features: ["50 Events per month", "Everything in Starter", "Priority Support", "Analytics Dashboard"],
+    popular: true
+  },
+  {
+    name: "Business",
+    monthlyPrice: 199000,
+    description: "For studios and agencies",
+    features: ["Unlimited Events", "Everything in Pro", "Team Collaboration", "White Label"],
+    popular: false
+  }
+];
+
 function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -145,6 +173,91 @@ function MobileNav() {
   );
 }
 
+// Floating animated icons for hero
+function FloatingIcons() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Floating hearts */}
+      <motion.div
+        animate={{ y: [0, -30, 0], rotate: [0, 10, -10, 0] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-[20%] left-[10%]"
+      >
+        <div className="w-16 h-16 rounded-2xl bg-pink-500/20 backdrop-blur-sm border border-pink-500/30 flex items-center justify-center">
+          <Heart size={28} className="text-pink-400" />
+        </div>
+      </motion.div>
+
+      {/* Floating star */}
+      <motion.div
+        animate={{ y: [0, 20, 0], rotate: [0, -15, 15, 0] }}
+        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+        className="absolute top-[15%] right-[15%]"
+      >
+        <div className="w-14 h-14 rounded-2xl bg-amber-500/20 backdrop-blur-sm border border-amber-500/30 flex items-center justify-center">
+          <Star size={24} className="text-amber-400" />
+        </div>
+      </motion.div>
+
+      {/* Floating camera */}
+      <motion.div
+        animate={{ y: [0, -25, 0], x: [0, 10, 0] }}
+        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        className="absolute bottom-[30%] left-[5%]"
+      >
+        <div className="w-20 h-20 rounded-3xl bg-purple-500/20 backdrop-blur-sm border border-purple-500/30 flex items-center justify-center">
+          <Camera size={36} className="text-purple-400" />
+        </div>
+      </motion.div>
+
+      {/* Floating image icon */}
+      <motion.div
+        animate={{ y: [0, 15, 0], rotate: [0, 5, -5, 0] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+        className="absolute bottom-[25%] right-[10%]"
+      >
+        <div className="w-12 h-12 rounded-xl bg-blue-500/20 backdrop-blur-sm border border-blue-500/30 flex items-center justify-center">
+          <ImageIcon size={20} className="text-blue-400" />
+        </div>
+      </motion.div>
+
+      {/* Floating send */}
+      <motion.div
+        animate={{ y: [0, -20, 0], x: [0, -10, 0] }}
+        transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        className="absolute top-[40%] right-[8%]"
+      >
+        <div className="w-10 h-10 rounded-lg bg-green-500/20 backdrop-blur-sm border border-green-500/30 flex items-center justify-center">
+          <Send size={16} className="text-green-400" />
+        </div>
+      </motion.div>
+
+      {/* Animated particles */}
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          key={i}
+          animate={{
+            y: [0, -100],
+            opacity: [0, 1, 0],
+          }}
+          transition={{
+            duration: 3 + i,
+            repeat: Infinity,
+            delay: i * 0.8,
+          }}
+          className="absolute"
+          style={{
+            left: `${15 + i * 15}%`,
+            bottom: '10%',
+          }}
+        >
+          <div className="w-2 h-2 rounded-full bg-purple-400/50" />
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
 export default function LandingPage() {
   const targetRef = useRef(null);
   const { scrollYProgress } = useScroll({
@@ -155,6 +268,36 @@ export default function LandingPage() {
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.5], [1, 0.8]);
   const y = useTransform(scrollYProgress, [0, 0.5], [0, -100]);
+
+  // Pricing billing cycle state
+  const [billingCycle, setBillingCycle] = useState<'monthly' | '3month' | 'yearly'>('monthly');
+
+  const getPrice = (monthlyPrice: number) => {
+    switch (billingCycle) {
+      case '3month':
+        return Math.round(monthlyPrice * 3 * 0.9); // 10% discount
+      case 'yearly':
+        return Math.round(monthlyPrice * 12 * 0.75); // 25% discount
+      default:
+        return monthlyPrice;
+    }
+  };
+
+  const getPeriodLabel = () => {
+    switch (billingCycle) {
+      case '3month': return '/3 bulan';
+      case 'yearly': return '/tahun';
+      default: return '/bulan';
+    }
+  };
+
+  const getDiscount = () => {
+    switch (billingCycle) {
+      case '3month': return 'Hemat 10%';
+      case 'yearly': return 'Hemat 25%';
+      default: return null;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#030014] text-white selection:bg-purple-500/30">
@@ -206,7 +349,10 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section ref={targetRef} className="relative pt-44 pb-32 px-6">
-        <motion.div style={{ opacity, scale, y }} className="max-w-5xl mx-auto text-center">
+        {/* Floating Icons */}
+        <FloatingIcons />
+
+        <motion.div style={{ opacity, scale, y }} className="max-w-5xl mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -220,7 +366,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-6xl md:text-8xl font-black tracking-tight mb-8 leading-[0.9]"
+            className="text-5xl sm:text-6xl md:text-8xl font-black tracking-tight mb-8 leading-[0.9]"
           >
             Ditch the Emails.
             <br />
@@ -246,13 +392,13 @@ export default function LandingPage() {
             className="flex flex-col sm:flex-row items-center justify-center gap-5"
           >
             <Link href="/register">
-              <Button size="lg" className="h-16 px-10 text-lg rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-105 transition-all shadow-2xl shadow-purple-500/25 font-bold">
-                Level Up Your Workflow <ArrowRight className="ml-2" size={20} />
+              <Button size="lg" className="h-14 sm:h-16 px-8 sm:px-10 text-base sm:text-lg rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-105 transition-all shadow-2xl shadow-purple-500/25 font-bold">
+                Coba Gratis 7 Hari <ArrowRight className="ml-2" size={20} />
               </Button>
             </Link>
             <Link href="#how-it-works">
-              <Button variant="outline" size="lg" className="h-16 px-10 text-lg rounded-full border-white/10 hover:bg-white/5 font-semibold transition-all">
-                Learn the Process
+              <Button variant="outline" size="lg" className="h-14 sm:h-16 px-8 sm:px-10 text-base sm:text-lg rounded-full border-white/10 hover:bg-white/5 font-semibold transition-all">
+                Lihat Cara Kerja
               </Button>
             </Link>
           </motion.div>
@@ -270,12 +416,16 @@ export default function LandingPage() {
             <img
               src="https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&q=80&w=2070"
               alt="Dashboard Preview"
-              className="rounded-[30px] border border-white/5 shadow-2xl w-full h-[500px] object-cover opacity-80"
+              className="rounded-[30px] border border-white/5 shadow-2xl w-full h-[300px] sm:h-[500px] object-cover opacity-80"
             />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-white/10 backdrop-blur-3xl flex items-center justify-center border border-white/20">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white flex items-center justify-center animate-pulse">
-                <Sparkles size={32} className="text-purple-600" />
-              </div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 sm:w-32 sm:h-32 rounded-full bg-white/10 backdrop-blur-3xl flex items-center justify-center border border-white/20">
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-white flex items-center justify-center"
+              >
+                <Sparkles size={28} className="text-purple-600" />
+              </motion.div>
             </div>
           </div>
         </motion.div>
@@ -302,7 +452,7 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 whileHover={{ y: -10 }}
-                className="group p-10 rounded-[40px] glass border-white/5 hover:border-purple-500/40 transition-all duration-500"
+                className="group p-8 sm:p-10 rounded-[40px] glass border-white/5 hover:border-purple-500/40 transition-all duration-500"
               >
                 <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 shadow-lg`}>
                   <feature.icon size={32} className="text-white" />
@@ -318,7 +468,7 @@ export default function LandingPage() {
       {/* Process Section */}
       <section id="how-it-works" className="py-32 px-6 bg-white/5">
         <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-20 items-center">
+          <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-center">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -376,42 +526,50 @@ export default function LandingPage() {
       {/* Pricing Section */}
       <section id="pricing" className="py-32 px-6">
         <div className="max-w-7xl mx-auto">
-          <motion.div {...fadeInUp} className="text-center mb-20">
+          <motion.div {...fadeInUp} className="text-center mb-12">
             <h2 className="text-4xl md:text-6xl font-black mb-6">
               Simple, Honest <span className="text-gradient">Pricing.</span>
             </h2>
             <p className="text-gray-400 text-lg max-w-xl mx-auto">
-              Pick a plan that matches your workflow. All plans come with a 7-day free trial.
+              Pick a plan that matches your workflow. All plans include 7-day free trial.
             </p>
           </motion.div>
 
+          {/* Billing Toggle */}
+          <div className="flex justify-center mb-12">
+            <div className="inline-flex bg-white/5 rounded-full p-1.5 border border-white/10">
+              {[
+                { key: 'monthly', label: 'Bulanan' },
+                { key: '3month', label: '3 Bulan' },
+                { key: 'yearly', label: 'Tahunan' }
+              ].map((option) => (
+                <button
+                  key={option.key}
+                  onClick={() => setBillingCycle(option.key as any)}
+                  className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all ${billingCycle === option.key
+                      ? 'bg-white text-black'
+                      : 'text-gray-400 hover:text-white'
+                    }`}
+                >
+                  {option.label}
+                  {option.key === 'yearly' && <span className="ml-1 text-green-400 text-xs">-25%</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {getDiscount() && (
+            <motion.p
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center text-green-400 font-bold mb-8"
+            >
+              🎉 {getDiscount()}
+            </motion.p>
+          )}
+
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {[
-              {
-                name: "Starter",
-                price: "50.000",
-                period: "/bulan",
-                description: "Perfect for beginner photographers",
-                features: ["10 Events per month", "Google Drive Sync", "WhatsApp Integration", "Custom Branding"],
-                popular: false
-              },
-              {
-                name: "Pro",
-                price: "99.000",
-                period: "/bulan",
-                description: "For professional photographers",
-                features: ["50 Events per month", "Everything in Starter", "Priority Support", "Analytics Dashboard"],
-                popular: true
-              },
-              {
-                name: "Business",
-                price: "199.000",
-                period: "/bulan",
-                description: "For studios and agencies",
-                features: ["Unlimited Events", "Everything in Pro", "Team Collaboration", "White Label"],
-                popular: false
-              }
-            ].map((plan, index) => (
+            {pricingPlans.map((plan, index) => (
               <motion.div
                 key={plan.name}
                 initial={{ opacity: 0, y: 40 }}
@@ -430,8 +588,8 @@ export default function LandingPage() {
                 <p className="text-gray-400 text-sm mb-6">{plan.description}</p>
 
                 <div className="mb-8">
-                  <span className="text-4xl font-black">Rp {plan.price}</span>
-                  <span className="text-gray-400">{plan.period}</span>
+                  <span className="text-4xl font-black">Rp {getPrice(plan.monthlyPrice).toLocaleString('id-ID')}</span>
+                  <span className="text-gray-400">{getPeriodLabel()}</span>
                 </div>
 
                 <ul className="space-y-4 mb-8">
@@ -445,7 +603,7 @@ export default function LandingPage() {
 
                 <Link href="/register">
                   <Button className={`w-full h-14 rounded-full font-bold ${plan.popular ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'bg-white/10 hover:bg-white/20'}`}>
-                    Get Started
+                    Mulai Gratis
                   </Button>
                 </Link>
               </motion.div>
@@ -453,7 +611,7 @@ export default function LandingPage() {
           </div>
 
           <motion.p {...fadeInUp} className="text-center text-gray-500 mt-12">
-            Have a promo code? Enter it after registration to unlock your benefits!
+            Punya kode promo? Masukkan setelah registrasi untuk unlock benefit Anda!
           </motion.p>
         </div>
       </section>
@@ -467,24 +625,24 @@ export default function LandingPage() {
           viewport={{ once: true }}
           className="max-w-4xl mx-auto text-center"
         >
-          <h2 className="text-5xl md:text-7xl font-black mb-8">Ready to transform your client experience?</h2>
-          <p className="text-gray-400 text-xl mb-12 max-w-2xl mx-auto">
-            Join the elite circle of photographers who value their time and their client's joy.
-            Start today for free.
+          <h2 className="text-4xl sm:text-5xl md:text-7xl font-black mb-8">Ready to transform your client experience?</h2>
+          <p className="text-gray-400 text-lg sm:text-xl mb-12 max-w-2xl mx-auto">
+            Join photographers who value their time and their client's joy.
+            Coba gratis 7 hari - tidak perlu kartu kredit.
           </p>
           <Link href="/register">
-            <Button size="lg" className="h-20 px-12 text-xl rounded-full bg-white text-black hover:bg-gray-200 font-bold shadow-2xl transition-all hover:scale-105 active:scale-95">
-              Get Started for Free <ArrowRight className="ml-2" size={24} />
+            <Button size="lg" className="h-16 sm:h-20 px-10 sm:px-12 text-lg sm:text-xl rounded-full bg-white text-black hover:bg-gray-200 font-bold shadow-2xl transition-all hover:scale-105 active:scale-95">
+              Mulai Gratis Sekarang <ArrowRight className="ml-2" size={24} />
             </Button>
           </Link>
-          <p className="mt-8 text-gray-500 text-sm font-medium">No credit card required • 7-day free trial • Cancel anytime</p>
+          <p className="mt-8 text-gray-500 text-sm font-medium">Tanpa kartu kredit • 7 hari gratis • Bisa cancel kapan saja</p>
         </motion.div>
       </section>
 
       {/* Footer */}
       <footer className="pt-24 pb-12 px-6 border-t border-white/5 bg-black/40 relative">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-20 text-sm">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 sm:gap-12 mb-20 text-sm">
 
             <div className="col-span-2 lg:col-span-2 space-y-6">
               <Link href="/" className="flex items-center gap-3">
@@ -498,9 +656,9 @@ export default function LandingPage() {
                 deliver stunning, interactive galleries that clients love swiping through.
               </p>
               <div className="flex gap-4">
-                <Twitter size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" />
-                <Instagram size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" />
-                <Linkedin size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" />
+                <Link href="https://twitter.com" target="_blank"><Twitter size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" /></Link>
+                <Link href="https://instagram.com" target="_blank"><Instagram size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" /></Link>
+                <Link href="https://linkedin.com" target="_blank"><Linkedin size={20} className="text-gray-400 hover:text-white cursor-pointer transition-colors" /></Link>
               </div>
             </div>
 
@@ -517,10 +675,10 @@ export default function LandingPage() {
             <div className="space-y-6 text-gray-400 font-medium">
               <h4 className="text-white font-bold">Resources</h4>
               <ul className="space-y-4">
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
+                <li><Link href="/contact" className="hover:text-white transition-colors">Contact</Link></li>
+                <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
+                <li><Link href="/guide" className="hover:text-white transition-colors">Help Center</Link></li>
               </ul>
             </div>
 
@@ -541,10 +699,10 @@ export default function LandingPage() {
           </div>
 
           <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-600 font-medium">
-            <p>© 2024 VibeSelect Team. All rights reserved.</p>
+            <p>© 2026 VibeSelect Team. All rights reserved.</p>
             <div className="flex gap-8">
               <span>Designed for Creatives</span>
-              <span>v1.0.4-stable</span>
+              <span>v1.0.5-stable</span>
             </div>
           </div>
         </div>

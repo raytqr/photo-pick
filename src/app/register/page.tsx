@@ -1,13 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { Camera, Sparkles, ArrowRight, Zap, Mail, Eye, EyeOff } from "lucide-react";
+import { Camera, Sparkles, ArrowRight, Zap, Mail, Eye, EyeOff, ShieldAlert } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+// Generate a simple device fingerprint
+function getDeviceFingerprint(): string {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.fillText('VibeSelect', 2, 2);
+    }
+    const canvasHash = canvas.toDataURL().slice(-50);
+
+    const data = [
+        navigator.userAgent,
+        navigator.language,
+        screen.width + 'x' + screen.height,
+        new Date().getTimezoneOffset(),
+        canvasHash
+    ].join('|');
+
+    // Simple hash function
+    let hash = 0;
+    for (let i = 0; i < data.length; i++) {
+        const char = data.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    return 'DEV_' + Math.abs(hash).toString(36);
+}
 
 export default function RegisterPage() {
     const [email, setEmail] = useState("");
@@ -16,13 +45,31 @@ export default function RegisterPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showVerification, setShowVerification] = useState(false);
+    const [deviceBlocked, setDeviceBlocked] = useState(false);
     const router = useRouter();
     const supabase = createClient();
+
+    // Check if device already has an account
+    useEffect(() => {
+        const registeredDevices = localStorage.getItem('vs_registered_device');
+        if (registeredDevices) {
+            setDeviceBlocked(true);
+        }
+    }, []);
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
+
+        // Double check device limit
+        const registeredDevice = localStorage.getItem('vs_registered_device');
+        if (registeredDevice) {
+            setError("Perangkat ini sudah pernah mendaftar. Silakan login atau gunakan perangkat lain.");
+            setLoading(false);
+            setDeviceBlocked(true);
+            return;
+        }
 
         const { data, error } = await supabase.auth.signUp({
             email,
@@ -37,6 +84,10 @@ export default function RegisterPage() {
             setError("An account with this email already exists. Please login instead.");
             setLoading(false);
         } else {
+            // Mark device as registered
+            const fingerprint = getDeviceFingerprint();
+            localStorage.setItem('vs_registered_device', fingerprint);
+
             // Show verification modal
             setShowVerification(true);
             setLoading(false);
