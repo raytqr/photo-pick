@@ -1,142 +1,188 @@
+"use client";
+
 import { useState } from "react";
-import { useAppStore, Photo } from "@/store/useAppStore";
+import { useAppStore, Photo, PhotoStatus } from "@/store/useAppStore";
 import Image from "next/image";
-import { Check, HelpCircle, X, Maximize2, Filter } from "lucide-react";
+import { Check, HelpCircle, X, Maximize2, Filter, Clock, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImageViewer } from "./image-viewer";
 import { cn } from "@/lib/utils";
 
-type FilterType = 'all' | 'selected' | 'maybe' | 'rejected';
+type FilterType = 'all' | 'pending' | 'selected' | 'maybe' | 'rejected';
 
 export function GridView() {
-    const { selectedPhotos, maybePhotos, rejectedPhotos, movePhoto } = useAppStore();
+    const { sourceImages, selectedPhotos, maybePhotos, rejectedPhotos, movePhoto } = useAppStore();
     const [filter, setFilter] = useState<FilterType>('all');
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [previewPhoto, setPreviewPhoto] = useState<Photo | null>(null);
 
-    const getPhotosByStatus = (status: FilterType) => {
-        switch (status) {
+    // All photos combined
+    const allPhotos = [...sourceImages, ...selectedPhotos, ...maybePhotos, ...rejectedPhotos];
+
+    const getPhotoStatus = (photo: Photo): PhotoStatus | 'source' => {
+        if (sourceImages.some(p => p.id === photo.id)) return 'source';
+        if (selectedPhotos.some(p => p.id === photo.id)) return 'selected';
+        if (maybePhotos.some(p => p.id === photo.id)) return 'maybe';
+        if (rejectedPhotos.some(p => p.id === photo.id)) return 'rejected';
+        return 'source';
+    };
+
+    const getFilteredPhotos = () => {
+        switch (filter) {
+            case 'pending': return sourceImages;
             case 'selected': return selectedPhotos;
             case 'maybe': return maybePhotos;
             case 'rejected': return rejectedPhotos;
-            case 'all': return [...selectedPhotos, ...maybePhotos, ...rejectedPhotos]; // Simplification for MVP
+            case 'all':
+            default: return allPhotos;
         }
     };
 
-    const renderSection = (title: string, photos: Photo[], status: 'selected' | 'maybe' | 'rejected') => {
-        if (photos.length === 0) return null;
-        if (filter !== 'all' && filter !== status) return null;
+    const filteredPhotos = getFilteredPhotos();
 
-        return (
-            <div className="space-y-4 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <h3 className="text-xl font-bold flex items-center gap-2 dark:text-gray-100 border-b dark:border-gray-800 pb-2">
-                    {title} <span className="text-sm font-normal text-gray-500">({photos.length})</span>
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    {photos.map(photo => (
-                        <div key={photo.id} className="relative group aspect-[3/4] rounded-lg overflow-hidden border dark:border-gray-800 bg-gray-100 dark:bg-gray-900 shadow-sm hover:shadow-md transition">
-                            <Image
-                                src={photo.url}
-                                alt={photo.id}
-                                fill
-                                className="object-cover transition group-hover:scale-105"
-                                onClick={() => setPreviewUrl(photo.url)}
-                            />
+    const tabs = [
+        { id: 'all' as FilterType, label: 'All', icon: Filter, count: allPhotos.length },
+        { id: 'pending' as FilterType, label: 'Not Reviewed', icon: Clock, count: sourceImages.length },
+        { id: 'selected' as FilterType, label: 'Selected', icon: Check, count: selectedPhotos.length },
+        { id: 'maybe' as FilterType, label: 'Maybe', icon: HelpCircle, count: maybePhotos.length },
+        { id: 'rejected' as FilterType, label: 'Rejected', icon: X, count: rejectedPhotos.length },
+    ];
 
-                            {/* Expand Icon Hint */}
-                            <div className="absolute top-2 left-2 p-1.5 rounded-full bg-black/40 text-white opacity-0 group-hover:opacity-100 transition backdrop-blur-sm pointer-events-none">
-                                <Maximize2 size={12} />
-                            </div>
+    const handleMove = (photo: Photo, fromStatus: PhotoStatus | 'source', toStatus: PhotoStatus) => {
+        movePhoto(photo.id, fromStatus, toStatus);
+    };
 
-                            {/* Overlay actions */}
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2 pointer-events-none">
-                                <div className="pointer-events-auto flex flex-col w-full gap-2 px-2">
-                                    {status !== 'selected' && (
-                                        <Button size="sm" variant="default" className="w-full bg-green-600 hover:bg-green-700 h-8 text-xs" onClick={() => movePhoto(photo.id, status, 'selected')}>
-                                            <Check size={12} className="mr-1" /> Select
-                                        </Button>
-                                    )}
+    return (
+        <div className="px-3 pb-24 pt-4">
+            {/* Full Image Preview */}
+            <ImageViewer url={previewPhoto?.url || null} onClose={() => setPreviewPhoto(null)} />
 
-                                    {status !== 'maybe' && (
-                                        <Button size="sm" variant="secondary" className="w-full bg-yellow-500 hover:bg-yellow-600 text-white border-none h-8 text-xs" onClick={() => movePhoto(photo.id, status, 'maybe')}>
-                                            <HelpCircle size={12} className="mr-1" /> Maybe
-                                        </Button>
-                                    )}
-
-                                    {status !== 'rejected' && (
-                                        <Button size="sm" variant="destructive" className="w-full h-8 text-xs" onClick={() => movePhoto(photo.id, status, 'rejected')}>
-                                            <X size={12} className="mr-1" /> Reject
-                                        </Button>
-                                    )}
-
-                                    <Button size="sm" variant="outline" className="w-full h-8 text-xs border-white/30 text-white hover:bg-white/20" onClick={() => setPreviewUrl(photo.url)}>
-                                        <Maximize2 size={12} className="mr-1" /> View Full
-                                    </Button>
-                                </div>
-                            </div>
-
-                            {/* Status Indicator (Corner) */}
-                            <div className={`absolute top-2 right-2 p-1.5 rounded-full text-white shadow-sm z-10 ${status === 'selected' ? 'bg-green-500' :
-                                    status === 'maybe' ? 'bg-yellow-500' : 'bg-red-500'
-                                }`}>
-                                {status === 'selected' && <Check size={12} />}
-                                {status === 'maybe' && <HelpCircle size={12} />}
-                                {status === 'rejected' && <X size={12} />}
-                            </div>
-                        </div>
+            {/* Filter Tabs - Scrollable on mobile */}
+            <div className="overflow-x-auto -mx-3 px-3 mb-6">
+                <div className="flex gap-2 bg-gray-100 dark:bg-gray-900 p-1.5 rounded-xl w-max min-w-full">
+                    {tabs.map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setFilter(tab.id)}
+                            className={cn(
+                                "flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all text-xs font-medium whitespace-nowrap",
+                                filter === tab.id
+                                    ? "bg-white dark:bg-gray-800 text-black dark:text-white shadow-sm"
+                                    : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"
+                            )}
+                        >
+                            <tab.icon size={14} />
+                            <span className="hidden sm:inline">{tab.label}</span>
+                            <span className={cn(
+                                "px-1.5 py-0.5 rounded-full text-[10px]",
+                                filter === tab.id ? "bg-gray-100 dark:bg-gray-700" : "bg-gray-200/50 dark:bg-gray-800"
+                            )}>
+                                {tab.count}
+                            </span>
+                        </button>
                     ))}
                 </div>
             </div>
-        );
-    };
 
-    const tabs: { id: FilterType, label: string, icon: any }[] = [
-        { id: 'all', label: 'All Photos', icon: Filter },
-        { id: 'selected', label: 'Selected', icon: Check },
-        { id: 'maybe', label: 'Maybe', icon: HelpCircle },
-        { id: 'rejected', label: 'Rejected', icon: X },
-    ];
-
-    return (
-        <div className="container mx-auto px-4 pb-20 pt-6">
-            {/* Full Image Preview */}
-            <ImageViewer url={previewUrl} onClose={() => setPreviewUrl(null)} />
-
-            {/* Filter Tabs */}
-            <div className="flex flex-wrap gap-2 mb-8 bg-gray-100 dark:bg-gray-900 p-1 rounded-lg w-full md:w-fit font-medium">
-                {tabs.map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setFilter(tab.id)}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-md transition-all text-sm",
-                            filter === tab.id
-                                ? "bg-white dark:bg-gray-800 text-black dark:text-white shadow-sm"
-                                : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"
-                        )}
-                    >
-                        <tab.icon size={14} />
-                        {tab.label}
-                        {filter === tab.id && (
-                            <span className="ml-1 text-xs opacity-60">
-                                {tab.id === 'all'
-                                    ? (selectedPhotos.length + maybePhotos.length + rejectedPhotos.length)
-                                    : getPhotosByStatus(tab.id).length
-                                }
-                            </span>
-                        )}
-                    </button>
-                ))}
-            </div>
-
-            {selectedPhotos.length === 0 && maybePhotos.length === 0 && rejectedPhotos.length === 0 && (
-                <div className="text-center py-20 text-gray-500">
-                    No photos categorized yet. Go back to Swipe Mode!
+            {/* Empty State */}
+            {filteredPhotos.length === 0 && (
+                <div className="text-center py-16 text-gray-500">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                        {filter === 'pending' ? <Clock size={24} /> : <CheckCircle2 size={24} />}
+                    </div>
+                    <p className="font-medium">
+                        {filter === 'pending'
+                            ? "All photos reviewed!"
+                            : filter === 'all'
+                                ? "No photos available"
+                                : `No ${filter} photos yet`
+                        }
+                    </p>
                 </div>
             )}
 
-            {renderSection("Selected (Keep)", selectedPhotos, 'selected')}
-            {renderSection("Maybe (Undecided)", maybePhotos, 'maybe')}
-            {renderSection("Rejected (Discard)", rejectedPhotos, 'rejected')}
+            {/* Photo Grid - 3 columns on mobile, more on desktop */}
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
+                {filteredPhotos.map(photo => {
+                    const status = getPhotoStatus(photo);
+                    const isSource = status === 'source';
+
+                    return (
+                        <div
+                            key={photo.id}
+                            className="relative group aspect-[3/4] rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-900"
+                        >
+                            <Image
+                                src={photo.url}
+                                alt={photo.name || photo.id}
+                                fill
+                                className="object-cover"
+                                onClick={() => setPreviewPhoto(photo)}
+                                sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 20vw"
+                            />
+
+                            {/* Status Badge */}
+                            <div className={cn(
+                                "absolute top-1.5 right-1.5 p-1 rounded-full text-white z-10 shadow-lg",
+                                isSource ? "bg-gray-500" :
+                                    status === 'selected' ? "bg-green-500" :
+                                        status === 'maybe' ? "bg-yellow-500" : "bg-red-500"
+                            )}>
+                                {isSource && <Clock size={10} />}
+                                {status === 'selected' && <Check size={10} />}
+                                {status === 'maybe' && <HelpCircle size={10} />}
+                                {status === 'rejected' && <X size={10} />}
+                            </div>
+
+                            {/* Filename - Mobile visible */}
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 pt-6">
+                                <p className="text-[10px] text-white/80 truncate">
+                                    {photo.name || photo.id.slice(0, 8)}
+                                </p>
+                            </div>
+
+                            {/* Hover Actions */}
+                            <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-2">
+                                {status !== 'selected' && (
+                                    <Button
+                                        size="sm"
+                                        className="w-full h-7 text-[10px] bg-green-600 hover:bg-green-700"
+                                        onClick={() => handleMove(photo, status, 'selected')}
+                                    >
+                                        <Check size={10} className="mr-1" /> Select
+                                    </Button>
+                                )}
+                                {status !== 'maybe' && (
+                                    <Button
+                                        size="sm"
+                                        className="w-full h-7 text-[10px] bg-yellow-500 hover:bg-yellow-600"
+                                        onClick={() => handleMove(photo, status, 'maybe')}
+                                    >
+                                        <HelpCircle size={10} className="mr-1" /> Maybe
+                                    </Button>
+                                )}
+                                {status !== 'rejected' && (
+                                    <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        className="w-full h-7 text-[10px]"
+                                        onClick={() => handleMove(photo, status, 'rejected')}
+                                    >
+                                        <X size={10} className="mr-1" /> Reject
+                                    </Button>
+                                )}
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="w-full h-7 text-[10px] border-white/30 text-white hover:bg-white/20"
+                                    onClick={() => setPreviewPhoto(photo)}
+                                >
+                                    <Maximize2 size={10} className="mr-1" /> View
+                                </Button>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
         </div>
     );
 }
