@@ -3,15 +3,19 @@
 import { useState } from "react";
 import { useAppStore, Photo, PhotoStatus } from "@/store/useAppStore";
 import Image from "next/image";
-import { Check, HelpCircle, X, Maximize2, Filter, Clock, CheckCircle2, Star } from "lucide-react";
+import { Check, HelpCircle, X, Maximize2, Filter, Clock, CheckCircle2, Star, RotateCcw, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImageViewer } from "./image-viewer";
 import { cn } from "@/lib/utils";
 
 type FilterType = 'all' | 'pending' | 'selected' | 'superLiked' | 'maybe' | 'rejected';
 
-export function GridView() {
-    const { sourceImages, selectedPhotos, maybePhotos, rejectedPhotos, superLikedPhotos, movePhoto } = useAppStore();
+interface GridViewProps {
+    setViewMode: (mode: 'swipe' | 'grid') => void;
+}
+
+export function GridView({ setViewMode }: GridViewProps) {
+    const { sourceImages, selectedPhotos, maybePhotos, rejectedPhotos, superLikedPhotos, movePhoto, restartCategory } = useAppStore();
     const [filter, setFilter] = useState<FilterType>('all');
     const [previewPhoto, setPreviewPhoto] = useState<Photo | null>(null);
 
@@ -60,7 +64,7 @@ export function GridView() {
             <ImageViewer url={previewPhoto?.url || null} onClose={() => setPreviewPhoto(null)} />
 
             {/* Filter Tabs - Scrollable on mobile */}
-            <div className="overflow-x-auto -mx-3 px-3 mb-6">
+            <div className="overflow-x-auto -mx-3 px-3 mb-4">
                 <div className="flex gap-2 bg-gray-100 dark:bg-gray-900 p-1.5 rounded-xl w-max min-w-full">
                     {tabs.map(tab => (
                         <button
@@ -89,6 +93,42 @@ export function GridView() {
                     ))}
                 </div>
             </div>
+
+            {/* Swipe Action Bar */}
+            {filter !== 'all' && filteredPhotos.length > 0 && (
+                <div className="mb-6 animate-in slide-in-from-top-2 fade-in">
+                    <Button
+                        onClick={() => {
+                            if (filter === 'pending') {
+                                // Just switch to swipe view
+                                setViewMode('swipe');
+                            } else {
+                                // Restart this category
+                                restartCategory(filter as PhotoStatus);
+                                setViewMode('swipe');
+                            }
+                        }}
+                        className={cn(
+                            "w-full rounded-xl h-12 text-sm font-bold shadow-lg transition-all hover:scale-[1.02]",
+                            filter === 'pending' ? "bg-gray-900 dark:bg-white text-white dark:text-black hover:bg-gray-800" :
+                                filter === 'selected' ? "bg-green-500 hover:bg-green-600 text-white" :
+                                    filter === 'superLiked' ? "bg-blue-500 hover:bg-blue-600 text-white" :
+                                        filter === 'maybe' ? "bg-yellow-500 hover:bg-yellow-600 text-white" :
+                                            "bg-red-500 hover:bg-red-600 text-white"
+                        )}
+                    >
+                        {filter === 'pending' ? (
+                            <>
+                                <Play size={16} className="mr-2" /> Resume Swiping ({filteredPhotos.length})
+                            </>
+                        ) : (
+                            <>
+                                <RotateCcw size={16} className="mr-2" /> Re-Swipe {filter === 'superLiked' ? 'Super Likes' : filter.charAt(0).toUpperCase() + filter.slice(1)} ({filteredPhotos.length})
+                            </>
+                        )}
+                    </Button>
+                </div>
+            )}
 
             {/* Empty State */}
             {filteredPhotos.length === 0 && (

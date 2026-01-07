@@ -93,7 +93,7 @@ export default async function DashboardPage() {
                 </div>
             </header>
 
-            <main className="max-w-7xl mx-auto px-6 py-6 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <main className="max-w-7xl mx-auto px-4 py-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
                 {/* Status Banners */}
                 <div className="space-y-4">
@@ -244,35 +244,37 @@ export default async function DashboardPage() {
                                     {/* Background decoration */}
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-600/10 to-transparent blur-3xl group-hover:opacity-100 opacity-0 transition-opacity duration-500" />
 
-                                    <div className="flex justify-between items-start mb-10">
-                                        <div className="w-16 h-16 rounded-[24px] bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center font-black text-2xl shadow-xl shadow-purple-500/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                                    <div className="flex justify-between items-start mb-6">
+                                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center font-black text-xl shadow-xl shadow-purple-500/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
                                             {event.name.substring(0, 1).toUpperCase()}
                                         </div>
-                                        <div className="px-4 py-1.5 rounded-full bg-green-500/10 text-[10px] text-green-400 font-black tracking-widest uppercase border border-green-500/20 group-hover:bg-green-500 group-hover:text-black transition-colors duration-500">
+                                        <div className="px-3 py-1 rounded-full bg-green-500/10 text-[10px] text-green-400 font-bold tracking-wider uppercase border border-green-500/20 group-hover:bg-green-500 group-hover:text-black transition-colors duration-500">
                                             Active
                                         </div>
                                     </div>
 
-                                    <h3 className="text-2xl font-black mb-2 text-white group-hover:text-purple-400 transition-colors duration-500 truncate pr-4">
-                                        {event.name}
-                                    </h3>
+                                    <div className="flex-1">
+                                        <h3 className="text-xl font-black mb-2 text-white group-hover:text-purple-400 transition-colors duration-500 truncate pr-4">
+                                            {event.name}
+                                        </h3>
 
-                                    <div className="flex items-center gap-4 text-xs font-bold text-gray-500">
-                                        <span className="flex items-center gap-1.5">
-                                            <Calendar size={14} className="opacity-50" />
-                                            {new Date(event.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                                        </span>
-                                        <span className="w-1 h-1 rounded-full bg-white/10" />
-                                        <span className="flex items-center gap-1.5">
-                                            <ImageIcon size={14} className="opacity-50" />
-                                            {event.photos[0]?.count || 0} Photos
-                                        </span>
+                                        <div className="flex items-center gap-4 text-xs font-bold text-gray-500">
+                                            <span className="flex items-center gap-1.5">
+                                                <Calendar size={14} className="opacity-50" />
+                                                {new Date(event.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </span>
+                                            <span className="w-1 h-1 rounded-full bg-white/10" />
+                                            <span className="flex items-center gap-1.5">
+                                                <ImageIcon size={14} className="opacity-50" />
+                                                {event.photos[0]?.count || 0} Photos
+                                            </span>
+                                        </div>
                                     </div>
 
-                                    <div className="mt-12 pt-8 border-t border-white/5 flex items-center justify-between">
+                                    <div className="mt-6 pt-6 border-t border-white/5 flex items-center justify-between">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 group-hover:text-white transition-colors">Manage Gallery</p>
-                                        <div className="w-10 h-10 rounded-full glass border-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all">
-                                            <ChevronRight size={18} />
+                                        <div className="w-8 h-8 rounded-full glass border-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all">
+                                            <ChevronRight size={16} />
                                         </div>
                                     </div>
                                 </div>

@@ -88,16 +88,21 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
 
     return (
         <>
-            <div className="fixed top-0 left-0 right-0 h-16 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl z-50 px-4 flex items-center justify-between border-b dark:border-gray-800">
+            <div className="fixed top-0 left-0 right-0 h-16 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl z-[60] px-4 flex items-center justify-between border-b dark:border-gray-800">
                 {/* Left: Branding */}
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden relative border dark:border-gray-700 shrink-0">
-                        {logoUrl ? (
-                            <Image src={logoUrl} alt="Logo" fill className="object-cover" />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center text-xs">📸</div>
-                        )}
-                    </div>
+                    <button
+                        onClick={() => setViewMode('grid')}
+                        className="flex items-center gap-3 transition-opacity hover:opacity-80"
+                    >
+                        <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden relative border dark:border-gray-700 shrink-0">
+                            {logoUrl ? (
+                                <Image src={logoUrl} alt="Logo" fill className="object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-xs">📸</div>
+                            )}
+                        </div>
+                    </button>
                     <div className="flex flex-col">
                         <span className="font-bold text-sm truncate max-w-[100px] sm:max-w-[150px] dark:text-gray-100 leading-tight">
                             {eventName}
@@ -187,10 +192,10 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
             {isMobileMenuOpen && (
                 <>
                     <div
-                        className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm md:hidden"
+                        className="fixed inset-0 z-[65] bg-black/20 backdrop-blur-sm md:hidden"
                         onClick={() => setIsMobileMenuOpen(false)}
                     />
-                    <div className="fixed top-20 right-4 z-50 w-56 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-2 border border-white/20 dark:border-gray-800 md:hidden animate-in slide-in-from-top-4 duration-200">
+                    <div className="fixed top-20 right-4 z-[70] w-56 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-2 border border-white/20 dark:border-gray-800 md:hidden animate-in slide-in-from-top-4 duration-200">
                         <div className="flex flex-col gap-1">
                             {count > 0 && (
                                 <Button

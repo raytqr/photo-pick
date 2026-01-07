@@ -10,8 +10,9 @@ import { PhotographerModal } from "@/components/photographer-modal";
 import { OnboardingModal } from "@/components/onboarding-modal";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, AlertTriangle, Send, MessageCircle, Grid3X3, Star } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Send, MessageCircle, Grid3X3, Star, RotateCcw } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export function ClientSelectionApp() {
     const [viewMode, setViewMode] = useState<'swipe' | 'grid'>('swipe');
@@ -22,6 +23,15 @@ export function ClientSelectionApp() {
 
     const visibleCards = sourceImages.slice(0, 3);
     const isDeckEmpty = sourceImages.length === 0;
+
+    // ... (rest of component) ...
+
+    {/* Grid View */ }
+    {
+        viewMode === 'grid' && (
+            <GridView setViewMode={setViewMode} />
+        )
+    }
 
     const handleSwipe = (direction: 'left' | 'right' | 'up' | 'down') => {
         if (visibleCards.length === 0) return;
@@ -82,9 +92,22 @@ export function ClientSelectionApp() {
                 {viewMode === 'swipe' && !isDeckEmpty && (
                     <div className="relative w-full h-[calc(100vh-200px)] flex flex-col items-center justify-center px-4">
 
+                        {/* Context Title (Reviewing specific category) */}
+                        {store.restartingFrom && (
+                            <div className="absolute top-[-30px] z-20 animate-in fade-in slide-in-from-bottom-2">
+                                <div className="px-4 py-1.5 rounded-full bg-purple-500 text-white text-sm font-bold shadow-lg flex items-center gap-2">
+                                    <RotateCcw size={14} />
+                                    Swiping from {store.restartingFrom === 'superLiked' ? 'Super Like' : store.restartingFrom.charAt(0).toUpperCase() + store.restartingFrom.slice(1)}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Progress Indicator */}
-                        <div className="absolute top-4 left-1/2 -translate-x-1/2 text-center">
-                            <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">
+                        <div className={cn(
+                            "absolute top-2 left-1/2 -translate-x-1/2 text-center z-10 pointer-events-none",
+                            store.restartingFrom && "top-8" // Move down if title is present
+                        )}>
+                            <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider font-bold bg-white/50 dark:bg-black/50 px-2 py-1 rounded-full backdrop-blur-sm">
                                 {remainingCards} photos remaining
                             </p>
                         </div>
@@ -112,7 +135,7 @@ export function ClientSelectionApp() {
                 {/* Grid View */}
                 {viewMode === 'grid' && (
                     <div className="overflow-y-auto h-[calc(100vh-140px)] pb-20">
-                        <GridView />
+                        <GridView setViewMode={setViewMode} />
                     </div>
                 )}
 

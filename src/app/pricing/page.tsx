@@ -142,7 +142,7 @@ export default function PricingPage() {
             </div>
 
             {/* Hero */}
-            <div className="text-center py-12 px-6">
+            <div className="text-center pt-32 pb-12 px-6">
                 <motion.h1
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -175,8 +175,8 @@ export default function PricingPage() {
                             key={option.value}
                             onClick={() => setBillingCycle(option.value as BillingCycle)}
                             className={`px-6 py-3 rounded-full font-bold text-sm transition-all flex items-center gap-2 ${billingCycle === option.value
-                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
-                                    : 'text-gray-400 hover:text-white'
+                                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
+                                : 'text-gray-400 hover:text-white'
                                 }`}
                         >
                             {option.label}
