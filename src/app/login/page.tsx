@@ -236,7 +236,7 @@ export default function LoginPage() {
 
                 {/* Footer text */}
                 <div className="mt-8 sm:mt-12 text-center flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-600">
-                    <Sparkles size={12} /> Powered by VibeSelect Studio
+                    <Sparkles size={12} /> Powered by SatSetPic Studio
                 </div>
             </motion.div>
         </div>

@@ -108,7 +108,7 @@ export default function CreateEventPage() {
 
                         <h2 className="text-3xl font-black mb-4">Subscription Required</h2>
                         <p className="text-gray-400 mb-8">
-                            You need an active subscription to create new events. Unlock unlimited creativity with a VibeSelect plan.
+                            You need an active subscription to create new events. Unlock unlimited creativity with a SatSetPic plan.
                         </p>
 
                         <Link href="/pricing">
