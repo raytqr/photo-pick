@@ -105,7 +105,7 @@ const pricingPlans = [
     monthly: { price: 40000 },
     originalMonthly: 50000,
     description: "Perfect for beginners",
-    features: ["10 Events/month", "300 photos/event", "Google Drive Sync", "WhatsApp Integration"],
+    features: ["10 Events/month", "300 photos/event", "Google Drive Sync", "Email Support"],
     popular: false
   },
   {
@@ -116,7 +116,7 @@ const pricingPlans = [
     monthly: { price: 70000 },
     originalMonthly: 89000,
     description: "For growing photographers",
-    features: ["20 Events/month", "500 photos/event", "Custom Branding", "Priority Support"],
+    features: ["20 Events/month", "500 photos/event", "Everything in Starter", "Email Support"],
     popular: false
   },
   {
@@ -127,7 +127,7 @@ const pricingPlans = [
     monthly: { price: 150000 },
     originalMonthly: 199000,
     description: "Most popular choice",
-    features: ["50 Events/month", "Unlimited photos", "Advanced Analytics", "Remove Watermark"],
+    features: ["50 Events/month", "Unlimited photos", "Everything in Basic", "WhatsApp Support"],
     popular: true
   },
   {
@@ -138,7 +138,7 @@ const pricingPlans = [
     monthly: { price: 300000 },
     originalMonthly: 399000,
     description: "For studios & agencies",
-    features: ["Unlimited Events", "Team Management", "API Access", "Portfolio Website"],
+    features: ["Unlimited Events", "Everything in Pro", "WhatsApp Support", "Portfolio Website"],
     popular: false
   }
 ];
