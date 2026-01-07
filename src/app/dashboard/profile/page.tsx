@@ -3,21 +3,27 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Input, Textarea } from "@/components/ui/input";
-import { ArrowLeft, Camera, Phone, FileText } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Camera, Phone, FileText, User, MessageSquare, Sparkles, Info, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function ProfilePage() {
     const router = useRouter();
     const supabase = createClient();
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
+    const [saved, setSaved] = useState(false);
+    const [showGuide, setShowGuide] = useState(false);
 
     // Profile State
+    const [photographerName, setPhotographerName] = useState("");
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const [bio, setBio] = useState("");
     const [whatsappNumber, setWhatsappNumber] = useState("");
+    const [waHeader, setWaHeader] = useState("");
+    const [waFooter, setWaFooter] = useState("");
     const [logoFile, setLogoFile] = useState<File | null>(null);
 
     useEffect(() => {
@@ -35,9 +41,19 @@ export default function ProfilePage() {
                 .single();
 
             if (data) {
+                setPhotographerName(data.photographer_name || "");
                 setLogoUrl(data.logo_url);
                 setBio(data.bio || "");
                 setWhatsappNumber(data.whatsapp_number || "");
+                setWaHeader(data.wa_header || "Halo! Berikut pilihan foto dari client:");
+                setWaFooter(data.wa_footer || "Terima kasih telah memilih kami! 📸");
+
+                // Show guide if profile is incomplete
+                if (!data.photographer_name || !data.whatsapp_number) {
+                    setShowGuide(true);
+                }
+            } else {
+                setShowGuide(true);
             }
             setFetching(false);
         };
@@ -70,14 +86,18 @@ export default function ProfilePage() {
             const { error } = await supabase.from('profiles').upsert({
                 id: user.id,
                 email: user.email,
+                photographer_name: photographerName,
                 logo_url: finalLogoUrl,
                 bio,
                 whatsapp_number: whatsappNumber,
+                wa_header: waHeader,
+                wa_footer: waFooter,
             });
 
             if (error) throw error;
 
-            alert("Profile saved!");
+            setSaved(true);
+            setTimeout(() => setSaved(false), 3000);
             router.refresh();
 
         } catch (err: any) {
@@ -87,95 +107,215 @@ export default function ProfilePage() {
         }
     };
 
-    if (fetching) return <div className="p-8 text-center text-gray-400">Loading...</div>;
+    if (fetching) return (
+        <div className="min-h-screen bg-[#030014] flex items-center justify-center">
+            <div className="text-gray-400">Loading...</div>
+        </div>
+    );
 
     return (
-        <div className="p-8 max-w-2xl mx-auto space-y-8 animate-in fade-in duration-500">
+        <div className="min-h-screen bg-[#030014] text-white">
+            <div className="p-6 md:p-8 max-w-3xl mx-auto space-y-8 animate-in fade-in duration-500">
 
-            <Link href="/dashboard" className="flex items-center text-sm font-medium text-gray-500 hover:text-black dark:hover:text-white transition">
-                <ArrowLeft size={16} className="mr-1" /> Back to Overview
-            </Link>
+                <Link href="/dashboard" className="flex items-center text-sm font-medium text-gray-500 hover:text-white transition">
+                    <ArrowLeft size={16} className="mr-1" /> Back to Overview
+                </Link>
 
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Profile & Branding</h1>
-                <p className="text-gray-500 mt-1">Customize your brand identity shown to clients.</p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-8">
-
-                {/* Logo Section */}
-                <div className="bg-white dark:bg-gray-900 border dark:border-gray-800 rounded-2xl p-6 space-y-4">
-                    <h2 className="font-semibold flex items-center gap-2 border-b dark:border-gray-800 pb-3">
-                        <Camera size={18} /> Brand Logo
-                    </h2>
-
-                    <div className="flex items-center gap-6">
-                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center overflow-hidden border-4 border-white dark:border-gray-900 shadow-lg">
-                            {logoUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
-                            ) : (
-                                <Camera className="text-gray-400" size={32} />
-                            )}
-                        </div>
-
-                        <div className="space-y-2">
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => {
-                                    if (e.target.files?.[0]) {
-                                        setLogoFile(e.target.files[0]);
-                                        setLogoUrl(URL.createObjectURL(e.target.files[0]));
-                                    }
-                                }}
-                                className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/30 dark:file:text-blue-400"
-                            />
-                            <p className="text-xs text-gray-400">Recommended: Square image, 512x512px</p>
-                        </div>
-                    </div>
+                <div>
+                    <h1 className="text-3xl font-black tracking-tight">Profile & Branding</h1>
+                    <p className="text-gray-500 mt-1">Customize your brand identity shown to clients.</p>
                 </div>
 
-                {/* About Section */}
-                <div className="bg-white dark:bg-gray-900 border dark:border-gray-800 rounded-2xl p-6 space-y-4">
-                    <h2 className="font-semibold flex items-center gap-2 border-b dark:border-gray-800 pb-3">
-                        <FileText size={18} /> About You
-                    </h2>
+                {/* Onboarding Guide */}
+                <AnimatePresence>
+                    {showGuide && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="glass rounded-[32px] p-6 border-purple-500/30 overflow-hidden"
+                        >
+                            <div className="flex items-start gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-600 flex items-center justify-center shrink-0">
+                                    <Sparkles size={24} className="text-white" />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="text-xl font-black mb-2">Welcome! Let's set up your profile 👋</h3>
+                                    <p className="text-gray-400 text-sm mb-4">
+                                        Complete your profile so clients see your branding when selecting photos. Here's what you'll need:
+                                    </p>
+                                    <ul className="space-y-3 text-sm">
+                                        <li className="flex items-center gap-3">
+                                            <CheckCircle size={16} className="text-green-500 shrink-0" />
+                                            <span><strong>Studio Name</strong> - Your business or personal brand name</span>
+                                        </li>
+                                        <li className="flex items-center gap-3">
+                                            <CheckCircle size={16} className="text-green-500 shrink-0" />
+                                            <span><strong>Logo</strong> - Square image (512x512px recommended)</span>
+                                        </li>
+                                        <li className="flex items-center gap-3">
+                                            <CheckCircle size={16} className="text-green-500 shrink-0" />
+                                            <span><strong>WhatsApp</strong> - For receiving client selections</span>
+                                        </li>
+                                    </ul>
+                                    <button
+                                        onClick={() => setShowGuide(false)}
+                                        className="mt-4 text-sm text-purple-400 hover:text-white transition-colors"
+                                    >
+                                        Got it, dismiss guide
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Bio / Tagline</label>
-                        <Textarea
+                {/* Success Banner */}
+                <AnimatePresence>
+                    {saved && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            className="glass rounded-2xl p-4 border-green-500/30 bg-green-500/10 flex items-center gap-3"
+                        >
+                            <CheckCircle className="text-green-500" size={20} />
+                            <span className="text-green-400 font-bold">Profile saved successfully!</span>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+
+                    {/* Studio Name */}
+                    <div className="glass rounded-[32px] p-6 space-y-4 border-white/5">
+                        <h2 className="font-bold flex items-center gap-2 text-lg">
+                            <User size={18} className="text-purple-400" /> Studio Name
+                        </h2>
+                        <Input
+                            placeholder="e.g. Studio Fotografi Jakarta"
+                            value={photographerName}
+                            onChange={(e) => setPhotographerName(e.target.value)}
+                            className="h-14 bg-white/5 border-white/10 rounded-2xl px-6 text-white placeholder:text-gray-600"
+                        />
+                        <p className="text-xs text-gray-500">This name will appear in the sidebar and on client galleries.</p>
+                    </div>
+
+                    {/* Logo Section */}
+                    <div className="glass rounded-[32px] p-6 space-y-4 border-white/5">
+                        <h2 className="font-bold flex items-center gap-2 text-lg">
+                            <Camera size={18} className="text-pink-400" /> Brand Logo
+                        </h2>
+
+                        <div className="flex items-center gap-6">
+                            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 flex items-center justify-center overflow-hidden border-2 border-white/10">
+                                {logoUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                                ) : (
+                                    <Camera className="text-gray-500" size={32} />
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        if (e.target.files?.[0]) {
+                                            setLogoFile(e.target.files[0]);
+                                            setLogoUrl(URL.createObjectURL(e.target.files[0]));
+                                        }
+                                    }}
+                                    className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-purple-500/20 file:text-purple-400 hover:file:bg-purple-500/30 transition-colors"
+                                />
+                                <p className="text-xs text-gray-500">Recommended: Square image, 512x512px</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* About Section */}
+                    <div className="glass rounded-[32px] p-6 space-y-4 border-white/5">
+                        <h2 className="font-bold flex items-center gap-2 text-lg">
+                            <FileText size={18} className="text-blue-400" /> About You
+                        </h2>
+                        <textarea
                             placeholder="e.g. Professional wedding photographer based in Jakarta..."
                             value={bio}
                             onChange={(e) => setBio(e.target.value)}
                             rows={3}
-                            className="resize-none"
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder:text-gray-600 resize-none focus:outline-none focus:border-purple-500/50"
                         />
                     </div>
-                </div>
 
-                {/* Contact Section */}
-                <div className="bg-white dark:bg-gray-900 border dark:border-gray-800 rounded-2xl p-6 space-y-4">
-                    <h2 className="font-semibold flex items-center gap-2 border-b dark:border-gray-800 pb-3">
-                        <Phone size={18} /> Contact
-                    </h2>
-
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">WhatsApp Number</label>
+                    {/* Contact Section */}
+                    <div className="glass rounded-[32px] p-6 space-y-4 border-white/5">
+                        <h2 className="font-bold flex items-center gap-2 text-lg">
+                            <Phone size={18} className="text-green-400" /> WhatsApp
+                        </h2>
                         <Input
                             placeholder="+62812345678"
                             value={whatsappNumber}
                             onChange={(e) => setWhatsappNumber(e.target.value)}
+                            className="h-14 bg-white/5 border-white/10 rounded-2xl px-6 text-white placeholder:text-gray-600"
                         />
-                        <p className="text-xs text-gray-400">Clients will send their photo selections to this number.</p>
+                        <p className="text-xs text-gray-500">Clients will send their photo selections to this number.</p>
                     </div>
-                </div>
 
-                <Button type="submit" disabled={loading} size="lg" className="w-full h-12 rounded-full text-base">
-                    {loading ? "Saving..." : "Save Profile"}
-                </Button>
+                    {/* WA Message Templates */}
+                    <div className="glass rounded-[32px] p-6 space-y-6 border-white/5">
+                        <h2 className="font-bold flex items-center gap-2 text-lg">
+                            <MessageSquare size={18} className="text-amber-400" /> WhatsApp Message Template
+                        </h2>
+                        <p className="text-xs text-gray-500">
+                            Customize the message that clients send when sharing their photo selections.
+                        </p>
 
-            </form>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-400">Header Message</label>
+                            <Input
+                                placeholder="e.g. Halo! Berikut pilihan foto dari client:"
+                                value={waHeader}
+                                onChange={(e) => setWaHeader(e.target.value)}
+                                className="h-14 bg-white/5 border-white/10 rounded-2xl px-6 text-white placeholder:text-gray-600"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-400">Footer Message</label>
+                            <Input
+                                placeholder="e.g. Terima kasih telah memilih kami! 📸"
+                                value={waFooter}
+                                onChange={(e) => setWaFooter(e.target.value)}
+                                className="h-14 bg-white/5 border-white/10 rounded-2xl px-6 text-white placeholder:text-gray-600"
+                            />
+                        </div>
+
+                        {/* Preview */}
+                        <div className="mt-4 p-4 bg-green-500/10 border border-green-500/20 rounded-2xl">
+                            <p className="text-[10px] uppercase tracking-widest text-green-400 font-bold mb-2">Preview WA Message</p>
+                            <div className="text-sm text-gray-300 whitespace-pre-line">
+                                {waHeader || "Halo! Berikut pilihan foto dari client:"}{"\n"}
+                                {"\n"}
+                                ✅ Selected: IMG_001.jpg, IMG_002.jpg{"\n"}
+                                ⭐ Super Like: IMG_003.jpg{"\n"}
+                                🤔 Maybe: IMG_004.jpg{"\n"}
+                                {"\n"}
+                                {waFooter || "Terima kasih telah memilih kami! 📸"}
+                            </div>
+                        </div>
+                    </div>
+
+                    <Button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full h-14 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-lg hover:scale-105 transition-all"
+                    >
+                        {loading ? "Saving..." : "Save Profile"}
+                    </Button>
+
+                </form>
+            </div>
         </div>
     );
 }

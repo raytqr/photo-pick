@@ -10,66 +10,84 @@ import { Check, ArrowLeft, Gift, Sparkles, Crown, Zap } from "lucide-react";
 import { redeemCode } from "@/actions/subscription";
 import { useRouter } from "next/navigation";
 
-const pricingPlans = [
-    {
-        name: "Starter",
-        price: "50.000",
-        period: "/bulan",
-        description: "Perfect for beginner photographers",
-        icon: Sparkles,
-        color: "from-blue-500 to-cyan-500",
-        features: [
-            "10 Events per month",
-            "Google Drive Sync",
-            "WhatsApp Integration",
-            "Custom Branding",
-            "Email Support"
-        ],
-        cta: "Get Started",
-        popular: false
-    },
-    {
-        name: "Pro",
-        price: "99.000",
-        period: "/bulan",
-        description: "For professional photographers",
-        icon: Crown,
-        color: "from-purple-500 to-pink-500",
-        features: [
-            "50 Events per month",
-            "Everything in Starter",
-            "Priority Support",
-            "Analytics Dashboard",
-            "Custom Domain"
-        ],
-        cta: "Get Started",
-        popular: true
-    },
-    {
-        name: "Business",
-        price: "199.000",
-        period: "/bulan",
-        description: "For studios and agencies",
-        icon: Zap,
-        color: "from-orange-500 to-red-500",
-        features: [
-            "Unlimited Events",
-            "Everything in Pro",
-            "Team Collaboration",
-            "White Label",
-            "Dedicated Support"
-        ],
-        cta: "Contact Sales",
-        popular: false
-    }
-];
+type BillingCycle = 'monthly' | '3-month' | 'yearly';
+
+const getPricingPlans = (cycle: BillingCycle) => {
+    const multiplier = cycle === 'monthly' ? 1 : cycle === '3-month' ? 3 : 12;
+    const discount = cycle === 'monthly' ? 0 : cycle === '3-month' ? 0.1 : 0.25; // 10% for 3-month, 25% for yearly
+
+    const formatPrice = (basePrice: number) => {
+        const total = basePrice * multiplier * (1 - discount);
+        return new Intl.NumberFormat('id-ID').format(total);
+    };
+
+    return [
+        {
+            name: "Starter",
+            basePrice: 50000,
+            price: formatPrice(50000),
+            period: cycle === 'monthly' ? '/bulan' : cycle === '3-month' ? '/3 bulan' : '/tahun',
+            description: "Perfect for beginner photographers",
+            icon: Sparkles,
+            color: "from-blue-500 to-cyan-500",
+            features: [
+                "10 Events per month",
+                "Google Drive Sync",
+                "WhatsApp Integration",
+                "Custom Branding",
+                "Email Support"
+            ],
+            cta: "Get Started",
+            popular: false
+        },
+        {
+            name: "Pro",
+            basePrice: 99000,
+            price: formatPrice(99000),
+            period: cycle === 'monthly' ? '/bulan' : cycle === '3-month' ? '/3 bulan' : '/tahun',
+            description: "For professional photographers",
+            icon: Crown,
+            color: "from-purple-500 to-pink-500",
+            features: [
+                "50 Events per month",
+                "Everything in Starter",
+                "Priority Support",
+                "Analytics Dashboard",
+                "Custom Domain"
+            ],
+            cta: "Get Started",
+            popular: true
+        },
+        {
+            name: "Business",
+            basePrice: 199000,
+            price: formatPrice(199000),
+            period: cycle === 'monthly' ? '/bulan' : cycle === '3-month' ? '/3 bulan' : '/tahun',
+            description: "For studios and agencies",
+            icon: Zap,
+            color: "from-orange-500 to-red-500",
+            features: [
+                "Unlimited Events",
+                "Everything in Pro",
+                "Team Collaboration",
+                "White Label",
+                "Dedicated Support"
+            ],
+            cta: "Contact Sales",
+            popular: false
+        }
+    ];
+};
 
 export default function PricingPage() {
     const [code, setCode] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
+    const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
     const router = useRouter();
+
+    const pricingPlans = getPricingPlans(billingCycle);
 
     const handleRedeem = async () => {
         if (!code.trim()) {
@@ -136,10 +154,40 @@ export default function PricingPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="text-gray-400 text-lg max-w-xl mx-auto"
+                    className="text-gray-400 text-lg max-w-xl mx-auto mb-10"
                 >
                     Unlock all features and start delivering beautiful galleries to your clients.
                 </motion.p>
+
+                {/* Billing Cycle Toggle */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                    className="inline-flex items-center gap-2 p-2 bg-white/5 rounded-full border border-white/10"
+                >
+                    {[
+                        { value: 'monthly', label: 'Bulanan' },
+                        { value: '3-month', label: '3 Bulan', badge: '-10%' },
+                        { value: 'yearly', label: 'Tahunan', badge: '-25%' }
+                    ].map((option) => (
+                        <button
+                            key={option.value}
+                            onClick={() => setBillingCycle(option.value as BillingCycle)}
+                            className={`px-6 py-3 rounded-full font-bold text-sm transition-all flex items-center gap-2 ${billingCycle === option.value
+                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
+                                    : 'text-gray-400 hover:text-white'
+                                }`}
+                        >
+                            {option.label}
+                            {option.badge && billingCycle !== option.value && (
+                                <span className="text-[10px] px-2 py-0.5 bg-green-500/20 text-green-400 rounded-full">
+                                    {option.badge}
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </motion.div>
             </div>
 
             {/* Redeem Code Section */}
@@ -186,8 +234,8 @@ export default function PricingPage() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 * index + 0.3 }}
                             className={`relative p-8 rounded-3xl border ${plan.popular
-                                    ? 'border-purple-500 bg-gradient-to-br from-purple-500/10 to-pink-500/10'
-                                    : 'border-white/10 bg-white/5'
+                                ? 'border-purple-500 bg-gradient-to-br from-purple-500/10 to-pink-500/10'
+                                : 'border-white/10 bg-white/5'
                                 }`}
                         >
                             {plan.popular && (
@@ -219,8 +267,8 @@ export default function PricingPage() {
 
                             <Button
                                 className={`w-full h-12 rounded-full ${plan.popular
-                                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
-                                        : 'bg-white/10 hover:bg-white/20'
+                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
+                                    : 'bg-white/10 hover:bg-white/20'
                                     }`}
                             >
                                 {plan.cta}

@@ -187,13 +187,12 @@ export default async function DashboardPage() {
                 </div>
 
                 {/* Metrics Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[
                         { label: "Active Events", value: totalEvents, icon: Layers, color: "text-blue-500", bg: "bg-blue-500/10" },
                         { label: "Quota Left", value: eventsRemaining, icon: TrendingUp, color: "text-purple-500", bg: "bg-purple-500/10" },
                         { label: "Current Tier", value: tier.toUpperCase(), icon: Crown, color: "text-amber-500", bg: "bg-amber-500/10" },
-                        { label: "Account Score", value: "98%", icon: Sparkles, color: "text-green-500", bg: "bg-green-500/10" },
-                    ].map((stat, i) => (stat.label !== "Hidden" &&
+                    ].map((stat, i) => (
                         <div key={i} className="glass rounded-[32px] p-6 border-white/5 hover:border-white/10 transition-all group overflow-hidden relative">
                             <div className="absolute -right-4 -top-4 opacity-[0.03] group-hover:opacity-[0.07] group-hover:scale-110 transition-all duration-700">
                                 <stat.icon size={120} />

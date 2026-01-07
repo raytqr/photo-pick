@@ -4,7 +4,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   Camera,
   Sparkles,
@@ -22,7 +22,9 @@ import {
   Mail,
   Smartphone,
   MousePointer2,
-  Workflow
+  Workflow,
+  Menu,
+  X
 } from "lucide-react";
 
 const fadeInUp = {
@@ -102,6 +104,47 @@ const steps = [
   }
 ];
 
+function MobileNav() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      {/* Mobile Menu Overlay */}
+      {isOpen && (
+        <div className="fixed inset-0 z-[60] bg-black/95 backdrop-blur-xl md:hidden">
+          <div className="flex flex-col h-full p-6">
+            <div className="flex justify-between items-center mb-12">
+              <Link href="/" className="flex items-center gap-3">
+                <Image src="/logo-premium.png" alt="VibeSelect" width={40} height={40} className="rounded-lg" />
+                <span className="text-xl font-black tracking-tighter text-white">VibeSelect</span>
+              </Link>
+              <button onClick={() => setIsOpen(false)} className="p-2 rounded-lg hover:bg-white/10">
+                <X size={24} className="text-white" />
+              </button>
+            </div>
+
+            <nav className="flex flex-col gap-6 text-2xl font-bold">
+              <a href="#features" onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white">Features</a>
+              <a href="#how-it-works" onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white">Process</a>
+              <a href="#pricing" onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white">Pricing</a>
+              <hr className="border-white/10 my-4" />
+              <Link href="/login" onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white">Login</Link>
+              <Link href="/register" onClick={() => setIsOpen(false)}>
+                <Button className="w-full h-14 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-lg font-bold">
+                  Start Free Trial
+                </Button>
+              </Link>
+            </nav>
+          </div>
+        </div>
+      )}
+
+      {/* Global Mobile Menu Toggle Trigger */}
+      <div id="mobile-nav-trigger" className="hidden" onClick={() => setIsOpen(true)} />
+    </>
+  );
+}
+
 export default function LandingPage() {
   const targetRef = useRef(null);
   const { scrollYProgress } = useScroll({
@@ -124,6 +167,7 @@ export default function LandingPage() {
       </div>
 
       {/* Nav */}
+      <MobileNav />
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-black/20 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
@@ -140,14 +184,22 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Link href="/login" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">
+            <Link href="/login" className="hidden sm:block text-sm font-medium text-gray-400 hover:text-white transition-colors">
               Login
             </Link>
-            <Link href="/register">
+            <Link href="/register" className="hidden sm:block">
               <Button className="rounded-full bg-white text-black hover:bg-gray-200 px-6 font-semibold transition-all hover:scale-105 active:scale-95">
                 Start Free
               </Button>
             </Link>
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => document.getElementById('mobile-nav-trigger')?.click()}
+              className="md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors"
+              aria-label="Open menu"
+            >
+              <Menu size={24} />
+            </button>
           </div>
         </div>
       </nav>
@@ -318,6 +370,91 @@ export default function LandingPage() {
               </motion.div>
             </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="py-32 px-6">
+        <div className="max-w-7xl mx-auto">
+          <motion.div {...fadeInUp} className="text-center mb-20">
+            <h2 className="text-4xl md:text-6xl font-black mb-6">
+              Simple, Honest <span className="text-gradient">Pricing.</span>
+            </h2>
+            <p className="text-gray-400 text-lg max-w-xl mx-auto">
+              Pick a plan that matches your workflow. All plans come with a 7-day free trial.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {[
+              {
+                name: "Starter",
+                price: "50.000",
+                period: "/bulan",
+                description: "Perfect for beginner photographers",
+                features: ["10 Events per month", "Google Drive Sync", "WhatsApp Integration", "Custom Branding"],
+                popular: false
+              },
+              {
+                name: "Pro",
+                price: "99.000",
+                period: "/bulan",
+                description: "For professional photographers",
+                features: ["50 Events per month", "Everything in Starter", "Priority Support", "Analytics Dashboard"],
+                popular: true
+              },
+              {
+                name: "Business",
+                price: "199.000",
+                period: "/bulan",
+                description: "For studios and agencies",
+                features: ["Unlimited Events", "Everything in Pro", "Team Collaboration", "White Label"],
+                popular: false
+              }
+            ].map((plan, index) => (
+              <motion.div
+                key={plan.name}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className={`relative p-8 rounded-[40px] glass border ${plan.popular ? 'border-purple-500/50' : 'border-white/10'}`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full text-sm font-bold">
+                    Most Popular
+                  </div>
+                )}
+
+                <h3 className="text-2xl font-black mb-2">{plan.name}</h3>
+                <p className="text-gray-400 text-sm mb-6">{plan.description}</p>
+
+                <div className="mb-8">
+                  <span className="text-4xl font-black">Rp {plan.price}</span>
+                  <span className="text-gray-400">{plan.period}</span>
+                </div>
+
+                <ul className="space-y-4 mb-8">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-center gap-3 text-sm">
+                      <Check size={18} className="text-green-400 shrink-0" />
+                      <span className="text-gray-300">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Link href="/register">
+                  <Button className={`w-full h-14 rounded-full font-bold ${plan.popular ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'bg-white/10 hover:bg-white/20'}`}>
+                    Get Started
+                  </Button>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.p {...fadeInUp} className="text-center text-gray-500 mt-12">
+            Have a promo code? Enter it after registration to unlock your benefits!
+          </motion.p>
         </div>
       </section>
 

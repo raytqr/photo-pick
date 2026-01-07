@@ -6,14 +6,15 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { Camera, Sparkles, ArrowRight, Zap } from "lucide-react";
-import { motion } from "framer-motion";
+import { Camera, Sparkles, ArrowRight, Zap, Mail, CheckCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function RegisterPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showVerification, setShowVerification] = useState(false);
     const router = useRouter();
     const supabase = createClient();
 
@@ -22,7 +23,7 @@ export default function RegisterPage() {
         setLoading(true);
         setError(null);
 
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
             email,
             password,
         });
@@ -30,9 +31,14 @@ export default function RegisterPage() {
         if (error) {
             setError(error.message);
             setLoading(false);
+        } else if (data?.user?.identities?.length === 0) {
+            // User already exists
+            setError("An account with this email already exists. Please login instead.");
+            setLoading(false);
         } else {
-            router.push("/dashboard");
-            router.refresh();
+            // Show verification modal
+            setShowVerification(true);
+            setLoading(false);
         }
     };
 
@@ -42,6 +48,57 @@ export default function RegisterPage() {
             {/* Background elements */}
             <div className="absolute top-0 right-0 w-[60%] h-[60%] bg-purple-900/10 blur-[130px]" />
             <div className="absolute bottom-0 left-0 w-[60%] h-[60%] bg-blue-900/10 blur-[130px]" />
+
+            {/* Email Verification Modal */}
+            <AnimatePresence>
+                {showVerification && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-center justify-center p-6"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.8, opacity: 0 }}
+                            className="glass rounded-[40px] p-10 max-w-md w-full text-center border-white/10"
+                        >
+                            <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mb-8 shadow-xl shadow-green-500/20">
+                                <Mail size={40} className="text-white" />
+                            </div>
+
+                            <h2 className="text-3xl font-black mb-4">Check Your Email!</h2>
+                            <p className="text-gray-400 mb-8">
+                                We've sent a verification link to <span className="text-white font-bold">{email}</span>.
+                                Please click the link to activate your account.
+                            </p>
+
+                            <div className="space-y-4">
+                                <Button
+                                    onClick={() => router.push("/login")}
+                                    className="w-full h-14 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-lg"
+                                >
+                                    Go to Login
+                                </Button>
+                                <button
+                                    onClick={() => setShowVerification(false)}
+                                    className="text-sm text-gray-500 hover:text-white transition-colors"
+                                >
+                                    Back to Register
+                                </button>
+                            </div>
+
+                            <div className="mt-8 pt-6 border-t border-white/10">
+                                <p className="text-xs text-gray-500">
+                                    Didn't receive the email? Check your spam folder or
+                                    <button className="text-purple-400 hover:underline ml-1">resend verification</button>
+                                </p>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
