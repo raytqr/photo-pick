@@ -7,6 +7,7 @@ import { SwipeCard } from "@/components/swipe-card";
 import { ControlBar } from "@/components/control-bar";
 import { GridView } from "@/components/grid-view";
 import { PhotographerModal } from "@/components/photographer-modal";
+import { OnboardingModal } from "@/components/onboarding-modal";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, AlertTriangle, Send, MessageCircle, Grid3X3 } from "lucide-react";
@@ -17,7 +18,7 @@ export function ClientSelectionApp() {
     const [isInfoOpen, setIsInfoOpen] = useState(false);
 
     const store = useAppStore();
-    const { sourceImages, selectedPhotos, photoLimit, whatsappNumber, movePhoto } = store;
+    const { sourceImages, selectedPhotos, photoLimit, whatsappNumber, eventSlug, movePhoto } = store;
 
     const visibleCards = sourceImages.slice(0, 3);
     const isDeckEmpty = sourceImages.length === 0;
@@ -55,6 +56,9 @@ export function ClientSelectionApp() {
             />
 
             <PhotographerModal isOpen={isInfoOpen} onClose={() => setIsInfoOpen(false)} />
+
+            {/* Onboarding Guide for First-Time Users */}
+            {eventSlug && <OnboardingModal eventSlug={eventSlug} />}
 
             {/* Main Content */}
             <main className="flex-1 relative pt-20 pb-24">

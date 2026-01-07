@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 export interface Photo {
     id: string;
@@ -13,6 +14,7 @@ export type PhotoStatus = 'source' | 'selected' | 'maybe' | 'rejected';
 interface AppState {
     // Photographer Setup
     eventName: string;
+    eventSlug: string;
     driveLink: string;
     photoLimit: number;
     whatsappNumber: string;
@@ -37,6 +39,7 @@ interface AppState {
     setEventDetails: (details: Partial<AppState>) => void;
     initializeMockData: () => void;
     initializeRealData: (photos: Photo[], eventDetails: Partial<AppState>) => void;
+    initializeWithCache: (photos: Photo[], eventDetails: Partial<AppState>) => void;
     movePhoto: (photoId: string, from: PhotoStatus, to: PhotoStatus) => void;
     undoLastAction: () => void;
     resetClientState: () => void;
@@ -52,9 +55,37 @@ const generateMockPhotos = (count: number): Photo[] => {
     }));
 };
 
-export const useAppStore = create<AppState>((set, get) => ({
+// Get saved selections from localStorage for specific event
+const getSavedSelections = (eventSlug: string) => {
+    if (typeof window === 'undefined') return null;
+    try {
+        const saved = localStorage.getItem(`selections-${eventSlug}`);
+        if (saved) return JSON.parse(saved);
+    } catch (e) {
+        console.error('Failed to load saved selections:', e);
+    }
+    return null;
+};
+
+// Save selections to localStorage
+const saveSelections = (eventSlug: string, data: {
+    selectedPhotos: Photo[];
+    maybePhotos: Photo[];
+    rejectedPhotos: Photo[];
+    sourceImages: Photo[];
+}) => {
+    if (typeof window === 'undefined') return;
+    try {
+        localStorage.setItem(`selections-${eventSlug}`, JSON.stringify(data));
+    } catch (e) {
+        console.error('Failed to save selections:', e);
+    }
+};
+
+export const useAppStore = create<AppState>()((set, get) => ({
     // Initial Photographer State
     eventName: '',
+    eventSlug: '',
     driveLink: '',
     photoLimit: 50,
     whatsappNumber: '',
@@ -73,7 +104,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     setEventDetails: (details) => set((state) => ({ ...state, ...details })),
 
     initializeMockData: () => {
-        // We'll generate 30 mock photos for the deck
         const mockPhotos = generateMockPhotos(30);
         set({
             sourceImages: mockPhotos,
@@ -81,7 +111,6 @@ export const useAppStore = create<AppState>((set, get) => ({
             maybePhotos: [],
             rejectedPhotos: [],
             history: [],
-            // Mark setup as complete ONLY if we have basic event data (optional check logic can go here)
             isSetupComplete: true
         });
     },
@@ -98,9 +127,53 @@ export const useAppStore = create<AppState>((set, get) => ({
         });
     },
 
+    // Initialize with cached selections if available
+    initializeWithCache: (photos: Photo[], eventDetails: Partial<AppState>) => {
+        const slug = eventDetails.eventSlug || '';
+        const saved = getSavedSelections(slug);
+
+        if (saved) {
+            // Restore from cache, but filter to only include photos that exist
+            const photoIds = new Set(photos.map(p => p.id));
+            const validSelected = (saved.selectedPhotos || []).filter((p: Photo) => photoIds.has(p.id));
+            const validMaybe = (saved.maybePhotos || []).filter((p: Photo) => photoIds.has(p.id));
+            const validRejected = (saved.rejectedPhotos || []).filter((p: Photo) => photoIds.has(p.id));
+
+            // Get IDs of already categorized photos
+            const categorizedIds = new Set([
+                ...validSelected.map((p: Photo) => p.id),
+                ...validMaybe.map((p: Photo) => p.id),
+                ...validRejected.map((p: Photo) => p.id)
+            ]);
+
+            // Source is all photos not yet categorized
+            const remainingSource = photos.filter(p => !categorizedIds.has(p.id));
+
+            set({
+                sourceImages: remainingSource,
+                selectedPhotos: validSelected,
+                maybePhotos: validMaybe,
+                rejectedPhotos: validRejected,
+                history: [],
+                isSetupComplete: true,
+                ...eventDetails
+            });
+        } else {
+            // No cache, initialize fresh
+            set({
+                sourceImages: photos,
+                selectedPhotos: [],
+                maybePhotos: [],
+                rejectedPhotos: [],
+                history: [],
+                isSetupComplete: true,
+                ...eventDetails
+            });
+        }
+    },
+
     movePhoto: (photoId, from, to) => {
         set((state) => {
-            // Helper to find and remove photo from a list
             const getList = (status: PhotoStatus) => {
                 switch (status) {
                     case 'source': return state.sourceImages;
@@ -114,18 +187,15 @@ export const useAppStore = create<AppState>((set, get) => ({
             const sourceList = getList(from);
             const photo = sourceList.find(p => p.id === photoId);
 
-            if (!photo) return state; // Should not happen
+            if (!photo) return state;
 
-            // Remove from 'from' list
             const newSourceList = sourceList.filter(p => p.id !== photoId);
 
-            // Add to 'to' list
-            // Special case handling for 'source' to ensure correct typing
             let newState: Partial<AppState> = {};
 
             if (to === 'source') {
                 newState = {
-                    sourceImages: [photo, ...state.sourceImages], // returning to source goes to top of deck? Or bottom? standard is usually "back to deck"
+                    sourceImages: [photo, ...state.sourceImages],
                 };
             } else {
                 const targetList = state[`${to}Photos` as 'selectedPhotos' | 'maybePhotos' | 'rejectedPhotos'];
@@ -134,17 +204,32 @@ export const useAppStore = create<AppState>((set, get) => ({
                 };
             }
 
-            // Update source list
             if (from === 'source') {
                 newState.sourceImages = newSourceList;
             } else {
                 newState[`${from}Photos` as 'selectedPhotos' | 'maybePhotos' | 'rejectedPhotos'] = newSourceList;
             }
 
-            return {
+            const finalState = {
                 ...newState,
                 history: [...state.history, { photoId, from, to }]
             };
+
+            // Save to localStorage after move
+            const eventSlug = state.eventSlug;
+            if (eventSlug) {
+                setTimeout(() => {
+                    const currentState = get();
+                    saveSelections(eventSlug, {
+                        selectedPhotos: currentState.selectedPhotos,
+                        maybePhotos: currentState.maybePhotos,
+                        rejectedPhotos: currentState.rejectedPhotos,
+                        sourceImages: currentState.sourceImages
+                    });
+                }, 0);
+            }
+
+            return finalState;
         });
     },
 
@@ -154,10 +239,6 @@ export const useAppStore = create<AppState>((set, get) => ({
 
         const lastAction = state.history[state.history.length - 1];
         const { photoId, from, to } = lastAction;
-
-        // Reverse the move: move from 'to' back to 'from'
-        // We need to call movePhoto but WITHOUT adding to history, or just manually manipulate state + pop history.
-        // Manual manipulation is safer to avoid infinite loop or messy history.
 
         set((currentState) => {
             const getList = (status: PhotoStatus) => {
@@ -170,27 +251,37 @@ export const useAppStore = create<AppState>((set, get) => ({
                 }
             };
 
-            const currentList = getList(to); // It is currently in 'to'
+            const currentList = getList(to);
             const photo = currentList.find(p => p.id === photoId);
 
-            if (!photo) return { history: currentState.history.slice(0, -1) }; // Error fallback
+            if (!photo) return { history: currentState.history.slice(0, -1) };
 
             const newCurrentList = currentList.filter(p => p.id !== photoId);
             const targetOriginalList = getList(from);
 
-            // Construct updates
             const updates: Partial<AppState> = {
                 history: currentState.history.slice(0, -1)
             };
 
-            // Update list we are taking FROM (which was the destination)
             if (to === 'source') updates.sourceImages = newCurrentList;
             else updates[`${to}Photos` as 'selectedPhotos' | 'maybePhotos' | 'rejectedPhotos'] = newCurrentList;
 
-            // Update list we are returning TO (which was the origin)
-            // If returning to source, usually we want it back at the START of the deck if it was just swiped
             if (from === 'source') updates.sourceImages = [photo, ...targetOriginalList];
             else updates[`${from}Photos` as 'selectedPhotos' | 'maybePhotos' | 'rejectedPhotos'] = [photo, ...targetOriginalList];
+
+            // Save after undo
+            const eventSlug = currentState.eventSlug;
+            if (eventSlug) {
+                setTimeout(() => {
+                    const latestState = get();
+                    saveSelections(eventSlug, {
+                        selectedPhotos: latestState.selectedPhotos,
+                        maybePhotos: latestState.maybePhotos,
+                        rejectedPhotos: latestState.rejectedPhotos,
+                        sourceImages: latestState.sourceImages
+                    });
+                }, 0);
+            }
 
             return updates;
         });

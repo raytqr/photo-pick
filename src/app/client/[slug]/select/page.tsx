@@ -48,6 +48,7 @@ export default async function ClientSelectPage({ params }: { params: { slug: str
     const profile = event.profiles;
     const eventDetails = {
         eventName: event.name,
+        eventSlug: slug, // For localStorage cache key
         driveLink: event.drive_link || '',
         photoLimit: event.photo_limit || 50,
         whatsappNumber: profile?.whatsapp_number || '', // From profile, not event

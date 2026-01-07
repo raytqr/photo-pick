@@ -7,6 +7,7 @@ interface ClientStateWrapperProps {
     photos: Photo[];
     eventDetails: {
         eventName: string;
+        eventSlug: string;
         driveLink: string;
         photoLimit: number;
         whatsappNumber: string;
@@ -18,17 +19,15 @@ interface ClientStateWrapperProps {
 
 export function ClientStateWrapper({ photos, eventDetails, children }: ClientStateWrapperProps) {
     const initialized = useRef(false);
-    const initializeRealData = useAppStore(state => state.initializeRealData);
+    const initializeWithCache = useAppStore(state => state.initializeWithCache);
 
     useEffect(() => {
         if (!initialized.current) {
-            initializeRealData(photos, eventDetails);
+            // Use cache-aware initialization to restore selections on refresh
+            initializeWithCache(photos, eventDetails);
             initialized.current = true;
         }
-    }, [photos, eventDetails, initializeRealData]);
-
-    // Optional: Show loading state until store matches? 
-    // Since initializeRealData is synchronous in Zustand, it should be fine.
+    }, [photos, eventDetails, initializeWithCache]);
 
     return <>{children}</>;
 }
