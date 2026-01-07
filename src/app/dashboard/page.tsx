@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase-server";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Plus, FolderOpen, Calendar, ArrowRight, Image as ImageIcon, Crown, Lock, Sparkles } from "lucide-react";
+import { Plus, FolderOpen, Calendar, ArrowRight, Image as ImageIcon, Crown, Lock, Sparkles, AlertTriangle, Clock } from "lucide-react";
 import { redirect } from "next/navigation";
 
 export const dynamic = 'force-dynamic';
@@ -28,6 +28,18 @@ export default async function DashboardPage() {
     const isSubscribed = expiresAt ? now < expiresAt : false;
     const tier = profile?.subscription_tier || 'free';
 
+    // Calculate days until expiration
+    let daysUntilExpiry = 0;
+    let isExpiringSoon = false;
+    let isExpired = false;
+
+    if (expiresAt) {
+        const diffTime = expiresAt.getTime() - now.getTime();
+        daysUntilExpiry = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        isExpiringSoon = daysUntilExpiry > 0 && daysUntilExpiry <= 7;
+        isExpired = daysUntilExpiry <= 0;
+    }
+
     // Fetch Events with count of photos
     const { data: events } = await supabase
         .from('events')
@@ -41,8 +53,54 @@ export default async function DashboardPage() {
     return (
         <div className="min-h-screen">
 
-            {/* Subscription Banner (Non-blocking) */}
-            {!isSubscribed && (
+            {/* Expired Subscription Banner (RED) */}
+            {isExpired && expiresAt && (
+                <div className="bg-gradient-to-r from-red-600 to-rose-600 text-white px-6 py-4">
+                    <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                                <AlertTriangle size={20} />
+                            </div>
+                            <div>
+                                <p className="font-semibold">Subscription Expired</p>
+                                <p className="text-sm text-white/80">Your subscription ended on {expiresAt.toLocaleDateString()}. Renew to continue creating events.</p>
+                            </div>
+                        </div>
+                        <Link href="/pricing">
+                            <Button className="bg-white text-red-600 hover:bg-gray-100 rounded-full px-6">
+                                Renew Now <ArrowRight size={16} className="ml-2" />
+                            </Button>
+                        </Link>
+                    </div>
+                </div>
+            )}
+
+            {/* Expiring Soon Warning Banner (ORANGE) */}
+            {isExpiringSoon && !isExpired && (
+                <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-4">
+                    <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                                <Clock size={20} />
+                            </div>
+                            <div>
+                                <p className="font-semibold">Subscription Expiring Soon</p>
+                                <p className="text-sm text-white/90">
+                                    Your subscription will expire in <strong>{daysUntilExpiry} day{daysUntilExpiry !== 1 ? 's' : ''}</strong>. Renew now to avoid interruption.
+                                </p>
+                            </div>
+                        </div>
+                        <Link href="/pricing">
+                            <Button className="bg-white text-orange-600 hover:bg-gray-100 rounded-full px-6">
+                                Extend Now <ArrowRight size={16} className="ml-2" />
+                            </Button>
+                        </Link>
+                    </div>
+                </div>
+            )}
+
+            {/* New User / Never Subscribed Banner (PURPLE) */}
+            {!expiresAt && (
                 <div className="bg-gradient-to-r from-purple-600/90 to-pink-600/90 text-white px-6 py-4">
                     <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
@@ -112,7 +170,14 @@ export default async function DashboardPage() {
                         <h3 className="text-sm font-medium text-gray-500">Subscription</h3>
                         <div className="text-lg font-bold mt-2">
                             {isSubscribed ? (
-                                <span className="text-green-600">Active until {expiresAt?.toLocaleDateString()}</span>
+                                <span className={isExpiringSoon ? "text-orange-500" : "text-green-600"}>
+                                    {isExpiringSoon
+                                        ? `Expires in ${daysUntilExpiry} day${daysUntilExpiry !== 1 ? 's' : ''}`
+                                        : `Active until ${expiresAt?.toLocaleDateString()}`
+                                    }
+                                </span>
+                            ) : isExpired ? (
+                                <span className="text-red-500">Expired</span>
                             ) : (
                                 <Link href="/pricing" className="text-purple-600 hover:underline flex items-center gap-1">
                                     Upgrade Now <ArrowRight size={14} />
