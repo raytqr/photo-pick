@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAppStore } from "@/store/useAppStore";
-import { Info, Grip, Layers, MessageCircle, RotateCcw } from "lucide-react";
+import { Info, Grip, Layers, MessageCircle, RotateCcw, Send, Copy, Check, X } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -16,26 +16,40 @@ interface HeaderProps {
 export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
     const { eventName, eventSlug, logoUrl, selectedPhotos, maybePhotos, rejectedPhotos, sourceImages, photoLimit, whatsappNumber } = useAppStore();
     const [showRestartConfirm, setShowRestartConfirm] = useState(false);
+    const [showSendModal, setShowSendModal] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     const count = selectedPhotos.length;
     const isOverLimit = count > photoLimit;
     const totalPhotos = sourceImages.length + selectedPhotos.length + maybePhotos.length + rejectedPhotos.length;
     const reviewedCount = selectedPhotos.length + maybePhotos.length + rejectedPhotos.length;
 
-    const generateWhatsAppLink = () => {
+    const generateMessage = () => {
         const names = selectedPhotos.map(p => p.name || p.id).join('\n• ');
-        const text = `Hi! 👋\n\nI've selected ${count} photos:\n\n• ${names}\n\nThank you!`;
+        return `Hi! 👋\n\nI've selected ${count} photos:\n\n• ${names}\n\nThank you!`;
+    };
+
+    const generateWhatsAppLink = () => {
+        const text = generateMessage();
         const phone = whatsappNumber.replace(/\D/g, '');
         return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
     };
 
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(generateMessage());
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+        }
+    };
+
     const handleRestart = () => {
-        // Clear localStorage cache for this event
         if (eventSlug) {
             localStorage.removeItem(`selections-${eventSlug}`);
             localStorage.removeItem(`onboarding-${eventSlug}`);
         }
-        // Reload the page to reset state
         window.location.reload();
     };
 
@@ -63,7 +77,7 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
 
                 {/* Right: Controls */}
                 <div className="flex items-center gap-1.5 sm:gap-2">
-                    {/* Counter (Selected/Limit) */}
+                    {/* Counter */}
                     <div className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${isOverLimit
                             ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
                             : "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-200"
@@ -71,20 +85,19 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
                         {count}/{photoLimit}
                     </div>
 
-                    {/* WhatsApp Button */}
+                    {/* Send Button */}
                     {count > 0 && (
-                        <Link href={generateWhatsAppLink()} target="_blank">
-                            <Button
-                                size="sm"
-                                className={`h-8 px-3 rounded-full text-xs font-medium ${isOverLimit
-                                        ? 'bg-amber-500 hover:bg-amber-600'
-                                        : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700'
-                                    }`}
-                            >
-                                <MessageCircle size={14} className="mr-1" />
-                                <span className="hidden sm:inline">Send</span> WA
-                            </Button>
-                        </Link>
+                        <Button
+                            size="sm"
+                            onClick={() => setShowSendModal(true)}
+                            className={`h-8 px-3 rounded-full text-xs font-medium ${isOverLimit
+                                    ? 'bg-amber-500 hover:bg-amber-600'
+                                    : 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700'
+                                }`}
+                        >
+                            <Send size={14} className="mr-1" />
+                            Send
+                        </Button>
                     )}
 
                     {/* Restart Button */}
@@ -94,7 +107,7 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
                             size="icon"
                             onClick={() => setShowRestartConfirm(true)}
                             className="text-gray-600 dark:text-gray-300 h-8 w-8"
-                            title="Restart / Reset selections"
+                            title="Restart"
                         >
                             <RotateCcw size={16} />
                         </Button>
@@ -122,6 +135,60 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
                 </div>
             </div>
 
+            {/* Send Options Modal */}
+            {showSendModal && (
+                <div className="fixed inset-0 z-[100] bg-black/70 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setShowSendModal(false)}>
+                    <div
+                        className="bg-white dark:bg-gray-900 rounded-t-3xl sm:rounded-2xl w-full sm:max-w-sm p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-300"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-bold dark:text-white">Send {count} Photos</h3>
+                            <Button variant="ghost" size="icon" onClick={() => setShowSendModal(false)} className="h-8 w-8">
+                                <X size={18} />
+                            </Button>
+                        </div>
+
+                        <div className="space-y-3">
+                            {/* Copy Option */}
+                            <button
+                                onClick={handleCopy}
+                                className="w-full flex items-center gap-4 p-4 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                            >
+                                <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                    {copied ? <Check className="text-green-600" size={24} /> : <Copy size={24} className="text-gray-600 dark:text-gray-300" />}
+                                </div>
+                                <div className="text-left">
+                                    <p className="font-medium dark:text-white">{copied ? 'Copied!' : 'Copy to Clipboard'}</p>
+                                    <p className="text-sm text-gray-500">Copy photo list to paste anywhere</p>
+                                </div>
+                            </button>
+
+                            {/* WhatsApp Option */}
+                            <Link href={generateWhatsAppLink()} target="_blank" onClick={() => setShowSendModal(false)}>
+                                <button className="w-full flex items-center gap-4 p-4 rounded-xl bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 transition border border-green-200 dark:border-green-800">
+                                    <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
+                                        <MessageCircle size={24} className="text-white" />
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="font-medium text-green-700 dark:text-green-400">Send via WhatsApp</p>
+                                        <p className="text-sm text-green-600/70 dark:text-green-500/70">Open WhatsApp with message</p>
+                                    </div>
+                                </button>
+                            </Link>
+                        </div>
+
+                        {/* Preview */}
+                        <div className="pt-2 border-t dark:border-gray-800">
+                            <p className="text-xs text-gray-500 mb-2">Preview:</p>
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 max-h-32 overflow-y-auto text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                                {generateMessage()}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Restart Confirmation Modal */}
             {showRestartConfirm && (
                 <div className="fixed inset-0 z-[100] bg-black/70 flex items-center justify-center p-4" onClick={() => setShowRestartConfirm(false)}>
@@ -135,7 +202,7 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
                             </div>
                             <h3 className="text-lg font-bold dark:text-white">Restart Selection?</h3>
                             <p className="text-gray-500 text-sm mt-2">
-                                All your {reviewedCount} reviewed photos will be reset. You'll start from the beginning.
+                                All your {reviewedCount} reviewed photos will be reset.
                             </p>
                         </div>
                         <div className="flex gap-3">
@@ -150,7 +217,7 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
                                 className="flex-1 bg-red-600 hover:bg-red-700"
                                 onClick={handleRestart}
                             >
-                                Yes, Restart
+                                Restart
                             </Button>
                         </div>
                     </div>
