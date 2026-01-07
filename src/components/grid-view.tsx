@@ -218,4 +218,4 @@ export function GridView() {
         </div >
     );
 }
-}
+

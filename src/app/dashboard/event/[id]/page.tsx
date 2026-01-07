@@ -93,58 +93,58 @@ export default async function EventDetailPage({ params }: { params: { id: string
                     <p className="text-2xl font-bold">{event.photo_limit || 50}</p>
                 </div>
             </div>
-        </div>
 
-            {/* Google Drive Sync Section */ }
-    <div className="glass rounded-2xl p-4 sm:p-6 border-white/5">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
-                    <Cloud size={20} />
-                </div>
-                <div>
-                    <h2 className="font-bold">Google Drive Source</h2>
-                    <p className="text-sm text-gray-500 truncate max-w-[200px] sm:max-w-sm">{event.drive_link || "No link set"}</p>
+
+            {/* Google Drive Sync Section */}
+            <div className="glass rounded-2xl p-4 sm:p-6 border-white/5">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
+                            <Cloud size={20} />
+                        </div>
+                        <div>
+                            <h2 className="font-bold">Google Drive Source</h2>
+                            <p className="text-sm text-gray-500 truncate max-w-[200px] sm:max-w-sm">{event.drive_link || "No link set"}</p>
+                        </div>
+                    </div>
+
+                    <SyncDriveButton eventId={id} driveLink={event.drive_link} />
                 </div>
             </div>
 
-            <SyncDriveButton eventId={id} driveLink={event.drive_link} />
-        </div>
-    </div>
+            {/* Client Submissions Removed as requested */}
 
-    {/* Client Submissions Removed as requested */ }
+            {/* Photo Grid */}
+            <div className="space-y-4">
+                <h2 className="text-lg font-bold flex items-center gap-2">
+                    <ImageIcon size={20} /> Gallery Photos ({photos?.length || 0})
+                </h2>
 
-    {/* Photo Grid */ }
-    <div className="space-y-4">
-        <h2 className="text-lg font-bold flex items-center gap-2">
-            <ImageIcon size={20} /> Gallery Photos ({photos?.length || 0})
-        </h2>
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
+                    {photos?.map((photo: any) => (
+                        <div key={photo.id} className="relative aspect-[3/4] bg-gray-900 rounded-xl overflow-hidden group ring-1 ring-white/10">
+                            <Image
+                                src={photo.url}
+                                alt={photo.name || "photo"}
+                                fill
+                                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                sizes="(max-width: 640px) 33vw, (max-width: 1024px) 20vw, 16vw"
+                            />
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <p className="text-[10px] text-white/80 truncate">{photo.name}</p>
+                            </div>
+                        </div>
+                    ))}
 
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
-            {photos?.map((photo: any) => (
-                <div key={photo.id} className="relative aspect-[3/4] bg-gray-900 rounded-xl overflow-hidden group ring-1 ring-white/10">
-                    <Image
-                        src={photo.url}
-                        alt={photo.name || "photo"}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        sizes="(max-width: 640px) 33vw, (max-width: 1024px) 20vw, 16vw"
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <p className="text-[10px] text-white/80 truncate">{photo.name}</p>
-                    </div>
+                    {(!photos || photos.length === 0) && (
+                        <div className="col-span-full py-16 text-center text-gray-500 border-2 border-dashed border-gray-800 rounded-2xl bg-gray-900/50">
+                            <Cloud size={40} className="mx-auto mb-3 opacity-50" />
+                            <p className="font-medium">No photos synced yet.</p>
+                            <p className="text-sm">Click "Sync from Drive" to import your photos.</p>
+                        </div>
+                    )}
                 </div>
-            ))}
-
-            {(!photos || photos.length === 0) && (
-                <div className="col-span-full py-16 text-center text-gray-500 border-2 border-dashed border-gray-800 rounded-2xl bg-gray-900/50">
-                    <Cloud size={40} className="mx-auto mb-3 opacity-50" />
-                    <p className="font-medium">No photos synced yet.</p>
-                    <p className="text-sm">Click "Sync from Drive" to import your photos.</p>
-                </div>
-            )}
-        </div>
-    </div>
+            </div>
 
         </div >
     );
