@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAppStore } from "@/store/useAppStore";
-import { Info, Grip, Layers, MessageCircle, RotateCcw, Send, Copy, Check, X } from "lucide-react";
+import { Info, Grip, Layers, MessageCircle, RotateCcw, Send, Copy, Check, X, FileText, Hash } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -13,20 +13,40 @@ interface HeaderProps {
     onInfoClick: () => void;
 }
 
+// Generate unique code from photo IDs
+function generateSubmissionCode(photoIds: string[]): string {
+    const hash = photoIds.join('').split('').reduce((a, b) => {
+        a = ((a << 5) - a) + b.charCodeAt(0);
+        return a & a;
+    }, 0);
+    const code = Math.abs(hash).toString(36).toUpperCase().slice(0, 6);
+    return `SEL-${code}`;
+}
+
 export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
     const { eventName, eventSlug, logoUrl, selectedPhotos, maybePhotos, rejectedPhotos, sourceImages, photoLimit, whatsappNumber } = useAppStore();
     const [showRestartConfirm, setShowRestartConfirm] = useState(false);
     const [showSendModal, setShowSendModal] = useState(false);
-    const [copied, setCopied] = useState(false);
+    const [copiedType, setCopiedType] = useState<string | null>(null);
 
     const count = selectedPhotos.length;
     const isOverLimit = count > photoLimit;
     const totalPhotos = sourceImages.length + selectedPhotos.length + maybePhotos.length + rejectedPhotos.length;
     const reviewedCount = selectedPhotos.length + maybePhotos.length + rejectedPhotos.length;
 
+    // Generate unique code
+    const submissionCode = useMemo(() => {
+        return generateSubmissionCode(selectedPhotos.map(p => p.id));
+    }, [selectedPhotos]);
+
+    // Filename only list (for Lightroom/Finder filter)
+    const filenameList = useMemo(() => {
+        return selectedPhotos.map(p => p.name || p.id).join('\n');
+    }, [selectedPhotos]);
+
     const generateMessage = () => {
         const names = selectedPhotos.map(p => p.name || p.id).join('\n• ');
-        return `Hi! 👋\n\nI've selected ${count} photos:\n\n• ${names}\n\nThank you!`;
+        return `Hi! 👋\n\nCode: ${submissionCode}\nTotal: ${count} photos\n\n• ${names}\n\nThank you!`;
     };
 
     const generateWhatsAppLink = () => {
@@ -35,11 +55,16 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
         return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
     };
 
-    const handleCopy = async () => {
+    const handleCopy = async (type: 'message' | 'filenames' | 'code') => {
         try {
-            await navigator.clipboard.writeText(generateMessage());
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
+            let text = '';
+            if (type === 'message') text = generateMessage();
+            if (type === 'filenames') text = filenameList;
+            if (type === 'code') text = submissionCode;
+
+            await navigator.clipboard.writeText(text);
+            setCopiedType(type);
+            setTimeout(() => setCopiedType(null), 2000);
         } catch (err) {
             console.error('Failed to copy:', err);
         }
@@ -139,7 +164,7 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
             {showSendModal && (
                 <div className="fixed inset-0 z-[100] bg-black/70 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setShowSendModal(false)}>
                     <div
-                        className="bg-white dark:bg-gray-900 rounded-t-3xl sm:rounded-2xl w-full sm:max-w-sm p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-300"
+                        className="bg-white dark:bg-gray-900 rounded-t-3xl sm:rounded-2xl w-full sm:max-w-md p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between">
@@ -149,41 +174,72 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
                             </Button>
                         </div>
 
-                        <div className="space-y-3">
-                            {/* Copy Option */}
-                            <button
-                                onClick={handleCopy}
-                                className="w-full flex items-center gap-4 p-4 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                            >
-                                <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                    {copied ? <Check className="text-green-600" size={24} /> : <Copy size={24} className="text-gray-600 dark:text-gray-300" />}
+                        {/* Unique Code */}
+                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-800">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs text-purple-600 dark:text-purple-400 font-medium">Submission Code</p>
+                                    <p className="text-2xl font-mono font-bold text-purple-700 dark:text-purple-300">{submissionCode}</p>
                                 </div>
-                                <div className="text-left">
-                                    <p className="font-medium dark:text-white">{copied ? 'Copied!' : 'Copy to Clipboard'}</p>
-                                    <p className="text-sm text-gray-500">Copy photo list to paste anywhere</p>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleCopy('code')}
+                                    className="border-purple-300 text-purple-600 hover:bg-purple-100 dark:border-purple-700 dark:text-purple-400"
+                                >
+                                    {copiedType === 'code' ? <Check size={14} /> : <Copy size={14} />}
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            {/* Copy Full Message */}
+                            <button
+                                onClick={() => handleCopy('message')}
+                                className="w-full flex items-center gap-4 p-3 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                            >
+                                <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center shrink-0">
+                                    {copiedType === 'message' ? <Check className="text-green-600" size={20} /> : <Copy size={20} className="text-gray-600 dark:text-gray-300" />}
+                                </div>
+                                <div className="text-left flex-1">
+                                    <p className="font-medium dark:text-white text-sm">{copiedType === 'message' ? 'Copied!' : 'Copy Full Message'}</p>
+                                    <p className="text-xs text-gray-500">With code and photo names</p>
                                 </div>
                             </button>
 
-                            {/* WhatsApp Option */}
+                            {/* Copy Filenames Only (for Lightroom) */}
+                            <button
+                                onClick={() => handleCopy('filenames')}
+                                className="w-full flex items-center gap-4 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition border border-blue-200 dark:border-blue-800"
+                            >
+                                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center shrink-0">
+                                    {copiedType === 'filenames' ? <Check className="text-white" size={20} /> : <FileText size={20} className="text-white" />}
+                                </div>
+                                <div className="text-left flex-1">
+                                    <p className="font-medium text-blue-700 dark:text-blue-400 text-sm">{copiedType === 'filenames' ? 'Copied!' : 'Copy Filenames Only'}</p>
+                                    <p className="text-xs text-blue-600/70 dark:text-blue-500/70">For Lightroom / Finder filter</p>
+                                </div>
+                            </button>
+
+                            {/* WhatsApp */}
                             <Link href={generateWhatsAppLink()} target="_blank" onClick={() => setShowSendModal(false)}>
-                                <button className="w-full flex items-center gap-4 p-4 rounded-xl bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 transition border border-green-200 dark:border-green-800">
-                                    <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
-                                        <MessageCircle size={24} className="text-white" />
+                                <button className="w-full flex items-center gap-4 p-3 rounded-xl bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 transition border border-green-200 dark:border-green-800">
+                                    <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+                                        <MessageCircle size={20} className="text-white" />
                                     </div>
-                                    <div className="text-left">
-                                        <p className="font-medium text-green-700 dark:text-green-400">Send via WhatsApp</p>
-                                        <p className="text-sm text-green-600/70 dark:text-green-500/70">Open WhatsApp with message</p>
+                                    <div className="text-left flex-1">
+                                        <p className="font-medium text-green-700 dark:text-green-400 text-sm">Send via WhatsApp</p>
+                                        <p className="text-xs text-green-600/70 dark:text-green-500/70">Open WhatsApp with message</p>
                                     </div>
                                 </button>
                             </Link>
                         </div>
 
-                        {/* Preview */}
+                        {/* Help Text */}
                         <div className="pt-2 border-t dark:border-gray-800">
-                            <p className="text-xs text-gray-500 mb-2">Preview:</p>
-                            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 max-h-32 overflow-y-auto text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
-                                {generateMessage()}
-                            </div>
+                            <p className="text-xs text-gray-500 text-center">
+                                💡 Use "Copy Filenames Only" to filter photos in Lightroom or Finder
+                            </p>
                         </div>
                     </div>
                 </div>
