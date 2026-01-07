@@ -61,7 +61,7 @@ export function FreeTrialPopup({ tier }: FreeTrialPopupProps) {
 
                         <div className="text-center space-y-4 mb-6">
                             <p className="text-gray-300">
-                                Welcome to VibeSelect! To get you started, we've unlocked a special trial:
+                                Welcome to SatSetPic! To get you started, we've unlocked a special trial:
                             </p>
 
                             <div className="bg-white/5 rounded-2xl p-4 border border-white/10 space-y-2">

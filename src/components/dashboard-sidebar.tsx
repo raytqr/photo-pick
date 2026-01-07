@@ -72,9 +72,9 @@ export function DashboardSidebar({
             <div className="h-24 flex items-center px-6">
                 <Link href="/dashboard" className="flex items-center gap-3 group" onClick={() => setMobileMenuOpen(false)}>
                     <div className="w-12 h-12 rounded-xl glass border-white/10 flex items-center justify-center shadow-lg shadow-purple-500/20 group-hover:scale-110 transition-all duration-500">
-                        <Image src="/logo-premium.png" alt="VibeSelect" width={48} height={48} className="rounded-lg object-contain" />
+                        <Image src="/logo-premium.png" alt="SatSetPic" width={48} height={48} className="rounded-lg object-contain" />
                     </div>
-                    <span className="text-xl font-black tracking-tighter text-white">VibeSelect</span>
+                    <span className="text-xl font-black tracking-tighter text-white">SatSetPic</span>
                 </Link>
             </div>
 

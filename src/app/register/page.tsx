@@ -17,7 +17,7 @@ function getDeviceFingerprint(): string {
     if (ctx) {
         ctx.textBaseline = 'top';
         ctx.font = '14px Arial';
-        ctx.fillText('VibeSelect', 2, 2);
+        ctx.fillText('SatSetPic', 2, 2);
     }
     const canvasHash = canvas.toDataURL().slice(-50);
 

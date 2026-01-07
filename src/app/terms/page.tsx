@@ -16,12 +16,12 @@ export default function TermsPage() {
 
                     <section className="space-y-4">
                         <h2 className="text-2xl font-bold text-white">1. Acceptance of Terms</h2>
-                        <p>By accessing and using VibeSelect, you agree to be bound by these Terms of Service and all applicable laws and regulations.</p>
+                        <p>By accessing and using SatSetPic, you agree to be bound by these Terms of Service and all applicable laws and regulations.</p>
                     </section>
 
                     <section className="space-y-4">
                         <h2 className="text-2xl font-bold text-white">2. Use of Service</h2>
-                        <p>You may use VibeSelect for lawful purposes only. You agree not to:</p>
+                        <p>You may use SatSetPic for lawful purposes only. You agree not to:</p>
                         <ul className="list-disc pl-6 space-y-2">
                             <li>Upload or share illegal, harmful, or offensive content</li>
                             <li>Violate any applicable laws or regulations</li>
@@ -53,7 +53,7 @@ export default function TermsPage() {
                     <section className="space-y-4">
                         <h2 className="text-2xl font-bold text-white">7. Contact</h2>
                         <p>For questions about these Terms, please contact:</p>
-                        <p className="font-bold text-purple-400">support@vibeselect.id</p>
+                        <p className="font-bold text-purple-400">support@satsetpic.id</p>
                     </section>
                 </div>
             </div>

@@ -48,7 +48,7 @@ export default function PrivacyPage() {
                     <section className="space-y-4">
                         <h2 className="text-2xl font-bold text-white">5. Contact Us</h2>
                         <p>If you have any questions about this Privacy Policy, please contact us at:</p>
-                        <p className="font-bold text-purple-400">support@vibeselect.id</p>
+                        <p className="font-bold text-purple-400">privacy@satsetpic.id</p>
                     </section>
                 </div>
             </div>

@@ -34,7 +34,7 @@ export default function ContactPage() {
                     <div>
                         <h1 className="text-4xl font-black mb-4">Get in Touch</h1>
                         <p className="text-gray-400 mb-8">
-                            Have questions about VibeSelect? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+                            Have questions about SatSetPic? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
                         </p>
 
                         <div className="space-y-6">
