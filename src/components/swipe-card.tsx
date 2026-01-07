@@ -41,9 +41,6 @@ export function SwipeCard({ photo, onSwipe, index }: SwipeCardProps) {
     // Only the top card is interactive
     const isFront = index === 0;
 
-    // Determine if image is likely landscape based on dimensions
-    const isLandscape = photo.width && photo.height && photo.width > photo.height;
-
     return (
         <motion.div
             style={{
@@ -52,12 +49,12 @@ export function SwipeCard({ photo, onSwipe, index }: SwipeCardProps) {
                 rotate: isFront ? rotate : 0,
                 zIndex: 50 - index,
                 scale: 1 - index * 0.05,
-                top: index * 10, // CSS Top for stacking offset
+                top: index * 10,
             }}
-            className="absolute w-full h-full max-w-sm aspect-[3/4] rounded-3xl shadow-2xl overflow-hidden bg-gray-900 cursor-grab active:cursor-grabbing border border-white/10 origin-top"
+            className="absolute w-full h-full max-w-[400px] rounded-3xl shadow-2xl overflow-hidden bg-gray-900 cursor-grab active:cursor-grabbing border border-white/10 origin-top"
             drag={isFront ? true : false}
             dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-            dragElastic={0.6} // Rubber band effect
+            dragElastic={0.6}
             onDragEnd={handleDragEnd}
             whileTap={{ scale: 1.02 }}
             initial={{ scale: 0.9, opacity: 0 }}
@@ -89,22 +86,20 @@ export function SwipeCard({ photo, onSwipe, index }: SwipeCardProps) {
                 <span className="text-2xl font-black text-yellow-500 uppercase tracking-widest">Maybe</span>
             </motion.div>
 
-            {/* Image - Use object-contain for landscape, object-cover for portrait */}
+            {/* Image Container - Uses object-contain to preserve aspect ratio */}
             <div className="relative w-full h-full pointer-events-none select-none bg-black flex items-center justify-center">
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                     src={photo.url}
-                    alt="Photo"
-                    fill
-                    className={`pointer-events-none select-none ${isLandscape ? 'object-contain' : 'object-cover'}`}
+                    alt={photo.name || "Photo"}
+                    className="max-w-full max-h-full w-auto h-auto object-contain pointer-events-none select-none"
                     draggable={false}
-                    sizes="(max-width: 768px) 100vw, 400px"
-                    priority={index === 0}
                 />
 
                 {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/60" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/60 pointer-events-none" />
 
-                {/* Photo ID/Details */}
+                {/* Photo Name */}
                 <div className="absolute bottom-6 left-6 right-6 text-white z-20">
                     <h3 className="font-bold text-lg drop-shadow-lg">{photo.name || photo.id}</h3>
                 </div>

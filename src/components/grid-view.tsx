@@ -191,8 +191,7 @@ export function GridView() {
                                 {status !== 'rejected' && (
                                     <Button
                                         size="sm"
-                                        variant="destructive"
-                                        className="w-full h-7 text-[10px]"
+                                        className="w-full h-7 text-[10px] bg-red-600 hover:bg-red-700 text-white"
                                         onClick={() => handleMove(photo, status, 'rejected')}
                                     >
                                         <X size={10} className="mr-1" /> Reject

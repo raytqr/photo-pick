@@ -6,12 +6,13 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { Camera, Sparkles, ArrowRight, Zap, Mail, CheckCircle } from "lucide-react";
+import { Camera, Sparkles, ArrowRight, Zap, Mail, Eye, EyeOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function RegisterPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showVerification, setShowVerification] = useState(false);
@@ -43,7 +44,7 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#030014] text-white flex items-center justify-center p-6 relative overflow-hidden">
+        <div className="min-h-screen bg-[#030014] text-white flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
 
             {/* Background elements */}
             <div className="absolute top-0 right-0 w-[60%] h-[60%] bg-purple-900/10 blur-[130px]" />
@@ -56,20 +57,21 @@ export default function RegisterPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-center justify-center p-6"
+                        className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 sm:p-6"
                     >
                         <motion.div
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.8, opacity: 0 }}
-                            className="glass rounded-[40px] p-10 max-w-md w-full text-center border-white/10"
+                            className="glass rounded-[32px] sm:rounded-[40px] p-8 sm:p-10 max-w-md w-full text-center border-white/10"
                         >
-                            <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mb-8 shadow-xl shadow-green-500/20">
-                                <Mail size={40} className="text-white" />
+                            <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mb-6 sm:mb-8 shadow-xl shadow-green-500/20">
+                                <Mail size={32} className="text-white sm:hidden" />
+                                <Mail size={40} className="text-white hidden sm:block" />
                             </div>
 
-                            <h2 className="text-3xl font-black mb-4">Check Your Email!</h2>
-                            <p className="text-gray-400 mb-8">
+                            <h2 className="text-2xl sm:text-3xl font-black mb-4">Check Your Email!</h2>
+                            <p className="text-gray-400 mb-6 sm:mb-8 text-sm sm:text-base">
                                 We've sent a verification link to <span className="text-white font-bold">{email}</span>.
                                 Please click the link to activate your account.
                             </p>
@@ -77,7 +79,7 @@ export default function RegisterPage() {
                             <div className="space-y-4">
                                 <Button
                                     onClick={() => router.push("/login")}
-                                    className="w-full h-14 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-lg"
+                                    className="w-full h-12 sm:h-14 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-base sm:text-lg"
                                 >
                                     Go to Login
                                 </Button>
@@ -89,7 +91,7 @@ export default function RegisterPage() {
                                 </button>
                             </div>
 
-                            <div className="mt-8 pt-6 border-t border-white/10">
+                            <div className="mt-6 sm:mt-8 pt-6 border-t border-white/10">
                                 <p className="text-xs text-gray-500">
                                     Didn't receive the email? Check your spam folder or
                                     <button className="text-purple-400 hover:underline ml-1">resend verification</button>
@@ -106,18 +108,19 @@ export default function RegisterPage() {
                 transition={{ duration: 0.5 }}
                 className="w-full max-w-md relative z-10"
             >
-                <div className="glass rounded-[40px] p-8 sm:p-12 border-white/5 shadow-2xl">
+                <div className="glass rounded-[32px] sm:rounded-[40px] p-6 sm:p-8 lg:p-12 border-white/5 shadow-2xl">
                     {/* Header */}
-                    <div className="text-center space-y-4 mb-10">
-                        <Link href="/" className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-600 shadow-xl shadow-purple-500/20 mb-6 group transition-transform hover:rotate-12">
-                            <Camera size={32} className="text-white" />
+                    <div className="text-center space-y-3 sm:space-y-4 mb-6 sm:mb-10">
+                        <Link href="/" className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-600 shadow-xl shadow-purple-500/20 mb-4 sm:mb-6 group transition-transform hover:rotate-12">
+                            <Camera size={28} className="text-white sm:hidden" />
+                            <Camera size={32} className="text-white hidden sm:block" />
                         </Link>
-                        <h1 className="text-4xl font-black tracking-tighter">Join VibeSelect.</h1>
+                        <h1 className="text-3xl sm:text-4xl font-black tracking-tighter">Join VibeSelect.</h1>
                         <p className="text-gray-500 font-medium text-sm">Start delivering photo galleries that wow.</p>
                     </div>
 
                     {/* Benefit badges */}
-                    <div className="flex gap-2 justify-center mb-8">
+                    <div className="flex gap-2 justify-center mb-6 sm:mb-8 flex-wrap">
                         <div className="px-3 py-1 rounded-full glass border-white/5 text-[10px] font-black uppercase tracking-widest text-purple-400 flex items-center gap-1.5">
                             <Sparkles size={10} /> Free 7-Day Trial
                         </div>
@@ -127,7 +130,7 @@ export default function RegisterPage() {
                     </div>
 
                     {/* Form */}
-                    <form onSubmit={handleRegister} className="space-y-6">
+                    <form onSubmit={handleRegister} className="space-y-5 sm:space-y-6">
                         {error && (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.9 }}
@@ -143,7 +146,7 @@ export default function RegisterPage() {
                             <Input
                                 type="email"
                                 placeholder="you@studio.com"
-                                className="h-14 bg-white/5 border-white/10 rounded-2xl px-6 focus:ring-purple-500/50 focus:border-purple-500/50 text-white placeholder:text-gray-600 transition-all font-medium"
+                                className="h-12 sm:h-14 bg-white/5 border-white/10 rounded-2xl px-6 text-white placeholder:text-gray-600 font-medium"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -152,22 +155,31 @@ export default function RegisterPage() {
 
                         <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Password</label>
-                            <Input
-                                type="password"
-                                placeholder="Min 8 characters"
-                                className="h-14 bg-white/5 border-white/10 rounded-2xl px-6 focus:ring-purple-500/50 focus:border-purple-500/50 text-white placeholder:text-gray-600 transition-all font-medium"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                minLength={8}
-                            />
+                            <div className="relative">
+                                <Input
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Min 8 characters"
+                                    className="h-12 sm:h-14 bg-white/5 border-white/10 rounded-2xl px-6 pr-12 text-white placeholder:text-gray-600 font-medium"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    minLength={8}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
                         </div>
 
-                        <Button type="submit" className="w-full h-14 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-105 transition-all shadow-xl shadow-purple-500/20 font-black text-lg border-none" disabled={loading}>
+                        <Button type="submit" className="w-full h-12 sm:h-14 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-105 transition-all shadow-xl shadow-purple-500/20 font-black text-base sm:text-lg border-none" disabled={loading}>
                             {loading ? "Creating Account..." : "Start Free Trial"}
                         </Button>
 
-                        <div className="text-center pt-4">
+                        <div className="text-center pt-2 sm:pt-4">
                             <Link href="/login" className="text-sm font-bold text-gray-500 hover:text-white transition-colors group">
                                 Already have an account? <span className="text-purple-400 group-hover:underline">Login here</span> <ArrowRight size={14} className="inline ml-1" />
                             </Link>
@@ -176,7 +188,7 @@ export default function RegisterPage() {
                 </div>
 
                 {/* Info text */}
-                <p className="mt-8 text-center text-[10px] text-gray-600 font-medium px-4 leading-relaxed tracking-wider uppercase">
+                <p className="mt-6 sm:mt-8 text-center text-[10px] text-gray-600 font-medium px-4 leading-relaxed tracking-wider uppercase">
                     By joining, you agree to our Terms of Service <br /> and Privacy Policy.
                 </p>
             </motion.div>

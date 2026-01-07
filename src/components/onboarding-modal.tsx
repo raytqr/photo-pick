@@ -124,6 +124,41 @@ export function OnboardingModal({ eventSlug }: OnboardingModalProps) {
             )
         },
         {
+            title: "Toolbar Atas",
+            description: "Tombol-tombol di kanan atas navbar:",
+            content: (
+                <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-purple-500/10 border border-purple-500/30">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center shrink-0">
+                            <MessageCircle className="text-white" size={18} />
+                        </div>
+                        <div className="text-left">
+                            <p className="font-medium text-purple-400">Send</p>
+                            <p className="text-xs text-gray-500">Kirim pilihan via WhatsApp</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-500/10 border border-gray-500/30">
+                        <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center shrink-0">
+                            <Undo2 className="text-gray-400" size={18} />
+                        </div>
+                        <div className="text-left">
+                            <p className="font-medium text-gray-300">Restart</p>
+                            <p className="text-xs text-gray-500">Mulai ulang dari awal</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-500/10 border border-gray-500/30">
+                        <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center shrink-0">
+                            <Grip className="text-gray-400" size={18} />
+                        </div>
+                        <div className="text-left">
+                            <p className="font-medium text-gray-300">Grid/Swipe</p>
+                            <p className="text-xs text-gray-500">Ganti mode tampilan</p>
+                        </div>
+                    </div>
+                </div>
+            )
+        },
+        {
             title: "Siap Mulai! 🚀",
             description: "Setelah selesai, kirim pilihan via WhatsApp.",
             content: (
