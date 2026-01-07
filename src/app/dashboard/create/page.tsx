@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import { isRestricted } from "@/lib/subscription-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Cloud, Sparkles, Lock, Crown } from "lucide-react";
@@ -37,12 +38,17 @@ export default function CreateEventPage() {
                 .eq('id', user.id)
                 .single();
 
-            if (profile?.subscription_expires_at) {
-                const expiresAt = new Date(profile.subscription_expires_at);
-                const now = new Date();
-                setHasSubscription(expiresAt > now);
+            if (profile) {
+                const restricted = isRestricted(profile.subscription_tier, profile.subscription_expires_at);
+                if (restricted) {
+                    router.push("/dashboard/pricing");
+                    return;
+                }
+                setHasSubscription(true);
             } else {
                 setHasSubscription(false);
+                router.push("/dashboard/pricing");
+                return;
             }
             setChecking(false);
         };

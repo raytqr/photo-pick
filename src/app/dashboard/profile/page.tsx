@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
+import { isRestricted } from "@/lib/subscription-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Camera, Phone, FileText, User, MessageSquare, Sparkles, Info, CheckCircle } from "lucide-react";
@@ -41,6 +42,13 @@ export default function ProfilePage() {
                 .single();
 
             if (data) {
+                // Check restriction
+                const restricted = isRestricted(data.subscription_tier, data.subscription_expires_at);
+                if (restricted) {
+                    router.push('/dashboard/pricing');
+                    return;
+                }
+
                 setPhotographerName(data.photographer_name || "");
                 setLogoUrl(data.logo_url);
                 setBio(data.bio || "");

@@ -30,6 +30,8 @@ interface DashboardSidebarProps {
     subscriptionExpiresAt?: string | null;
 }
 
+import { isRestricted } from "@/lib/subscription-utils";
+
 export function DashboardSidebar({
     userEmail,
     photographerName,
@@ -39,6 +41,9 @@ export function DashboardSidebar({
 }: DashboardSidebarProps) {
     const pathname = usePathname();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+    // Ensure subscriptionTier is string or null, handling undefined
+    const restricted = isRestricted(subscriptionTier ?? null, subscriptionExpiresAt ?? null);
 
     const links = [
         { href: "/dashboard", label: "Overview", icon: Grid },
@@ -98,25 +103,41 @@ export function DashboardSidebar({
             {/* Navigation */}
             <nav className="flex-1 p-4 space-y-6">
                 <div>
-                    <div className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4 px-2">Menu</div>
-                    <div className="space-y-2">
+                    <div className="px-4 mb-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        Menu
+                    </div>
+                    <div className="space-y-1">
                         {links.map((link) => {
-                            const Icon = link.icon;
-                            const isActive = pathname === link.href;
+                            const isLinkDisabled = restricted && (link.href.includes('/create') || link.href.includes('/profile'));
+
                             return (
                                 <Link
                                     key={link.href}
-                                    href={link.href}
-                                    onClick={() => setMobileMenuOpen(false)}
+                                    href={isLinkDisabled ? "#" : link.href}
+                                    onClick={(e) => {
+                                        if (isLinkDisabled) {
+                                            e.preventDefault();
+                                            alert("Your subscription has expired. Please upgrade to continue.");
+                                            return;
+                                        }
+                                        setMobileMenuOpen(false);
+                                    }}
                                     className={cn(
-                                        "flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300",
-                                        isActive
-                                            ? "bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.1)]"
-                                            : "text-gray-400 hover:text-white hover:bg-white/5"
+                                        "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium group",
+                                        pathname === link.href
+                                            ? "bg-white/10 text-white shadow-lg border border-white/5"
+                                            : "text-gray-400 hover:text-white hover:bg-white/5 hover:translate-x-1",
+                                        isLinkDisabled && "opacity-50 cursor-not-allowed hover:bg-transparent hover:translate-x-0"
                                     )}
                                 >
-                                    <Icon size={18} className={isActive ? "text-black" : "text-gray-500"} />
-                                    {link.label}
+                                    <div className={cn(
+                                        "p-2 rounded-lg transition-all duration-300",
+                                        pathname === link.href ? "bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg" : "bg-white/5 group-hover:bg-white/10"
+                                    )}>
+                                        <link.icon size={18} />
+                                    </div>
+                                    <span>{link.label}</span>
+                                    {isLinkDisabled && <span className="ml-auto text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full">Locked</span>}
                                 </Link>
                             );
                         })}
