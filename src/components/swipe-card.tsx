@@ -26,7 +26,6 @@ export function SwipeCard({ photo, onSwipe, index }: SwipeCardProps) {
 
     const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         const threshold = 100;
-        const velocity = info.velocity.x;
 
         if (info.offset.x > threshold) {
             onSwipe('right');
@@ -42,6 +41,9 @@ export function SwipeCard({ photo, onSwipe, index }: SwipeCardProps) {
     // Only the top card is interactive
     const isFront = index === 0;
 
+    // Determine if image is likely landscape based on dimensions
+    const isLandscape = photo.width && photo.height && photo.width > photo.height;
+
     return (
         <motion.div
             style={{
@@ -52,12 +54,12 @@ export function SwipeCard({ photo, onSwipe, index }: SwipeCardProps) {
                 scale: 1 - index * 0.05,
                 top: index * 10, // CSS Top for stacking offset
             }}
-            className="absolute w-full h-full max-w-sm aspect-[3/4] rounded-2xl shadow-xl overflow-hidden bg-white dark:bg-gray-800 cursor-grab active:cursor-grabbing border border-gray-200 dark:border-gray-700 origin-top"
+            className="absolute w-full h-full max-w-sm aspect-[3/4] rounded-3xl shadow-2xl overflow-hidden bg-gray-900 cursor-grab active:cursor-grabbing border border-white/10 origin-top"
             drag={isFront ? true : false}
             dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
             dragElastic={0.6} // Rubber band effect
             onDragEnd={handleDragEnd}
-            whileTap={{ scale: 1.05 }}
+            whileTap={{ scale: 1.02 }}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{
                 scale: 1 - index * 0.05,
@@ -70,38 +72,41 @@ export function SwipeCard({ photo, onSwipe, index }: SwipeCardProps) {
             }}
         >
             {/* Visual Feedback Overlays */}
-            <motion.div style={{ opacity: likeOpacity }} className="absolute top-8 left-8 z-30 transform -rotate-12 border-4 border-green-500 rounded-lg p-2 px-4 shadow-lg bg-black/20 backdrop-blur-sm">
-                <span className="text-4xl font-bold text-green-500 uppercase tracking-widest">Like</span>
+            <motion.div style={{ opacity: likeOpacity }} className="absolute top-8 left-8 z-30 transform -rotate-12 border-4 border-green-500 rounded-lg p-2 px-4 shadow-lg bg-black/30 backdrop-blur-sm">
+                <span className="text-4xl font-black text-green-500 uppercase tracking-widest">Like</span>
             </motion.div>
 
-            <motion.div style={{ opacity: nopeOpacity }} className="absolute top-8 right-8 z-30 transform rotate-12 border-4 border-red-500 rounded-lg p-2 px-4 shadow-lg bg-black/20 backdrop-blur-sm">
-                <span className="text-4xl font-bold text-red-500 uppercase tracking-widest">Nope</span>
+            <motion.div style={{ opacity: nopeOpacity }} className="absolute top-8 right-8 z-30 transform rotate-12 border-4 border-red-500 rounded-lg p-2 px-4 shadow-lg bg-black/30 backdrop-blur-sm">
+                <span className="text-4xl font-black text-red-500 uppercase tracking-widest">Nope</span>
             </motion.div>
 
-            <motion.div style={{ opacity: superLikeOpacity }} className="absolute bottom-20 left-1/2 -translate-x-1/2 z-30 border-4 border-blue-500 rounded-lg p-2 px-4 shadow-lg bg-black/20 backdrop-blur-sm">
-                <span className="text-2xl font-bold text-blue-500 uppercase tracking-widest">Super Like</span>
+            <motion.div style={{ opacity: superLikeOpacity }} className="absolute bottom-20 left-1/2 -translate-x-1/2 z-30 border-4 border-blue-500 rounded-lg p-2 px-4 shadow-lg bg-black/30 backdrop-blur-sm flex items-center gap-2">
+                <Star className="text-blue-500" size={24} fill="currentColor" />
+                <span className="text-2xl font-black text-blue-500 uppercase tracking-widest">Super</span>
             </motion.div>
 
-            <motion.div style={{ opacity: maybeOpacity }} className="absolute top-1/2 left-1/2 -translate-x-1/2 z-30 border-4 border-yellow-500 rounded-lg p-2 px-4 shadow-lg bg-black/20 backdrop-blur-sm">
-                <span className="text-2xl font-bold text-yellow-500 uppercase tracking-widest">Maybe</span>
+            <motion.div style={{ opacity: maybeOpacity }} className="absolute top-1/2 left-1/2 -translate-x-1/2 z-30 border-4 border-yellow-500 rounded-lg p-2 px-4 shadow-lg bg-black/30 backdrop-blur-sm">
+                <span className="text-2xl font-black text-yellow-500 uppercase tracking-widest">Maybe</span>
             </motion.div>
 
-            {/* Image */}
-            <div className="relative w-full h-full pointer-events-none select-none">
+            {/* Image - Use object-contain for landscape, object-cover for portrait */}
+            <div className="relative w-full h-full pointer-events-none select-none bg-black flex items-center justify-center">
                 <Image
                     src={photo.url}
                     alt="Photo"
                     fill
-                    className="object-cover pointer-events-none select-none h-full w-full"
+                    className={`pointer-events-none select-none ${isLandscape ? 'object-contain' : 'object-cover'}`}
                     draggable={false}
+                    sizes="(max-width: 768px) 100vw, 400px"
+                    priority={index === 0}
                 />
 
                 {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/0 to-black/60" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/60" />
 
                 {/* Photo ID/Details */}
-                <div className="absolute bottom-6 left-6 right-6 text-white">
-                    <h3 className="font-semibold text-lg drop-shadow-md">{photo.name || photo.id}</h3>
+                <div className="absolute bottom-6 left-6 right-6 text-white z-20">
+                    <h3 className="font-bold text-lg drop-shadow-lg">{photo.name || photo.id}</h3>
                 </div>
             </div>
         </motion.div>

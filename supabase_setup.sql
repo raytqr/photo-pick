@@ -2,14 +2,19 @@
 create table public.profiles (
   id uuid not null references auth.users on delete cascade,
   email text,
+  photographer_name text, -- NEW: Display name for photographer
   logo_url text,
   bio text,
   whatsapp_number text,
   portfolio_urls text[],
+  -- WA Message Templates
+  wa_header text default 'Halo! Berikut pilihan foto dari client:', -- NEW
+  wa_footer text default 'Terima kasih telah memilih kami! 📸', -- NEW
   -- Subscription fields
   subscription_tier text default 'free', -- 'free', 'starter', 'pro', 'business'
   subscription_expires_at timestamptz,
   events_remaining int default 0,
+  total_events_created int default 0, -- NEW: Track total events even if deleted
   created_at timestamptz default now(),
   primary key (id)
 );
@@ -49,6 +54,7 @@ create table public.events (
   photo_limit int default 50,
   whatsapp_number text,
   thumbnail_url text,
+  is_deleted boolean default false, -- Soft delete
   created_at timestamptz default now(),
   primary key (id),
   unique(slug)
@@ -73,19 +79,33 @@ create table public.selections (
   event_id uuid not null references public.events(id) on delete cascade,
   photo_id uuid not null references public.photos(id) on delete cascade,
   client_session_id text not null, -- To identify client browser/session
-  status text not null check (status in ('selected', 'maybe', 'rejected')),
+  status text not null check (status in ('selected', 'superLiked', 'maybe', 'rejected')), -- Added superLiked
   created_at timestamptz default now(),
   primary key (id),
   unique(event_id, photo_id, client_session_id) -- Prevent duplicate votes per session
 );
 
--- 5. Enable Row Level Security (RLS)
+-- 5. Create Submissions Table (NEW: For storing client WA submissions)
+create table public.submissions (
+  id uuid not null default gen_random_uuid(),
+  event_id uuid not null references public.events(id) on delete cascade,
+  submission_code text unique not null, -- Unique code for photographer to retrieve
+  selected_photos text[] not null, -- Array of photo IDs/names
+  super_liked_photos text[], -- Array of super liked photo IDs/names
+  maybe_photos text[], -- Array of maybe photo IDs/names
+  client_name text,
+  submitted_at timestamptz default now(),
+  primary key (id)
+);
+
+-- 6. Enable Row Level Security (RLS)
 alter table public.profiles enable row level security;
 alter table public.events enable row level security;
 alter table public.photos enable row level security;
 alter table public.selections enable row level security;
+alter table public.submissions enable row level security;
 
--- 6. RLS Policies
+-- 7. RLS Policies
 
 -- Profiles: Public read, Owner write
 create policy "Public profiles are viewable by everyone." on public.profiles for select using (true);
@@ -110,7 +130,13 @@ create policy "Photographers can view selections." on public.selections for sele
   exists ( select 1 from public.events where id = event_id and photographer_id = auth.uid() )
 );
 
--- 7. Storage Buckets (Run this in SQL Editor too works often, or use Storage UI)
+-- Submissions: Public insert (Clients), Owner read
+create policy "Anyone can insert submissions." on public.submissions for insert with check (true);
+create policy "Photographers can view submissions." on public.submissions for select using (
+  exists ( select 1 from public.events where id = event_id and photographer_id = auth.uid() )
+);
+
+-- 8. Storage Buckets (Run this in SQL Editor too works often, or use Storage UI)
 insert into storage.buckets (id, name, public) values ('brand-assets', 'brand-assets', true);
 insert into storage.buckets (id, name, public) values ('event-photos', 'event-photos', true);
 
@@ -121,7 +147,7 @@ create policy "Auth Upload Brand Assets" on storage.objects for insert with chec
 create policy "Public Access Event Photos" on storage.objects for select using ( bucket_id = 'event-photos' );
 create policy "Auth Upload Event Photos" on storage.objects for insert with check ( bucket_id = 'event-photos' and auth.role() = 'authenticated' );
 
--- 8. [IMPORTANT] Auto-create Profile on Signup Trigger
+-- 9. [IMPORTANT] Auto-create Profile on Signup Trigger
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
@@ -134,3 +160,17 @@ $$ language plpgsql security definer;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- ============================================
+-- MIGRATION SQL (Run this if table already exists)
+-- ============================================
+-- Add new columns to existing profiles table:
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS photographer_name text;
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS wa_header text DEFAULT 'Halo! Berikut pilihan foto dari client:';
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS wa_footer text DEFAULT 'Terima kasih telah memilih kami! 📸';
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS total_events_created int DEFAULT 0;
+-- ALTER TABLE public.events ADD COLUMN IF NOT EXISTS is_deleted boolean DEFAULT false;
+-- 
+-- Add superLiked to selections status check:
+-- ALTER TABLE public.selections DROP CONSTRAINT IF EXISTS selections_status_check;
+-- ALTER TABLE public.selections ADD CONSTRAINT selections_status_check CHECK (status IN ('selected', 'superLiked', 'maybe', 'rejected'));

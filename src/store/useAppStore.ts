@@ -9,7 +9,7 @@ export interface Photo {
     height?: number;
 }
 
-export type PhotoStatus = 'source' | 'selected' | 'maybe' | 'rejected';
+export type PhotoStatus = 'source' | 'selected' | 'maybe' | 'rejected' | 'superLiked';
 
 interface AppState {
     // Photographer Setup
@@ -31,6 +31,7 @@ interface AppState {
     selectedPhotos: Photo[];
     maybePhotos: Photo[];
     rejectedPhotos: Photo[];
+    superLikedPhotos: Photo[]; // New: Super Like category
 
     // History for Undo
     history: { photoId: string; from: PhotoStatus; to: PhotoStatus }[];
@@ -72,6 +73,7 @@ const saveSelections = (eventSlug: string, data: {
     selectedPhotos: Photo[];
     maybePhotos: Photo[];
     rejectedPhotos: Photo[];
+    superLikedPhotos: Photo[];
     sourceImages: Photo[];
 }) => {
     if (typeof window === 'undefined') return;
@@ -99,6 +101,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
     selectedPhotos: [],
     maybePhotos: [],
     rejectedPhotos: [],
+    superLikedPhotos: [], // New
     history: [],
 
     setEventDetails: (details) => set((state) => ({ ...state, ...details })),
@@ -110,6 +113,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
             selectedPhotos: [],
             maybePhotos: [],
             rejectedPhotos: [],
+            superLikedPhotos: [],
             history: [],
             isSetupComplete: true
         });
@@ -121,6 +125,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
             selectedPhotos: [],
             maybePhotos: [],
             rejectedPhotos: [],
+            superLikedPhotos: [],
             history: [],
             isSetupComplete: true,
             ...eventDetails
@@ -138,12 +143,14 @@ export const useAppStore = create<AppState>()((set, get) => ({
             const validSelected = (saved.selectedPhotos || []).filter((p: Photo) => photoIds.has(p.id));
             const validMaybe = (saved.maybePhotos || []).filter((p: Photo) => photoIds.has(p.id));
             const validRejected = (saved.rejectedPhotos || []).filter((p: Photo) => photoIds.has(p.id));
+            const validSuperLiked = (saved.superLikedPhotos || []).filter((p: Photo) => photoIds.has(p.id));
 
             // Get IDs of already categorized photos
             const categorizedIds = new Set([
                 ...validSelected.map((p: Photo) => p.id),
                 ...validMaybe.map((p: Photo) => p.id),
-                ...validRejected.map((p: Photo) => p.id)
+                ...validRejected.map((p: Photo) => p.id),
+                ...validSuperLiked.map((p: Photo) => p.id)
             ]);
 
             // Source is all photos not yet categorized
@@ -154,6 +161,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
                 selectedPhotos: validSelected,
                 maybePhotos: validMaybe,
                 rejectedPhotos: validRejected,
+                superLikedPhotos: validSuperLiked,
                 history: [],
                 isSetupComplete: true,
                 ...eventDetails
@@ -165,6 +173,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
                 selectedPhotos: [],
                 maybePhotos: [],
                 rejectedPhotos: [],
+                superLikedPhotos: [],
                 history: [],
                 isSetupComplete: true,
                 ...eventDetails
@@ -180,6 +189,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
                     case 'selected': return state.selectedPhotos;
                     case 'maybe': return state.maybePhotos;
                     case 'rejected': return state.rejectedPhotos;
+                    case 'superLiked': return state.superLikedPhotos;
                     default: return [];
                 }
             };
@@ -197,6 +207,10 @@ export const useAppStore = create<AppState>()((set, get) => ({
                 newState = {
                     sourceImages: [photo, ...state.sourceImages],
                 };
+            } else if (to === 'superLiked') {
+                newState = {
+                    superLikedPhotos: [photo, ...state.superLikedPhotos]
+                };
             } else {
                 const targetList = state[`${to}Photos` as 'selectedPhotos' | 'maybePhotos' | 'rejectedPhotos'];
                 newState = {
@@ -206,6 +220,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
             if (from === 'source') {
                 newState.sourceImages = newSourceList;
+            } else if (from === 'superLiked') {
+                newState.superLikedPhotos = newSourceList;
             } else {
                 newState[`${from}Photos` as 'selectedPhotos' | 'maybePhotos' | 'rejectedPhotos'] = newSourceList;
             }
@@ -224,6 +240,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
                         selectedPhotos: currentState.selectedPhotos,
                         maybePhotos: currentState.maybePhotos,
                         rejectedPhotos: currentState.rejectedPhotos,
+                        superLikedPhotos: currentState.superLikedPhotos,
                         sourceImages: currentState.sourceImages
                     });
                 }, 0);
@@ -247,6 +264,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
                     case 'selected': return currentState.selectedPhotos;
                     case 'maybe': return currentState.maybePhotos;
                     case 'rejected': return currentState.rejectedPhotos;
+                    case 'superLiked': return currentState.superLikedPhotos;
                     default: return [];
                 }
             };
@@ -264,9 +282,11 @@ export const useAppStore = create<AppState>()((set, get) => ({
             };
 
             if (to === 'source') updates.sourceImages = newCurrentList;
+            else if (to === 'superLiked') updates.superLikedPhotos = newCurrentList;
             else updates[`${to}Photos` as 'selectedPhotos' | 'maybePhotos' | 'rejectedPhotos'] = newCurrentList;
 
             if (from === 'source') updates.sourceImages = [photo, ...targetOriginalList];
+            else if (from === 'superLiked') updates.superLikedPhotos = [photo, ...targetOriginalList];
             else updates[`${from}Photos` as 'selectedPhotos' | 'maybePhotos' | 'rejectedPhotos'] = [photo, ...targetOriginalList];
 
             // Save after undo
@@ -278,6 +298,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
                         selectedPhotos: latestState.selectedPhotos,
                         maybePhotos: latestState.maybePhotos,
                         rejectedPhotos: latestState.rejectedPhotos,
+                        superLikedPhotos: latestState.superLikedPhotos,
                         sourceImages: latestState.sourceImages
                     });
                 }, 0);
@@ -292,6 +313,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
         selectedPhotos: [],
         maybePhotos: [],
         rejectedPhotos: [],
+        superLikedPhotos: [],
         history: [],
         isSetupComplete: false
     })

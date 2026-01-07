@@ -10,7 +10,7 @@ import { PhotographerModal } from "@/components/photographer-modal";
 import { OnboardingModal } from "@/components/onboarding-modal";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, AlertTriangle, Send, MessageCircle, Grid3X3 } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Send, MessageCircle, Grid3X3, Star } from "lucide-react";
 import Link from "next/link";
 
 export function ClientSelectionApp() {
@@ -18,7 +18,7 @@ export function ClientSelectionApp() {
     const [isInfoOpen, setIsInfoOpen] = useState(false);
 
     const store = useAppStore();
-    const { sourceImages, selectedPhotos, photoLimit, whatsappNumber, eventSlug, movePhoto } = store;
+    const { sourceImages, selectedPhotos, superLikedPhotos, maybePhotos, photoLimit, whatsappNumber, eventSlug, movePhoto } = store;
 
     const visibleCards = sourceImages.slice(0, 3);
     const isDeckEmpty = sourceImages.length === 0;
@@ -29,19 +29,40 @@ export function ClientSelectionApp() {
 
         let toStatus: PhotoStatus = 'rejected';
         if (direction === 'right') toStatus = 'selected';
-        if (direction === 'up') toStatus = 'selected';
+        if (direction === 'up') toStatus = 'superLiked'; // Super Like!
         if (direction === 'down') toStatus = 'maybe';
 
         movePhoto(topCard.id, 'source', toStatus);
     };
 
-    const selectedCount = selectedPhotos.length;
-    const isOverLimit = selectedCount > photoLimit;
+    // Total selected includes regular selected + super liked
+    const totalSelected = selectedPhotos.length + superLikedPhotos.length;
+    const isOverLimit = totalSelected > photoLimit;
     const remainingCards = sourceImages.length;
 
     const generateWhatsAppLink = () => {
-        const names = selectedPhotos.map(p => p.name || p.id).join('\n• ');
-        const text = `Hi! 👋\n\nI've selected ${selectedCount} photos:\n\n• ${names}\n\nThank you!`;
+        let text = `Hi! 👋\n\nI've finished selecting my photos:\n\n`;
+
+        // Super Liked (most important)
+        if (superLikedPhotos.length > 0) {
+            const superLikeNames = superLikedPhotos.map(p => p.name || p.id).join('\n⭐ ');
+            text += `⭐ SUPER LIKE (${superLikedPhotos.length}):\n⭐ ${superLikeNames}\n\n`;
+        }
+
+        // Regular Selected
+        if (selectedPhotos.length > 0) {
+            const selectedNames = selectedPhotos.map(p => p.name || p.id).join('\n✅ ');
+            text += `✅ Selected (${selectedPhotos.length}):\n✅ ${selectedNames}\n\n`;
+        }
+
+        // Maybe (optional)
+        if (maybePhotos.length > 0) {
+            const maybeNames = maybePhotos.map(p => p.name || p.id).join('\n🤔 ');
+            text += `🤔 Maybe (${maybePhotos.length}):\n🤔 ${maybeNames}\n\n`;
+        }
+
+        text += `Total: ${totalSelected} photos selected\n\nThank you! 📸`;
+
         const phone = whatsappNumber.replace(/\D/g, '');
         return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
     };
@@ -127,17 +148,32 @@ export function ClientSelectionApp() {
                                 <span className="text-sm text-gray-500">Maximum</span>
                                 <span className="font-semibold tabular-nums">{photoLimit}</span>
                             </div>
+
+                            {superLikedPhotos.length > 0 && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-gray-500 flex items-center gap-1">
+                                        <Star size={14} className="text-blue-500" /> Super Liked
+                                    </span>
+                                    <span className="font-bold text-blue-500 tabular-nums">{superLikedPhotos.length}</span>
+                                </div>
+                            )}
+
                             <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-500">Your Selection</span>
+                                <span className="text-sm text-gray-500">Selected</span>
+                                <span className="font-semibold tabular-nums text-green-500">{selectedPhotos.length}</span>
+                            </div>
+
+                            <div className="flex justify-between items-center border-t dark:border-gray-800 pt-4">
+                                <span className="text-sm text-gray-500">Total</span>
                                 <span className={`font-bold text-lg tabular-nums ${isOverLimit ? 'text-red-500' : 'text-green-500'}`}>
-                                    {selectedCount}
+                                    {totalSelected}
                                 </span>
                             </div>
 
                             {isOverLimit && (
                                 <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
                                     <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-                                    <span>Please remove {selectedCount - photoLimit} photo(s) to proceed.</span>
+                                    <span>Please remove {totalSelected - photoLimit} photo(s) to proceed.</span>
                                 </div>
                             )}
                         </div>
