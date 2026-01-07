@@ -36,8 +36,8 @@ const fadeInUp = {
 const features = [
   {
     icon: Smartphone,
-    title: "Tinder-Style Swipe",
-    description: "Make selection addictive. Clients swipe right to select, left to reject. It's that simple.",
+    title: "Swipe & Done",
+    description: "Make selection addictive. Clients swipe right to select, left to reject. Sat-Set, done.",
     color: "from-purple-500 to-pink-500"
   },
   {
@@ -54,7 +54,7 @@ const features = [
   },
   {
     icon: Zap,
-    title: "Zero Latency",
+    title: "Sat-Set Speed",
     description: "Optimized delivery engine ensures high-res previews load instantly even on slow connections.",
     color: "from-amber-500 to-orange-500"
   },
@@ -76,7 +76,7 @@ const steps = [
   {
     number: "01",
     title: "Connect Folder",
-    description: "Paste your Google Drive public folder link into VibeSelect."
+    description: "Paste your Google Drive public folder link into SatSetPic."
   },
   {
     number: "02",
@@ -91,7 +91,7 @@ const steps = [
   {
     number: "04",
     title: "Instant Report",
-    description: "Receive the final selection list on WhatsApp instantly."
+    description: "Receive the final selection list on WhatsApp instantly. SatSet!"
   }
 ];
 
@@ -130,8 +130,8 @@ function MobileNav() {
           <div className="flex flex-col h-full p-6">
             <div className="flex justify-between items-center mb-12">
               <Link href="/" className="flex items-center gap-3">
-                <Image src="/logo-premium.png" alt="VibeSelect" width={40} height={40} className="rounded-lg" />
-                <span className="text-xl font-black tracking-tighter text-white">VibeSelect</span>
+                <Image src="/logo-premium.png" alt="SatSetPic" width={40} height={40} className="rounded-lg" />
+                <span className="text-xl font-black tracking-tighter text-white">SatSetPic</span>
               </Link>
               <button onClick={() => setIsOpen(false)} className="p-2 rounded-lg hover:bg-white/10">
                 <X size={24} className="text-white" />
@@ -274,9 +274,9 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-12 h-12 rounded-xl glass border-white/10 flex items-center justify-center p-2 group-hover:scale-110 transition-transform duration-500 shadow-lg shadow-purple-500/20">
-              <Image src="/logo-premium.png" alt="VibeSelect" width={40} height={40} className="rounded-lg object-contain" />
+              <Image src="/logo-premium.png" alt="SatSetPic" width={40} height={40} className="rounded-lg object-contain" />
             </div>
-            <span className="text-xl font-black tracking-tighter">VibeSelect</span>
+            <span className="text-xl font-black tracking-tighter">SatSetPic</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
@@ -456,7 +456,7 @@ export default function LandingPage() {
                 <Workflow size={200} className="text-purple-500 opacity-20 absolute" />
                 <div className="relative z-10 text-center">
                   <Smartphone size={80} className="mx-auto mb-6 text-pink-500" />
-                  <h3 className="text-2xl font-bold uppercase tracking-tighter">Powered by<br />VibeSelect</h3>
+                  <h3 className="text-2xl font-bold uppercase tracking-tighter">Powered by<br />SatSetPic</h3>
                 </div>
               </div>
 
@@ -503,8 +503,8 @@ export default function LandingPage() {
                   key={option.key}
                   onClick={() => setBillingCycle(option.key as any)}
                   className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all ${billingCycle === option.key
-                      ? 'bg-white text-black'
-                      : 'text-gray-400 hover:text-white'
+                    ? 'bg-white text-black'
+                    : 'text-gray-400 hover:text-white'
                     }`}
                 >
                   {option.label}
@@ -603,13 +603,13 @@ export default function LandingPage() {
             <div className="col-span-2 lg:col-span-2 space-y-6">
               <Link href="/" className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl glass border-white/10 flex items-center justify-center p-1.5 shadow-lg shadow-purple-500/10">
-                  <Image src="/logo-premium.png" alt="VibeSelect" width={32} height={32} className="rounded-lg object-contain" />
+                  <Image src="/logo-premium.png" alt="SatSetPic" width={32} height={32} className="rounded-lg object-contain" />
                 </div>
-                <span className="text-xl font-black tracking-tighter">VibeSelect</span>
+                <span className="text-xl font-black tracking-tighter">SatSetPic</span>
               </Link>
               <p className="text-gray-500 max-w-sm leading-relaxed">
-                The modern standard for photo selection. We help professional photographers
-                deliver stunning, interactive galleries that clients love swiping through.
+                The fastest standard for photo selection. We help professional photographers
+                deliver stunning, interactive galleries. SatSet and done.
               </p>
               <div className="flex gap-4">
                 <Link href="https://instagram.com/ray_tqr" target="_blank">
@@ -661,10 +661,10 @@ export default function LandingPage() {
           </div>
 
           <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-600 font-medium">
-            <p>© 2026 VibeSelect Team. All rights reserved.</p>
+            <p>© 2026 SatSetPic Team. All rights reserved.</p>
             <div className="flex gap-8">
-              <span>Designed for Creatives</span>
-              <span>v1.0.6-stable</span>
+              <span>SatSet Your Workflow</span>
+              <span>v1.0.7-beta</span>
             </div>
           </div>
         </div>

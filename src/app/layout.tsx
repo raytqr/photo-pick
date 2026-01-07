@@ -8,8 +8,8 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "VibeSelect — Photo Selection Made Simple",
-  description: "A Tinder-style photo selection app for photographers and clients.",
+  title: "SatSetPic — Photo Selection Made Fast",
+  description: "The fastest way for photographers to share and select photos. SatSet, done.",
   icons: {
     icon: "/logo.png",
   },
