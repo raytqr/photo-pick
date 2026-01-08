@@ -58,7 +58,7 @@ export async function middleware(request: NextRequest) {
 
     // 3. Admin route protection with separate admin session
     if (path.startsWith('/admin')) {
-        const ADMIN_EMAIL = 'rayhanwhyut27@gmail.com';
+        const ADMIN_EMAIL = 'rayhanwahyut27@gmail.com';
         const ADMIN_SESSION_COOKIE = 'admin_session';
         const ADMIN_SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 hours in ms
 

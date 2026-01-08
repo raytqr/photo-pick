@@ -9,7 +9,7 @@ import Link from "next/link";
 import { Shield, Eye, EyeOff, AlertTriangle, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
-const ADMIN_EMAIL = "rayhanwhyut27@gmail.com";
+const ADMIN_EMAIL = "rayhanwahyut27@gmail.com";
 
 export default function AdminLoginPage() {
     const [email, setEmail] = useState("");

@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase-server";
 
-const ADMIN_EMAIL = "rayhanwhyut27@gmail.com";
+const ADMIN_EMAIL = "rayhanwahyut27@gmail.com";
 
 // Helper to check if current user is admin
 async function isAdmin() {
