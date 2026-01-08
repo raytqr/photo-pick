@@ -18,7 +18,8 @@ import {
     MessageCircle,
     UserPlus,
     Menu,
-    X
+    X,
+    BookOpen
 } from "lucide-react";
 import Image from "next/image";
 import { isRestricted } from "@/lib/subscription-utils";
@@ -49,6 +50,7 @@ export function DashboardSidebar({
         { href: "/dashboard/create", label: "New Event", icon: PlusCircle },
         { href: "/dashboard/profile", label: "Profile & Branding", icon: User },
         { href: "/dashboard/pricing", label: "Pricing", icon: CreditCard },
+        { href: "/dashboard/guide", label: "Guide", icon: BookOpen },
     ];
 
     const displayName = photographerName || "Photographer";

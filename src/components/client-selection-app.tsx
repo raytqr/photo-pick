@@ -65,7 +65,16 @@ export function ClientSelectionApp() {
             text += `✅ Selected (${selectedPhotos.length}):\n✅ ${selectedNames}\n\n`;
         }
 
-        text += `Total: ${totalSelected} photos selected\n\nThank you! 📸`;
+        text += `Total: ${totalSelected} photos selected\n\n`;
+
+        // PC COPY PASTE STRING (For Search & Drag workflow)
+        const allSelected = [...superLikedPhotos, ...selectedPhotos];
+        if (allSelected.length > 0) {
+            const searchString = allSelected.map(p => p.name || p.id).join(' OR ');
+            text += `🖥️ *PC SEARCH STRING (For Lightroom Import):*\n\n${searchString}\n\n`;
+        }
+
+        text += `Thank you! 📸`;
 
         const phone = whatsappNumber.replace(/\D/g, '');
         return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
