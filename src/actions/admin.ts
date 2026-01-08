@@ -110,7 +110,10 @@ export async function getRedeemCodes() {
         return { error: "Unauthorized", codes: [] };
     }
 
-    const supabase = await createClient();
+    // Use admin client to view all codes regardless of RLS
+    const adminSupabase = createAdminClient();
+    const supabase = adminSupabase || await createClient();
+
     const { data, error } = await supabase
         .from("redeem_codes")
         .select("*")
@@ -135,8 +138,12 @@ export async function createRedeemCode(formData: {
         return { error: "Unauthorized" };
     }
 
-    const supabase = await createClient();
-    const { error } = await supabase.from("redeem_codes").insert({
+    const adminSupabase = createAdminClient();
+    if (!adminSupabase) {
+        return { error: "Admin client not configured" };
+    }
+
+    const { error } = await adminSupabase.from("redeem_codes").insert({
         code: formData.code.toLowerCase().replace(/\s/g, ""),
         tier: formData.tier,
         events_granted: formData.events_granted,
@@ -170,8 +177,12 @@ export async function updateRedeemCode(
         return { error: "Unauthorized" };
     }
 
-    const supabase = await createClient();
-    const { error } = await supabase
+    const adminSupabase = createAdminClient();
+    if (!adminSupabase) {
+        return { error: "Admin client not configured" };
+    }
+
+    const { error } = await adminSupabase
         .from("redeem_codes")
         .update(updates)
         .eq("id", id);
@@ -188,8 +199,12 @@ export async function deleteRedeemCode(id: string) {
         return { error: "Unauthorized" };
     }
 
-    const supabase = await createClient();
-    const { error } = await supabase.from("redeem_codes").delete().eq("id", id);
+    const adminSupabase = createAdminClient();
+    if (!adminSupabase) {
+        return { error: "Admin client not configured" };
+    }
+
+    const { error } = await adminSupabase.from("redeem_codes").delete().eq("id", id);
 
     if (error) {
         return { error: error.message };
