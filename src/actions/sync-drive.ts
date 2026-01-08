@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase-server";
+import { createClient, createAdminClient } from "@/lib/supabase-server";
 
 // Helper to extract Folder ID from Google Drive URL
 function extractFolderId(url: string): string | null {
@@ -122,10 +122,14 @@ export async function reSyncPhotosFromDrive(eventId: string, driveFolderUrl: str
         return { success: false, error: "Unauthorized: You do not own this event." };
     }
 
-    const supabase = await createClient();
+    // Use Admin Client to delete photos (bypassing RLS delete restrictions)
+    const adminSupabase = createAdminClient();
+    if (!adminSupabase) {
+        return { success: false, error: "Server Configuration Error: Admin client unavailable." };
+    }
 
     // First, delete all existing photos for this event
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await adminSupabase
         .from('photos')
         .delete()
         .eq('event_id', eventId);
