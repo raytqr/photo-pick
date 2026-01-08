@@ -11,6 +11,11 @@ interface SyncDriveButtonProps {
     driveLink: string | null;
 }
 
+import { reSyncPhotosFromDrive } from "@/actions/sync-drive";
+import { RotateCcw } from "lucide-react";
+
+// ... existing imports
+
 export function SyncDriveButton({ eventId, driveLink }: SyncDriveButtonProps) {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
@@ -35,10 +40,42 @@ export function SyncDriveButton({ eventId, driveLink }: SyncDriveButtonProps) {
         setLoading(false);
     };
 
+    const handleReSync = async () => {
+        if (!driveLink) return;
+
+        if (!confirm("⚠️ Force Resync will DELETE all current photos and re-import them from Drive.\n\nExisting selections might be affected if filenames changed.\n\nContinue?")) {
+            return;
+        }
+
+        setLoading(true);
+        const result = await reSyncPhotosFromDrive(eventId, driveLink); // Use the Force Resync action
+
+        if (result.success) {
+            alert(`Success! Re-synced ${result.count} photos.`);
+            router.refresh();
+        } else {
+            alert(`Resync failed: ${result.error}`);
+        }
+        setLoading(false);
+    };
+
     return (
-        <Button onClick={handleSync} disabled={loading || !driveLink} className="gap-2 rounded-full shadow-md">
-            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
-            {loading ? "Syncing..." : "Sync from Drive"}
-        </Button>
+        <div className="flex items-center gap-2">
+            <Button onClick={handleSync} disabled={loading || !driveLink} className="gap-2 rounded-full shadow-md">
+                <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+                {loading ? "Syncing..." : "Sync from Drive"}
+            </Button>
+
+            <Button
+                onClick={handleReSync}
+                disabled={loading || !driveLink}
+                variant="outline"
+                size="icon"
+                className="rounded-full w-10 h-10 border-white/10 hover:bg-white/10 hover:text-red-400"
+                title="Force Resync (Delete & Re-import)"
+            >
+                <RotateCcw size={16} />
+            </Button>
+        </div>
     );
 }
