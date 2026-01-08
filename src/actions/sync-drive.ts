@@ -33,85 +33,64 @@ async function verifyEventOwnership(eventId: string) {
 }
 
 export async function syncPhotosFromDrive(eventId: string, driveFolderUrl: string) {
-    // 1. SECURITY CHECK: Verify Ownership FIRST
+    // 1. SECURITY CHECK
     const isOwner = await verifyEventOwnership(eventId);
-    if (!isOwner) {
-        return { success: false, error: "Unauthorized: You do not own this event." };
-    }
+    if (!isOwner) return { success: false, error: "Unauthorized" };
 
-    const supabase = await createClient();
     const apiKey = process.env.GOOGLE_API_KEY;
-
-    if (!apiKey) {
-        return { success: false, error: "Google API Key is not configured. Contact admin." };
-    }
+    if (!apiKey) return { success: false, error: "Missing API Key" };
 
     const folderId = extractFolderId(driveFolderUrl);
-    if (!folderId) {
-        return { success: false, error: "Invalid Google Drive folder link." };
-    }
+    if (!folderId) return { success: false, error: "Invalid Link" };
 
     try {
-        let allFiles: DriveFile[] = [];
-        let pageToken: string | undefined = undefined;
-        let pageCount = 0;
-        const MAX_PAGES = 50; // Safety break: Max ~50,000 files
+        const allFiles = await fetchDriveFiles(folderId, apiKey);
+        if (allFiles.length === 0) return { success: false, error: "No images found." };
 
-        // Fetch ALL files using pagination (Google limits to 1000 per page max)
-        while (true) {
-            if (pageCount >= MAX_PAGES) {
-                console.warn(`Sync stopped after ${MAX_PAGES} pages (possible safety break).`);
-                break;
-            }
-
-            const url: string = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+(mimeType+contains+'image/')&fields=nextPageToken,files(id,name,mimeType,thumbnailLink)&pageSize=1000&key=${apiKey}${pageToken ? `&pageToken=${pageToken}` : ''}`;
-
-            const res: Response = await fetch(url);
-            const json: { files?: DriveFile[]; nextPageToken?: string; error?: { message?: string } } = await res.json();
-
-            if (json.error) {
-                return { success: false, error: json.error.message || "Failed to fetch from Google Drive." };
-            }
-
-            allFiles = allFiles.concat(json.files || []);
-            pageToken = json.nextPageToken;
-            pageCount++;
-
-            if (!pageToken) break;
-        }
-
-        if (allFiles.length === 0) {
-            return { success: false, error: "No images found in the folder. Make sure it's public." };
-        }
-
-        // Prepare records for insertion
-        const photosToInsert = allFiles.map(file => {
-            // Use permanent Google image URL format that doesn't expire
-            // Format: https://lh3.googleusercontent.com/d/{FILE_ID}
-            // Or: https://drive.google.com/uc?export=view&id={FILE_ID}
-            const permanentUrl = `https://drive.google.com/thumbnail?id=${file.id}&sz=w2000`;
-
-            return {
-                event_id: eventId,
-                url: permanentUrl,
-                name: file.name, // Original filename from Google Drive
-                width: 1200,
-                height: 1800
-            };
-        });
-
-        // Insert into Supabase
-        const { error: insertError } = await supabase.from('photos').insert(photosToInsert);
-
-        if (insertError) {
-            return { success: false, error: insertError.message };
-        }
-
-        return { success: true, count: photosToInsert.length };
-
-    } catch (err: any) {
-        return { success: false, error: err.message || "An unknown error occurred." };
+        return insertPhotos(eventId, allFiles);
+    } catch (e: any) {
+        return { success: false, error: e.message };
     }
+}
+
+// Helper: Verify Content Continuity (Prevent abusive event recycling)
+async function verifyContentContinuity(eventId: string, newDriveFiles: DriveFile[]) {
+    const supabase = createAdminClient();
+    if (!supabase) return true; // Fail open if admin client fails (avoids blocking valid users on sys error)
+
+    // 1. Get a sample of existing filenames (up to 50)
+    const { data: existingPhotos } = await supabase
+        .from('photos')
+        .select('name')
+        .eq('event_id', eventId)
+        .limit(50);
+
+    // If no existing photos, it's a fresh sync or empty event -> ALLOW
+    if (!existingPhotos || existingPhotos.length === 0) {
+        return true;
+    }
+
+    // 2. Check for at least ONE match
+    // We strictly require that the new batch isn't a 100% replacement of the sample.
+    // This allows:
+    // - Adding new photos (old names still exist)
+    // - Updating some photos (some old names still exist)
+    // - Deleting some photos (some old names still exist)
+    // But BLOCKS:
+    // - Deleting ALL old photos and uploading completely new ones (Event Swap)
+
+    // Create a Set for O(1) lookup
+    const newFileNames = new Set(newDriveFiles.map(f => f.name));
+
+    const hasMatch = existingPhotos.some(photo => newFileNames.has(photo.name));
+
+    if (!hasMatch) {
+        // Double check: If the sample size was small, maybe we just missed it?
+        // But we fetched 50. If user replaced 50/50 files, that's a swap.
+        return false;
+    }
+
+    return true;
 }
 
 // Re-sync: Delete existing photos and import fresh ones with permanent URLs
@@ -122,13 +101,47 @@ export async function reSyncPhotosFromDrive(eventId: string, driveFolderUrl: str
         return { success: false, error: "Unauthorized: You do not own this event." };
     }
 
-    // Use Admin Client to delete photos (bypassing RLS delete restrictions)
-    const adminSupabase = createAdminClient();
-    if (!adminSupabase) {
-        return { success: false, error: "Server Configuration Error: Admin client unavailable." };
+    // 2. PRE-FETCH DRIVE FILES (Needed for verification before deletion)
+    const apiKey = process.env.GOOGLE_API_KEY;
+    const folderId = extractFolderId(driveFolderUrl);
+
+    if (!apiKey || !folderId) {
+        return { success: false, error: "Configuration Error: Check API Key and Link." };
     }
 
-    // First, delete all existing photos for this event
+    let allFiles: DriveFile[] = [];
+    try {
+        // Reuse the fetch logic? Ideally refactor to shared function, but for now duplicate the fetch part or call a helper.
+        // Let's quickly re-implement the fetch loop here to be safe and isolated, or refactor `syncPhotosFromDrive` to accept `files`?
+        // Refactoring `syncPhotosFromDrive` is cleaner.
+        // Let's modify `syncPhotosFromDrive` to optionally accept `preFetchedFiles`.
+        // DOING: Extract fetch logic to helper `fetchDriveFiles`.
+
+        allFiles = await fetchDriveFiles(folderId, apiKey);
+        if (allFiles.length === 0) {
+            return { success: false, error: "No images found in Drive folder." };
+        }
+
+    } catch (e: any) {
+        return { success: false, error: "Failed to fetch Drive files: " + e.message };
+    }
+
+    // 3. SECURITY CHECK: Content Continuity
+    const isContinuous = await verifyContentContinuity(eventId, allFiles);
+    if (!isContinuous) {
+        return {
+            success: false,
+            error: "Sync Rejected: It looks like you replaced all photos. To use a different set of photos, please Create a New Event."
+        };
+    }
+
+    // 4. PROCEED: Delete & Insert
+    const adminSupabase = createAdminClient();
+    if (!adminSupabase) {
+        return { success: false, error: "Server Error: Admin client unavailable." };
+    }
+
+    // Delete old
     const { error: deleteError } = await adminSupabase
         .from('photos')
         .delete()
@@ -138,6 +151,54 @@ export async function reSyncPhotosFromDrive(eventId: string, driveFolderUrl: str
         return { success: false, error: `Failed to clear old photos: ${deleteError.message}` };
     }
 
-    // Then sync fresh photos (ownership check is redundant but safe)
-    return syncPhotosFromDrive(eventId, driveFolderUrl);
+    // Insert new (using the pre-fetched files to save API calls)
+    return insertPhotos(eventId, allFiles);
+}
+
+// --- Helpers to refactor `syncPhotosFromDrive` ---
+
+async function fetchDriveFiles(folderId: string, apiKey: string): Promise<DriveFile[]> {
+    let allFiles: DriveFile[] = [];
+    let pageToken: string | undefined = undefined;
+    let pageCount = 0;
+    const MAX_PAGES = 50;
+
+    while (true) {
+        if (pageCount >= MAX_PAGES) break;
+        const url: string = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+(mimeType+contains+'image/')&fields=nextPageToken,files(id,name,mimeType,thumbnailLink)&pageSize=1000&key=${apiKey}${pageToken ? `&pageToken=${pageToken}` : ''}`;
+
+        const res = await fetch(url);
+        const json = await res.json();
+
+        if (json.error) throw new Error(json.error.message);
+
+        allFiles = allFiles.concat(json.files || []);
+        pageToken = json.nextPageToken;
+        pageCount++;
+
+        if (!pageToken) break;
+    }
+    return allFiles;
+}
+
+async function insertPhotos(eventId: string, files: DriveFile[]) {
+    const supabase = await createClient();
+
+    // Chunking insertions to be safe with Supabase limits (e.g. 500 at a time)
+    const CHUNK_SIZE = 500;
+    for (let i = 0; i < files.length; i += CHUNK_SIZE) {
+        const chunk = files.slice(i, i + CHUNK_SIZE);
+        const photosToInsert = chunk.map(file => ({
+            event_id: eventId,
+            url: `https://drive.google.com/thumbnail?id=${file.id}&sz=w2000`,
+            name: file.name,
+            width: 1200, // Placeholder, would need metadata fetch for real dims
+            height: 1800
+        }));
+
+        const { error } = await supabase.from('photos').insert(photosToInsert);
+        if (error) return { success: false, error: error.message };
+    }
+
+    return { success: true, count: files.length };
 }
