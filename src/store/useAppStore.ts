@@ -28,6 +28,7 @@ interface AppState {
 
     // Client Actions
     sourceImages: Photo[]; // The deck to swipe
+    stashedImages: Photo[]; // Temporary storage for sourceImages when re-swiping a specific category
     selectedPhotos: Photo[];
     maybePhotos: Photo[];
     rejectedPhotos: Photo[];
@@ -45,6 +46,7 @@ interface AppState {
     undoLastAction: () => void;
 
     resetClientState: () => void;
+    restoreStashedImages: () => void; // New helper
 
     // Re-swipe Feature
     restartingFrom: PhotoStatus | null;
@@ -90,6 +92,7 @@ const saveSelections = (eventSlug: string, data: {
 };
 
 export const useAppStore = create<AppState>()((set, get) => ({
+    // ... (Initial Setup State remains same) ...
     // Initial Photographer State
     eventName: '',
     eventSlug: '',
@@ -103,10 +106,11 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
     // Initial Client State
     sourceImages: [],
+    stashedImages: [],
     selectedPhotos: [],
     maybePhotos: [],
     rejectedPhotos: [],
-    superLikedPhotos: [], // New
+    superLikedPhotos: [],
     history: [],
 
     // Re-swipe Feature
@@ -118,6 +122,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
         const mockPhotos = generateMockPhotos(30);
         set({
             sourceImages: mockPhotos,
+            stashedImages: [],
             selectedPhotos: [],
             maybePhotos: [],
             rejectedPhotos: [],
@@ -131,6 +136,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
     initializeRealData: (photos: Photo[], eventDetails: Partial<AppState>) => {
         set({
             sourceImages: photos,
+            stashedImages: [],
             selectedPhotos: [],
             maybePhotos: [],
             rejectedPhotos: [],
@@ -168,6 +174,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
             set({
                 sourceImages: remainingSource,
+                stashedImages: [],
                 selectedPhotos: validSelected,
                 maybePhotos: validMaybe,
                 rejectedPhotos: validRejected,
@@ -181,6 +188,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
             // No cache, initialize fresh
             set({
                 sourceImages: photos,
+                stashedImages: [],
                 selectedPhotos: [],
                 maybePhotos: [],
                 rejectedPhotos: [],
@@ -238,6 +246,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
                 newState[`${from}Photos` as 'selectedPhotos' | 'maybePhotos' | 'rejectedPhotos'] = newSourceList;
             }
 
+            // Check if we emptied source during a re-swipe session
+            const isEmptied = (from === 'source' && newSourceList.length === 0);
+
             const finalState = {
                 ...newState,
                 history: [...state.history, { photoId, from, to }]
@@ -260,6 +271,12 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
             return finalState;
         });
+
+        // Auto-restore stashed images if deck is empty after move
+        const updatedState = get();
+        if (updatedState.sourceImages.length === 0 && updatedState.restartingFrom !== null) {
+            updatedState.restoreStashedImages();
+        }
     },
 
     undoLastAction: () => {
@@ -328,7 +345,25 @@ export const useAppStore = create<AppState>()((set, get) => ({
         let newRejected = state.rejectedPhotos;
         let newSuperLiked = state.superLikedPhotos;
 
-        // Extract photos based on category
+        // If we are already in a restart session, first restore the stashed images to ensure we don't lose anything
+        // Or should we just combine?
+        // Let's safe-guard: if restartingFrom is not null, restore stash first.
+        let currentSource = state.sourceImages;
+        let currentStash = state.stashedImages;
+
+        if (state.restartingFrom !== null) {
+            // We were already re-swiping.
+            // If we switch categories mid-way, we should put current source back to original stashed?
+            // This gets complicated. 
+            // Better behavior: Dump current source back to stashed, then proceed.
+            currentStash = [...currentSource, ...currentStash];
+            currentSource = [];
+        } else {
+            // New session: Stash the current source (Not Reviewed)
+            currentStash = [...state.sourceImages];
+        }
+
+        // Extract photos based on category to restart
         if (category === 'selected') {
             photosToRestart = [...state.selectedPhotos];
             newSelected = [];
@@ -345,17 +380,14 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
         if (photosToRestart.length === 0) return;
 
-        // Add to source images (at the beginning so they are swiped first)
-        const newSource = [...photosToRestart, ...state.sourceImages];
-
         set({
-            sourceImages: newSource,
+            sourceImages: photosToRestart, // Only the category photos
+            stashedImages: currentStash,   // The previous "Not Reviewed" pile
             selectedPhotos: newSelected,
             maybePhotos: newMaybe,
             rejectedPhotos: newRejected,
             superLikedPhotos: newSuperLiked,
             restartingFrom: category,
-            // Clear history related to these photos? Ideally yes, but for now simplify.
         });
 
         // Save
@@ -366,13 +398,45 @@ export const useAppStore = create<AppState>()((set, get) => ({
                 maybePhotos: newMaybe,
                 rejectedPhotos: newRejected,
                 superLikedPhotos: newSuperLiked,
-                sourceImages: newSource
+                sourceImages: photosToRestart // We only save what's active usually? No, stash implies volatile state.
+                // NOTE: Stashing might affect persistence if user reloads.
+                // Ideally we persist stashedImages too.
+            });
+        }
+    },
+
+    restoreStashedImages: () => {
+        const state = get();
+        if (state.stashedImages.length === 0) {
+            set({ restartingFrom: null });
+            return;
+        }
+
+        const restoredSource = [...state.sourceImages, ...state.stashedImages];
+
+        set({
+            sourceImages: restoredSource,
+            stashedImages: [],
+            restartingFrom: null
+        });
+
+        // Save
+        const eventSlug = state.eventSlug;
+        if (eventSlug) {
+            const latestState = get(); // grab fresh selected/etc
+            saveSelections(eventSlug, {
+                selectedPhotos: latestState.selectedPhotos,
+                maybePhotos: latestState.maybePhotos,
+                rejectedPhotos: latestState.rejectedPhotos,
+                superLikedPhotos: latestState.superLikedPhotos,
+                sourceImages: restoredSource
             });
         }
     },
 
     resetClientState: () => set({
         sourceImages: [],
+        stashedImages: [],
         selectedPhotos: [],
         maybePhotos: [],
         rejectedPhotos: [],

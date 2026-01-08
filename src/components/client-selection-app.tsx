@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppStore, PhotoStatus } from "@/store/useAppStore";
 import { Header } from "@/components/client-header";
 import { SwipeCard } from "@/components/swipe-card";
@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, AlertTriangle, Send, MessageCircle, Grid3X3, Star, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { usePrevious } from "@/hooks/use-previous";
+import { toast } from "sonner";
 
 export function ClientSelectionApp() {
     const [viewMode, setViewMode] = useState<'swipe' | 'grid'>('swipe');
@@ -32,6 +34,14 @@ export function ClientSelectionApp() {
             <GridView setViewMode={setViewMode} />
         )
     }
+
+    const prevRestartingFrom = usePrevious(store.restartingFrom);
+
+    useEffect(() => {
+        if (prevRestartingFrom && !store.restartingFrom) {
+            toast.success("Re-Swipe session complete! Returning to main deck.");
+        }
+    }, [store.restartingFrom, prevRestartingFrom]);
 
     const handleSwipe = (direction: 'left' | 'right' | 'up' | 'down') => {
         if (visibleCards.length === 0) return;
