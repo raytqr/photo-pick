@@ -42,7 +42,7 @@ export async function getAllUsers() {
 
     const supabase = await createClient();
 
-    // Get all profiles with their events
+    // Get all profiles
     const { data: profiles, error } = await supabase
         .from("profiles")
         .select(`
@@ -53,7 +53,6 @@ export async function getAllUsers() {
             subscription_tier,
             subscription_expires_at,
             events_remaining,
-            total_events_created,
             created_at
         `)
         .order("created_at", { ascending: false });
@@ -90,6 +89,7 @@ export async function getAllUsers() {
                 events: eventsResult.data || [],
                 eventsCount: eventsResult.data?.length || 0,
                 photosCount: photosResult.count || 0,
+                total_events_created: eventsResult.data?.length || 0,
             };
         })
     );
