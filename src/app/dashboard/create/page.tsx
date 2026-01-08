@@ -85,40 +85,33 @@ export default function CreateEventPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        // Final Validation
-        if (eventsCount >= tierLimits.maxEvents) {
-            alert(`You have reached your limit of ${tierLimits.maxEvents} events this month. Please upgrade to create more.`);
-            return;
-        }
-
-        const limitInt = parseInt(photoLimit);
-        if (limitInt > tierLimits.maxPhotos) {
-            alert(`Your plan allows a maximum of ${tierLimits.maxPhotos} photos per event. Please upgrade for more.`);
-            return;
-        }
-
         setLoading(true);
 
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error("Not authenticated");
+            // Import Server Action (dynamically or at top level)
+            const { createEvent } = await import('@/actions/create-event');
 
-            const { data, error } = await supabase.from('events').insert({
-                photographer_id: user.id,
+            const result = await createEvent({
                 name,
-                slug: slug || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-                drive_link: driveLink,
-                photo_limit: limitInt,
-            }).select().single();
+                slug,
+                driveLink,
+                photoLimit: parseInt(photoLimit),
+            });
 
-            if (error) throw error;
+            if (!result.success) {
+                alert(result.error);
+                return;
+            }
 
-            router.push(`/dashboard/event/${data.id}`);
-            router.refresh();
+            // Success redirect moved to Server Action? 
+            // Better to keep redirect here for client-side navigation experience
+            if (result.eventId) {
+                router.push(`/dashboard/event/${result.eventId}`);
+                router.refresh(); // Refresh to update limits in navbar/sidebar
+            }
 
         } catch (err: any) {
-            alert(err.message);
+            alert(err.message || "Something went wrong.");
         } finally {
             setLoading(false);
         }
