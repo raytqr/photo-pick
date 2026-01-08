@@ -8,10 +8,23 @@ export async function middleware(request: NextRequest) {
         },
     })
 
+    // 0. Safety Check: Ensure Env Vars exist
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+        console.error('Middleware Error: Missing Supabase Environment Variables');
+        return NextResponse.next({
+            request: {
+                headers: request.headers,
+            }
+        });
+    }
+
     // Create a supabase client that can read/write cookies
     const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        supabaseUrl,
+        supabaseKey,
         {
             cookies: {
                 getAll() {
