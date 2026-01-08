@@ -1,7 +1,18 @@
 "use client";
 
 import { useState, useMemo } from "react";
-// ... (imports remain)
+import { Filter, Clock, Check, Star, HelpCircle, X, Play, RotateCcw, CheckCircle2, Maximize2 } from "lucide-react";
+import Image from "next/image";
+import { useAppStore, type Photo, type PhotoStatus } from "@/store/useAppStore";
+import { ImageViewer } from "@/components/image-viewer";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+type FilterType = 'all' | 'pending' | 'selected' | 'superLiked' | 'maybe' | 'rejected';
+
+interface GridViewProps {
+    setViewMode: (mode: 'grid' | 'swipe') => void;
+}
 
 export function GridView({ setViewMode }: GridViewProps) {
     const { sourceImages, selectedPhotos, maybePhotos, rejectedPhotos, superLikedPhotos, movePhoto, restartCategory } = useAppStore();
