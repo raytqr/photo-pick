@@ -96,26 +96,28 @@ export default function AdminLayout({
         <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col md:flex-row">
 
             {/* Mobile Header */}
-            <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#0a0a0f]/95 backdrop-blur-xl border-b border-white/[0.06] flex items-center px-6 z-50 gap-4">
-                <button
-                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white rounded-xl hover:bg-white/5 transition-colors -ml-2"
-                >
-                    {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                </button>
+            <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#0a0a0f]/95 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-between px-6 z-50">
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-orange-500 rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/20">
                         <Shield size={16} className="text-white" />
                     </div>
                     <span className="font-bold text-sm tracking-tight">Admin Panel</span>
                 </div>
+                <button
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white rounded-xl hover:bg-white/5 transition-colors"
+                >
+                    {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
             </div>
 
             {/* Sidebar */}
             <aside className={`
-                fixed top-0 left-0 bottom-0 width-72 bg-[#0a0a0f] border-r border-white/[0.06] flex flex-col z-40 transition-transform duration-300
-                md:translate-x-0 w-72 md:relative md:inset-auto md:bg-gradient-to-b md:from-gray-900/80 md:to-gray-950/90
-                ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
+                fixed top-0 bottom-0 w-72 bg-[#0a0a0f] flex flex-col z-40 transition-transform duration-300
+                md:translate-x-0 md:relative md:inset-auto md:bg-gradient-to-b md:from-gray-900/80 md:to-gray-950/90
+                right-0 md:left-0 md:right-auto
+                border-l border-white/[0.06] md:border-l-0 md:border-r
+                ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"}
             `}>
                 {/* Logo Section (Desktop Only) */}
                 <div className="p-6 border-b border-white/[0.06] hidden md:block">

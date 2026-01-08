@@ -84,8 +84,10 @@ export function DashboardSidebar({
 
             {/* Sidebar Container - Consistent spacing */}
             <aside className={cn(
-                "fixed top-0 left-0 bottom-0 w-64 bg-[#0a0a0a] border-r border-white/5 flex flex-col z-40 transition-transform duration-300 md:translate-x-0",
-                mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+                "fixed top-0 bottom-0 w-64 bg-[#0a0a0a] border-r border-white/5 flex flex-col z-40 transition-transform duration-300 md:translate-x-0",
+                // Mobile: Right side, slide from right
+                "right-0 md:left-0 md:right-auto",
+                mobileMenuOpen ? "translate-x-0" : "translate-x-full"
             )}>
                 {/* Branding (Desktop) - Consistent height and padding */}
                 <div className="h-16 hidden md:flex items-center px-5 border-b border-white/5">
