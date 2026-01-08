@@ -19,13 +19,13 @@ export default function LoginPage() {
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [resetEmailSent, setResetEmailSent] = useState(false);
     const router = useRouter();
-    const supabase = createClient();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
+        const supabase = createClient();
         const { error } = await supabase.auth.signInWithPassword({
             email,
             password,
@@ -49,6 +49,7 @@ export default function LoginPage() {
         setLoading(true);
         setError(null);
 
+        const supabase = createClient();
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
             redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
         });

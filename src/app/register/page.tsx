@@ -48,7 +48,6 @@ export default function RegisterPage() {
     const [showVerification, setShowVerification] = useState(false);
     const [deviceBlocked, setDeviceBlocked] = useState(false);
     const router = useRouter();
-    const supabase = createClient();
 
     // Check if device already has an account
     useEffect(() => {
@@ -72,6 +71,7 @@ export default function RegisterPage() {
             return;
         }
 
+        const supabase = createClient();
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
