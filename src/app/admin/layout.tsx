@@ -1,0 +1,184 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
+import {
+    LayoutDashboard,
+    Users,
+    CreditCard,
+    Ticket,
+    ArrowLeft,
+    Shield,
+    Loader2
+} from "lucide-react";
+
+const navItems = [
+    { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+    { href: "/admin/users", label: "Users", icon: Users },
+    { href: "/admin/pricing", label: "Pricing", icon: CreditCard },
+    { href: "/admin/redeem-codes", label: "Redeem Codes", icon: Ticket },
+];
+
+const ADMIN_SESSION_COOKIE = "admin_session";
+const ADMIN_SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 hours
+
+function getAdminSession(): boolean {
+    if (typeof window === "undefined") return false;
+    const cookies = document.cookie.split(";");
+    for (const cookie of cookies) {
+        const [name, value] = cookie.trim().split("=");
+        if (name === ADMIN_SESSION_COOKIE && value) {
+            const sessionTime = parseInt(value);
+            return (Date.now() - sessionTime) < ADMIN_SESSION_DURATION;
+        }
+    }
+    return false;
+}
+
+export default function AdminLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    const pathname = usePathname();
+    const router = useRouter();
+    const [checking, setChecking] = useState(true);
+    const [authorized, setAuthorized] = useState(false);
+
+    useEffect(() => {
+        // Skip check for login page
+        if (pathname === "/admin/login") {
+            setChecking(false);
+            setAuthorized(true);
+            return;
+        }
+
+        // Check admin session
+        const hasValidSession = getAdminSession();
+        if (!hasValidSession) {
+            router.replace("/admin/login");
+            return;
+        }
+
+        setAuthorized(true);
+        setChecking(false);
+    }, [pathname, router]);
+
+    // Show loading while checking
+    if (checking) {
+        return (
+            <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center">
+                <div className="text-center space-y-4">
+                    <Loader2 size={32} className="animate-spin mx-auto text-purple-500" />
+                    <p className="text-gray-500 text-sm">Verifying access...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Don't show layout for login page
+    if (pathname === "/admin/login") {
+        return <>{children}</>;
+    }
+
+    // Not authorized
+    if (!authorized) {
+        return null;
+    }
+
+    return (
+        <div className="min-h-screen bg-[#0a0a0f] text-white flex">
+            {/* Sidebar */}
+            <aside className="w-72 bg-gradient-to-b from-gray-900/80 to-gray-950/90 border-r border-white/[0.06] flex flex-col backdrop-blur-xl">
+                {/* Logo Section */}
+                <div className="p-6 border-b border-white/[0.06]">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-red-500 via-orange-500 to-amber-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/20">
+                            <Shield size={22} className="text-white" />
+                        </div>
+                        <div>
+                            <h1 className="font-bold text-lg tracking-tight">Admin Panel</h1>
+                            <p className="text-[13px] text-gray-500">Photo Selector</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Navigation */}
+                <nav className="flex-1 p-4 space-y-1">
+                    <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">
+                        Main Menu
+                    </p>
+                    {navItems.map((item) => {
+                        const isActive = item.exact
+                            ? pathname === item.href
+                            : pathname === item.href || pathname.startsWith(item.href + "/");
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`group flex items-center gap-3 px-4 py-3 rounded-xl text-[14px] font-medium transition-all duration-200 ${isActive
+                                        ? "bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-white border border-purple-500/20 shadow-lg shadow-purple-500/5"
+                                        : "text-gray-400 hover:text-white hover:bg-white/[0.04]"
+                                    }`}
+                            >
+                                <div className={`${isActive ? "text-purple-400" : "text-gray-500 group-hover:text-gray-300"} transition-colors`}>
+                                    <item.icon size={20} strokeWidth={1.8} />
+                                </div>
+                                {item.label}
+                                {isActive && (
+                                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-purple-400" />
+                                )}
+                            </Link>
+                        );
+                    })}
+                </nav>
+
+                {/* Bottom Section */}
+                <div className="p-4 border-t border-white/[0.06] space-y-1">
+                    <button
+                        onClick={() => {
+                            // Clear admin session and redirect
+                            document.cookie = `${ADMIN_SESSION_COOKIE}=; path=/; max-age=0`;
+                            router.replace("/admin/login");
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[14px] text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all"
+                    >
+                        <ArrowLeft size={18} strokeWidth={1.8} />
+                        Logout Admin
+                    </button>
+                    <Link
+                        href="/dashboard"
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-[14px] text-gray-400 hover:text-white hover:bg-white/[0.04] transition-all"
+                    >
+                        <ArrowLeft size={18} strokeWidth={1.8} />
+                        Back to App
+                    </Link>
+                </div>
+            </aside>
+
+            {/* Main Content */}
+            <main className="flex-1 overflow-auto">
+                {/* Top Bar */}
+                <header className="sticky top-0 z-10 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/[0.06] px-8 py-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-[13px] text-gray-500">Welcome back,</p>
+                            <p className="font-semibold">Administrator</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-sm font-bold">
+                                A
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                {/* Page Content */}
+                <div className="p-8">
+                    {children}
+                </div>
+            </main>
+        </div>
+    );
+}

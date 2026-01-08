@@ -32,9 +32,16 @@ export async function middleware(request: NextRequest) {
         }
     )
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
+    let user = null;
+    try {
+        const { data, error } = await supabase.auth.getUser();
+        if (!error) {
+            user = data.user;
+        }
+    } catch {
+        // Auth error (e.g., invalid refresh token) - treat as unauthenticated
+        user = null;
+    }
 
     // ROUTE PROTECTION LOGIC
     const path = request.nextUrl.pathname;
@@ -47,6 +54,38 @@ export async function middleware(request: NextRequest) {
     // 2. If Auth User tries to access Public Auth Pages (Login/Register) -> Redirect to Dashboard
     if ((path === '/login' || path === '/register') && user) {
         return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+
+    // 3. Admin route protection with separate admin session
+    if (path.startsWith('/admin')) {
+        const ADMIN_EMAIL = 'rayhanwhyut27@gmail.com';
+        const ADMIN_SESSION_COOKIE = 'admin_session';
+        const ADMIN_SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 hours in ms
+
+        // Get admin session cookie
+        const adminSession = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
+        const adminSessionValid = adminSession && (Date.now() - parseInt(adminSession)) < ADMIN_SESSION_DURATION;
+
+        // Allow access to admin login page
+        if (path === '/admin/login') {
+            // If already has valid admin session, redirect to admin dashboard
+            if (user && user.email === ADMIN_EMAIL && adminSessionValid) {
+                return NextResponse.redirect(new URL('/admin', request.url))
+            }
+            return response
+        }
+
+        // For all other admin routes, require:
+        // 1. Valid auth session
+        // 2. Admin email
+        // 3. Valid admin session cookie (from /admin/login)
+        if (!user || user.email !== ADMIN_EMAIL || !adminSessionValid) {
+            // Clear any stale admin session
+            const loginUrl = new URL('/admin/login', request.url);
+            const redirectResponse = NextResponse.redirect(loginUrl);
+            redirectResponse.cookies.delete(ADMIN_SESSION_COOKIE);
+            return redirectResponse;
+        }
     }
 
     return response
