@@ -125,6 +125,7 @@ export async function createRedeemCode(formData: {
     events_granted: number;
     duration_days: number;
     max_uses: number;
+    discount_percentage?: number;
 }) {
     if (!(await isAdmin())) {
         return { error: "Unauthorized" };
@@ -137,6 +138,7 @@ export async function createRedeemCode(formData: {
         events_granted: formData.events_granted,
         duration_days: formData.duration_days,
         max_uses: formData.max_uses,
+        discount_percentage: formData.discount_percentage || 0,
         is_active: true,
         times_used: 0,
     });
@@ -157,6 +159,7 @@ export async function updateRedeemCode(
         duration_days: number;
         max_uses: number;
         is_active: boolean;
+        discount_percentage: number;
     }>
 ) {
     if (!(await isAdmin())) {

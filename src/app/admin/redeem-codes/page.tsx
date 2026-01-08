@@ -15,12 +15,13 @@ import {
     Check,
     X,
     Ticket,
-    Calendar,
     Users,
     Clock,
     Sparkles,
     Copy,
-    Crown
+    Crown,
+    Percent,
+    Gift
 } from "lucide-react";
 
 interface RedeemCode {
@@ -32,18 +33,22 @@ interface RedeemCode {
     max_uses: number;
     times_used: number;
     is_active: boolean;
+    discount_percentage?: number;
     created_at: string;
 }
 
 const TIERS = [
-    { value: "Starter", color: "from-gray-500 to-slate-500" },
-    { value: "Basic", color: "from-blue-500 to-cyan-500" },
-    { value: "Pro", color: "from-purple-500 to-pink-500" },
-    { value: "Unlimited", color: "from-orange-500 to-red-500" },
+    { value: "Trial", color: "from-green-500 to-emerald-500", label: "Trial/Free" },
+    { value: "Starter", color: "from-gray-500 to-slate-500", label: "Starter" },
+    { value: "Basic", color: "from-blue-500 to-cyan-500", label: "Basic" },
+    { value: "Pro", color: "from-purple-500 to-pink-500", label: "Pro" },
+    { value: "Unlimited", color: "from-orange-500 to-red-500", label: "Unlimited" },
 ];
 
 function getTierStyle(tier: string) {
     switch (tier.toLowerCase()) {
+        case "trial":
+            return "bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-400 border-green-500/30";
         case "unlimited":
             return "bg-gradient-to-r from-orange-500/20 to-red-500/20 text-orange-400 border-orange-500/30";
         case "pro":
@@ -55,12 +60,28 @@ function getTierStyle(tier: string) {
     }
 }
 
+function getTierGradient(tier: string) {
+    switch (tier.toLowerCase()) {
+        case "trial":
+            return "from-green-500 to-emerald-500";
+        case "unlimited":
+            return "from-orange-500 to-red-500";
+        case "pro":
+            return "from-purple-500 to-pink-500";
+        case "basic":
+            return "from-blue-500 to-cyan-500";
+        default:
+            return "from-gray-500 to-slate-500";
+    }
+}
+
 export default function AdminRedeemCodesPage() {
     const [codes, setCodes] = useState<RedeemCode[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [saving, setSaving] = useState(false);
     const [copied, setCopied] = useState<string | null>(null);
+    const [codeType, setCodeType] = useState<"subscription" | "discount">("subscription");
 
     const [formData, setFormData] = useState({
         code: "",
@@ -68,6 +89,7 @@ export default function AdminRedeemCodesPage() {
         events_granted: 5,
         duration_days: 30,
         max_uses: 1,
+        discount_percentage: 0,
     });
 
     const loadCodes = async () => {
@@ -87,7 +109,18 @@ export default function AdminRedeemCodesPage() {
         if (!formData.code.trim()) return;
 
         setSaving(true);
-        const result = await createRedeemCode(formData);
+        const dataToSend = {
+            ...formData,
+            // For discount codes, set trial tier and 0 events
+            ...(codeType === "discount" ? {
+                tier: "Discount",
+                events_granted: 0,
+            } : {
+                discount_percentage: 0,
+            }),
+        };
+
+        const result = await createRedeemCode(dataToSend);
 
         if (result.error) {
             alert(result.error);
@@ -99,7 +132,9 @@ export default function AdminRedeemCodesPage() {
                 events_granted: 5,
                 duration_days: 30,
                 max_uses: 1,
+                discount_percentage: 0,
             });
+            setCodeType("subscription");
             loadCodes();
         }
         setSaving(false);
@@ -154,44 +189,87 @@ export default function AdminRedeemCodesPage() {
                         </div>
                     </div>
 
+                    {/* Code Type Toggle */}
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => setCodeType("subscription")}
+                            className={`flex-1 h-12 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${codeType === "subscription"
+                                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg"
+                                    : "bg-white/[0.03] border border-white/10 text-gray-400 hover:bg-white/[0.06]"
+                                }`}
+                        >
+                            <Gift size={16} />
+                            Subscription / Trial
+                        </button>
+                        <button
+                            onClick={() => setCodeType("discount")}
+                            className={`flex-1 h-12 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${codeType === "discount"
+                                    ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg"
+                                    : "bg-white/[0.03] border border-white/10 text-gray-400 hover:bg-white/[0.06]"
+                                }`}
+                        >
+                            <Percent size={16} />
+                            Discount Code
+                        </button>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-300">Code</label>
                             <Input
                                 value={formData.code}
                                 onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                                placeholder="e.g. PROMO2024"
+                                placeholder={codeType === "discount" ? "e.g. DISKON20" : "e.g. TRIAL7DAYS"}
                                 className="bg-white/[0.03] border-white/10 h-11 rounded-xl font-mono"
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-300">Tier</label>
-                            <div className="grid grid-cols-2 gap-2">
-                                {TIERS.map((tier) => (
-                                    <button
-                                        key={tier.value}
-                                        onClick={() => setFormData({ ...formData, tier: tier.value })}
-                                        className={`h-11 rounded-xl text-sm font-medium transition-all ${formData.tier === tier.value
-                                                ? `bg-gradient-to-r ${tier.color} text-white shadow-lg`
-                                                : "bg-white/[0.03] border border-white/10 text-gray-400 hover:bg-white/[0.06]"
-                                            }`}
-                                    >
-                                        {tier.value}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+                        {codeType === "subscription" ? (
+                            <>
+                                <div className="space-y-2 md:col-span-2 lg:col-span-2">
+                                    <label className="text-sm font-medium text-gray-300">Tier</label>
+                                    <div className="grid grid-cols-5 gap-2">
+                                        {TIERS.map((tier) => (
+                                            <button
+                                                key={tier.value}
+                                                onClick={() => setFormData({ ...formData, tier: tier.value })}
+                                                className={`h-11 rounded-xl text-xs font-medium transition-all ${formData.tier === tier.value
+                                                        ? `bg-gradient-to-r ${tier.color} text-white shadow-lg`
+                                                        : "bg-white/[0.03] border border-white/10 text-gray-400 hover:bg-white/[0.06]"
+                                                    }`}
+                                            >
+                                                {tier.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-300">Events Granted</label>
-                            <Input
-                                type="number"
-                                value={formData.events_granted}
-                                onChange={(e) => setFormData({ ...formData, events_granted: parseInt(e.target.value) || 0 })}
-                                className="bg-white/[0.03] border-white/10 h-11 rounded-xl"
-                            />
-                        </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-300">Events Granted</label>
+                                    <Input
+                                        type="number"
+                                        value={formData.events_granted}
+                                        onChange={(e) => setFormData({ ...formData, events_granted: parseInt(e.target.value) || 0 })}
+                                        className="bg-white/[0.03] border-white/10 h-11 rounded-xl"
+                                    />
+                                </div>
+                            </>
+                        ) : (
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-300">Discount Percentage (%)</label>
+                                <div className="relative">
+                                    <Input
+                                        type="number"
+                                        min="1"
+                                        max="100"
+                                        value={formData.discount_percentage}
+                                        onChange={(e) => setFormData({ ...formData, discount_percentage: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) })}
+                                        className="bg-white/[0.03] border-white/10 h-11 rounded-xl pr-10"
+                                    />
+                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">%</span>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-300">Duration (Days)</label>
@@ -211,6 +289,24 @@ export default function AdminRedeemCodesPage() {
                                 onChange={(e) => setFormData({ ...formData, max_uses: parseInt(e.target.value) || 1 })}
                                 className="bg-white/[0.03] border-white/10 h-11 rounded-xl"
                             />
+                        </div>
+                    </div>
+
+                    {/* Preview */}
+                    <div className="bg-white/[0.03] rounded-xl p-4 border border-white/[0.06]">
+                        <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">Preview</p>
+                        <div className="flex items-center gap-3">
+                            <code className="font-mono font-bold text-lg text-purple-400">{formData.code || "CODE"}</code>
+                            <span className="text-gray-500">→</span>
+                            {codeType === "subscription" ? (
+                                <span className="text-gray-300">
+                                    {formData.tier} tier • {formData.events_granted} events • {formData.duration_days} days
+                                </span>
+                            ) : (
+                                <span className="text-green-400 font-semibold">
+                                    {formData.discount_percentage}% discount
+                                </span>
+                            )}
                         </div>
                     </div>
 
@@ -250,6 +346,7 @@ export default function AdminRedeemCodesPage() {
                 <div className="grid gap-4">
                     {codes.map((code) => {
                         const usagePercent = (code.times_used / code.max_uses) * 100;
+                        const isDiscountCode = code.tier === "Discount" || (code.discount_percentage && code.discount_percentage > 0);
 
                         return (
                             <div
@@ -259,12 +356,13 @@ export default function AdminRedeemCodesPage() {
                             >
                                 <div className="flex items-center gap-5">
                                     {/* Code Icon */}
-                                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${code.tier === "Unlimited" ? "from-orange-500 to-red-500" :
-                                            code.tier === "Pro" ? "from-purple-500 to-pink-500" :
-                                                code.tier === "Basic" ? "from-blue-500 to-cyan-500" :
-                                                    "from-gray-500 to-slate-500"
+                                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${isDiscountCode ? "from-green-500 to-emerald-500" : getTierGradient(code.tier)
                                         } flex items-center justify-center shrink-0 shadow-lg`}>
-                                        <Ticket size={24} className="text-white" />
+                                        {isDiscountCode ? (
+                                            <Percent size={24} className="text-white" />
+                                        ) : (
+                                            <Ticket size={24} className="text-white" />
+                                        )}
                                     </div>
 
                                     {/* Code Info */}
@@ -284,18 +382,27 @@ export default function AdminRedeemCodesPage() {
                                                 )}
                                             </button>
 
-                                            <span className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border ${getTierStyle(code.tier)}`}>
-                                                <Crown size={10} className="inline mr-1 -mt-0.5" />
-                                                {code.tier}
-                                            </span>
+                                            {isDiscountCode ? (
+                                                <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold border bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-400 border-green-500/30">
+                                                    <Percent size={10} className="inline mr-1 -mt-0.5" />
+                                                    {code.discount_percentage}% OFF
+                                                </span>
+                                            ) : (
+                                                <span className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border ${getTierStyle(code.tier)}`}>
+                                                    <Crown size={10} className="inline mr-1 -mt-0.5" />
+                                                    {code.tier}
+                                                </span>
+                                            )}
                                         </div>
 
                                         {/* Stats */}
                                         <div className="flex items-center gap-6 text-[13px] text-gray-400">
-                                            <span className="flex items-center gap-1.5">
-                                                <Sparkles size={13} className="text-purple-400" />
-                                                {code.events_granted.toLocaleString()} events
-                                            </span>
+                                            {!isDiscountCode && (
+                                                <span className="flex items-center gap-1.5">
+                                                    <Sparkles size={13} className="text-purple-400" />
+                                                    {code.events_granted.toLocaleString()} events
+                                                </span>
+                                            )}
                                             <span className="flex items-center gap-1.5">
                                                 <Clock size={13} className="text-blue-400" />
                                                 {code.duration_days} days
