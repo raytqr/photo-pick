@@ -20,8 +20,9 @@ export async function getAdminStats() {
         return { error: "Unauthorized" };
     }
 
-    // Use admin client to bypass RLS
-    const supabase = createAdminClient();
+    // Use admin client to bypass RLS, fall back to regular client
+    const adminClient = createAdminClient();
+    const supabase = adminClient || await createClient();
 
     const [usersResult, eventsResult, photosResult] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact" }),
@@ -41,8 +42,9 @@ export async function getAllUsers() {
         return { error: "Unauthorized", users: [] };
     }
 
-    // Use admin client to bypass RLS
-    const supabase = createAdminClient();
+    // Use admin client to bypass RLS, fall back to regular client
+    const adminClient = createAdminClient();
+    const supabase = adminClient || await createClient();
 
     // Get all profiles
     const { data: profiles, error } = await supabase

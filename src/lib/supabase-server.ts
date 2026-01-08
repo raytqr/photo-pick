@@ -32,13 +32,16 @@ export async function createClient() {
 // Admin client with service role for bypassing RLS
 export function createAdminClient() {
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-    if (!serviceRoleKey) {
-        throw new Error("SUPABASE_SERVICE_ROLE_KEY is not defined");
+    if (!serviceRoleKey || !supabaseUrl) {
+        // Return null if keys not available - caller should handle this
+        console.warn("Admin client: Missing SUPABASE_SERVICE_ROLE_KEY or SUPABASE_URL");
+        return null;
     }
 
     return createSupabaseClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        supabaseUrl,
         serviceRoleKey,
         {
             auth: {
