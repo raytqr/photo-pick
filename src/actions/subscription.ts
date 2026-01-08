@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase-server";
+import { createClient, createAdminClient } from "@/lib/supabase-server";
 import { revalidatePath } from "next/cache";
 
 export async function redeemCode(code: string) {
@@ -11,8 +11,14 @@ export async function redeemCode(code: string) {
         return { success: false, error: "Not authenticated" };
     }
 
+    // Use Admin Client to bypass RLS for redeem codes & profile updates
+    const adminSupabase = createAdminClient();
+    if (!adminSupabase) {
+        return { success: false, error: "Server Configuration Error: Admin client unavailable." };
+    }
+
     // Find the redeem code
-    const { data: redeemCode, error: codeError } = await supabase
+    const { data: redeemCode, error: codeError } = await adminSupabase
         .from('redeem_codes')
         .select('*')
         .eq('code', code.toLowerCase().trim())
@@ -32,8 +38,8 @@ export async function redeemCode(code: string) {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + redeemCode.duration_days);
 
-    // Update user profile with subscription
-    const { error: updateError } = await supabase
+    // Update user profile with subscription (Bypass RLS)
+    const { error: updateError } = await adminSupabase
         .from('profiles')
         .update({
             subscription_tier: redeemCode.tier,
@@ -46,8 +52,8 @@ export async function redeemCode(code: string) {
         return { success: false, error: updateError.message };
     }
 
-    // Increment times_used on the code
-    await supabase
+    // Increment times_used on the code (Bypass RLS)
+    await adminSupabase
         .from('redeem_codes')
         .update({ times_used: redeemCode.times_used + 1 })
         .eq('id', redeemCode.id);
