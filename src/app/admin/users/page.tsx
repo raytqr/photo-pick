@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
 import { getAllUsers } from "@/actions/admin";
 import {
     Crown,
@@ -8,12 +11,28 @@ import {
     User,
     Clock,
     Search,
-    Filter,
-    ChevronRight
+    ChevronRight,
+    ChevronLeft,
+    Loader2
 } from "lucide-react";
-import Link from "next/link";
+import { Input } from "@/components/ui/input";
 
-export const dynamic = "force-dynamic";
+interface UserData {
+    id: string;
+    email: string;
+    photographer_name: string | null;
+    logo_url: string | null;
+    subscription_tier: string | null;
+    subscription_expires_at: string | null;
+    events_remaining: number;
+    created_at: string;
+    events: { id: string; name: string }[];
+    eventsCount: number;
+    photosCount: number;
+    total_events_created: number;
+}
+
+const ITEMS_PER_PAGE = 10;
 
 function formatDate(dateString: string | null) {
     if (!dateString) return "-";
@@ -44,8 +63,57 @@ function getTierStyle(tier: string) {
     }
 }
 
-export default async function AdminUsersPage() {
-    const { users, error } = await getAllUsers();
+export default function AdminUsersPage() {
+    const [users, setUsers] = useState<UserData[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+
+    useEffect(() => {
+        async function loadUsers() {
+            setLoading(true);
+            const result = await getAllUsers();
+            if (result.error) {
+                setError(result.error);
+            } else {
+                setUsers(result.users as UserData[]);
+            }
+            setLoading(false);
+        }
+        loadUsers();
+    }, []);
+
+    // Filter users by search query
+    const filteredUsers = useMemo(() => {
+        if (!searchQuery.trim()) return users;
+        const query = searchQuery.toLowerCase();
+        return users.filter(
+            (user) =>
+                user.email?.toLowerCase().includes(query) ||
+                user.photographer_name?.toLowerCase().includes(query)
+        );
+    }, [users, searchQuery]);
+
+    // Pagination
+    const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+    const paginatedUsers = useMemo(() => {
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredUsers.slice(start, start + ITEMS_PER_PAGE);
+    }, [filteredUsers, currentPage]);
+
+    // Reset to page 1 when search changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+            </div>
+        );
+    }
 
     if (error) {
         return (
@@ -58,18 +126,30 @@ export default async function AdminUsersPage() {
     return (
         <div className="space-y-6 max-w-7xl">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-1">
                     <h1 className="text-3xl font-bold tracking-tight">Users</h1>
                     <p className="text-gray-500 text-[15px]">
-                        {users.length} registered users
+                        {filteredUsers.length} of {users.length} registered users
                     </p>
+                </div>
+
+                {/* Search Input */}
+                <div className="relative w-full sm:w-80">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <Input
+                        type="text"
+                        placeholder="Search by name or email..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-11 h-11 bg-white/[0.03] border-white/10 rounded-xl text-white placeholder:text-gray-500 focus:border-purple-500/50"
+                    />
                 </div>
             </div>
 
             {/* Users Grid */}
             <div className="grid gap-4">
-                {users.map((user) => {
+                {paginatedUsers.map((user) => {
                     const expired = isExpired(user.subscription_expires_at);
                     const tier = user.subscription_tier || "free";
 
@@ -128,7 +208,7 @@ export default async function AdminUsersPage() {
                                             <p className="text-xl font-bold">{user.eventsCount}</p>
                                             {user.events.length > 0 && (
                                                 <p className="text-[11px] text-gray-500 mt-1 truncate">
-                                                    {user.events.slice(0, 2).map((e: { name: string }) => e.name).join(", ")}
+                                                    {user.events.slice(0, 2).map((e) => e.name).join(", ")}
                                                     {user.events.length > 2 && ` +${user.events.length - 2}`}
                                                 </p>
                                             )}
@@ -182,13 +262,75 @@ export default async function AdminUsersPage() {
                 })}
             </div>
 
-            {users.length === 0 && (
+            {/* Empty State */}
+            {paginatedUsers.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                     <div className="w-16 h-16 rounded-2xl bg-gray-800 flex items-center justify-center mb-4">
                         <User size={28} className="text-gray-600" />
                     </div>
-                    <p className="text-gray-400 font-medium">No users found</p>
-                    <p className="text-gray-600 text-sm">Users will appear here once they register</p>
+                    <p className="text-gray-400 font-medium">
+                        {searchQuery ? "No users found matching your search" : "No users found"}
+                    </p>
+                    <p className="text-gray-600 text-sm">
+                        {searchQuery ? "Try a different search term" : "Users will appear here once they register"}
+                    </p>
+                </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
+                    <p className="text-[13px] text-gray-500">
+                        Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredUsers.length)} of {filteredUsers.length}
+                    </p>
+
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="flex items-center gap-1 px-3 py-2 rounded-lg text-[13px] font-medium bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        >
+                            <ChevronLeft size={16} />
+                            Previous
+                        </button>
+
+                        <div className="flex items-center gap-1">
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                let pageNum: number;
+                                if (totalPages <= 5) {
+                                    pageNum = i + 1;
+                                } else if (currentPage <= 3) {
+                                    pageNum = i + 1;
+                                } else if (currentPage >= totalPages - 2) {
+                                    pageNum = totalPages - 4 + i;
+                                } else {
+                                    pageNum = currentPage - 2 + i;
+                                }
+
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => setCurrentPage(pageNum)}
+                                        className={`w-9 h-9 rounded-lg text-[13px] font-medium transition-all ${currentPage === pageNum
+                                                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white"
+                                                : "bg-white/[0.03] border border-white/10 hover:bg-white/[0.06]"
+                                            }`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <button
+                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="flex items-center gap-1 px-3 py-2 rounded-lg text-[13px] font-medium bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        >
+                            Next
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
                 </div>
             )}
         </div>
