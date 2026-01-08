@@ -56,13 +56,14 @@ export async function syncPhotosFromDrive(eventId: string, driveFolderUrl: strin
 
         // Prepare records for insertion
         const photosToInsert = allFiles.map(file => {
-            // Use high-res thumbnail. Default is small, so we replace size.
-            const highResUrl = file.thumbnailLink?.replace(/=s\d+/, '=s2000') ||
-                `https://lh3.googleusercontent.com/d/${file.id}=s2000`;
+            // Use permanent Google image URL format that doesn't expire
+            // Format: https://lh3.googleusercontent.com/d/{FILE_ID}
+            // Or: https://drive.google.com/uc?export=view&id={FILE_ID}
+            const permanentUrl = `https://drive.google.com/thumbnail?id=${file.id}&sz=w2000`;
 
             return {
                 event_id: eventId,
-                url: highResUrl,
+                url: permanentUrl,
                 name: file.name, // Original filename from Google Drive
                 width: 1200,
                 height: 1800
@@ -83,3 +84,20 @@ export async function syncPhotosFromDrive(eventId: string, driveFolderUrl: strin
     }
 }
 
+// Re-sync: Delete existing photos and import fresh ones with permanent URLs
+export async function reSyncPhotosFromDrive(eventId: string, driveFolderUrl: string) {
+    const supabase = await createClient();
+
+    // First, delete all existing photos for this event
+    const { error: deleteError } = await supabase
+        .from('photos')
+        .delete()
+        .eq('event_id', eventId);
+
+    if (deleteError) {
+        return { success: false, error: `Failed to clear old photos: ${deleteError.message}` };
+    }
+
+    // Then sync fresh photos
+    return syncPhotosFromDrive(eventId, driveFolderUrl);
+}
