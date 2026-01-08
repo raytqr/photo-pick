@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase-server";
+import { createClient, createAdminClient } from "@/lib/supabase-server";
 
 const ADMIN_EMAIL = "rayhanwahyut27@gmail.com";
 
@@ -20,7 +20,8 @@ export async function getAdminStats() {
         return { error: "Unauthorized" };
     }
 
-    const supabase = await createClient();
+    // Use admin client to bypass RLS
+    const supabase = createAdminClient();
 
     const [usersResult, eventsResult, photosResult] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact" }),
@@ -40,7 +41,8 @@ export async function getAllUsers() {
         return { error: "Unauthorized", users: [] };
     }
 
-    const supabase = await createClient();
+    // Use admin client to bypass RLS
+    const supabase = createAdminClient();
 
     // Get all profiles
     const { data: profiles, error } = await supabase
