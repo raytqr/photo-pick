@@ -20,6 +20,7 @@ import {
     Camera
 } from "lucide-react";
 import { redirect } from "next/navigation";
+import { EventStatusToggle } from "@/components/event-status-toggle";
 
 export const dynamic = 'force-dynamic';
 
@@ -234,8 +235,8 @@ export default async function DashboardPage() {
                                         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center font-black text-xl shadow-xl shadow-purple-500/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
                                             {event.name.substring(0, 1).toUpperCase()}
                                         </div>
-                                        <div className="px-3 py-1 rounded-full bg-green-500/10 text-[10px] text-green-400 font-bold tracking-wider uppercase border border-green-500/20 group-hover:bg-green-500 group-hover:text-black transition-colors duration-500">
-                                            Active
+                                        <div className="relative z-10">
+                                            <EventStatusToggle eventId={event.id} initialStatus={event.is_active} />
                                         </div>
                                     </div>
 

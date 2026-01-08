@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "sonner";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -24,8 +25,8 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${outfit.className} antialiased bg-gray-50 dark:bg-gray-950`}>
         {children}
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );
 }
-
