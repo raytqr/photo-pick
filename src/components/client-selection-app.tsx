@@ -39,7 +39,8 @@ export function ClientSelectionApp() {
 
     useEffect(() => {
         if (prevRestartingFrom && !store.restartingFrom) {
-            toast.success("Re-Swipe session complete! Returning to main deck.");
+            toast.success("Re-Swipe session complete!");
+            setViewMode('grid'); // Auto-switch to grid view
         }
     }, [store.restartingFrom, prevRestartingFrom]);
 

@@ -188,13 +188,24 @@ async function insertPhotos(eventId: string, files: DriveFile[]) {
     const CHUNK_SIZE = 500;
     for (let i = 0; i < files.length; i += CHUNK_SIZE) {
         const chunk = files.slice(i, i + CHUNK_SIZE);
-        const photosToInsert = chunk.map(file => ({
-            event_id: eventId,
-            url: `https://drive.google.com/thumbnail?id=${file.id}&sz=w2000`,
-            name: file.name,
-            width: 1200, // Placeholder, would need metadata fetch for real dims
-            height: 1800
-        }));
+        const photosToInsert = chunk.map(file => {
+            // Prefer the API-provided thumbnailLink (usually lh3.googleusercontent.com) which is robust and cached.
+            // Ensure we get a large enough version by appending/replacing size param.
+            // The default thumbnailLink usually ends with '=s220' (small). We want high res.
+            // Force use of drive.google.com/thumbnail endpoint.
+            // This redirects to a cached lh3 link with 'Content-Disposition: inline', which allows it to be displayed in <img> tags.
+            // Direct lh3.../d/... links are 'attachment' only.
+            // Downgraded from w2048 to w1200 to fix "heavy" loading/lag issues reported by user.
+            const url = `https://drive.google.com/thumbnail?id=${file.id}&sz=w1200`;
+
+            return {
+                event_id: eventId,
+                url: url,
+                name: file.name,
+                width: 1200, // Placeholder
+                height: 1800
+            };
+        });
 
         const { error } = await supabase.from('photos').insert(photosToInsert);
         if (error) return { success: false, error: error.message };

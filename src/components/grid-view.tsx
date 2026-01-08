@@ -1,33 +1,31 @@
 "use client";
 
-import { useState } from "react";
-import { useAppStore, Photo, PhotoStatus } from "@/store/useAppStore";
-import Image from "next/image";
-import { Check, HelpCircle, X, Maximize2, Filter, Clock, CheckCircle2, Star, RotateCcw, Play } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ImageViewer } from "./image-viewer";
-import { cn } from "@/lib/utils";
-
-type FilterType = 'all' | 'pending' | 'selected' | 'superLiked' | 'maybe' | 'rejected';
-
-interface GridViewProps {
-    setViewMode: (mode: 'swipe' | 'grid') => void;
-}
+import { useState, useMemo } from "react";
+// ... (imports remain)
 
 export function GridView({ setViewMode }: GridViewProps) {
     const { sourceImages, selectedPhotos, maybePhotos, rejectedPhotos, superLikedPhotos, movePhoto, restartCategory } = useAppStore();
     const [filter, setFilter] = useState<FilterType>('all');
     const [previewPhoto, setPreviewPhoto] = useState<Photo | null>(null);
 
-    // All photos combined
-    const allPhotos = [...sourceImages, ...selectedPhotos, ...superLikedPhotos, ...maybePhotos, ...rejectedPhotos];
+    // Optimize: Create Sets for O(1) lookup
+    const { selectedSet, superLikedSet, maybeSet, rejectedSet } = useMemo(() => ({
+        selectedSet: new Set(selectedPhotos.map(p => p.id)),
+        superLikedSet: new Set(superLikedPhotos.map(p => p.id)),
+        maybeSet: new Set(maybePhotos.map(p => p.id)),
+        rejectedSet: new Set(rejectedPhotos.map(p => p.id))
+    }), [selectedPhotos, superLikedPhotos, maybePhotos, rejectedPhotos]);
+
+    // Optimize: Memoize all photos array
+    const allPhotos = useMemo(() =>
+        [...sourceImages, ...selectedPhotos, ...superLikedPhotos, ...maybePhotos, ...rejectedPhotos],
+        [sourceImages, selectedPhotos, superLikedPhotos, maybePhotos, rejectedPhotos]);
 
     const getPhotoStatus = (photo: Photo): PhotoStatus | 'source' => {
-        if (sourceImages.some(p => p.id === photo.id)) return 'source';
-        if (selectedPhotos.some(p => p.id === photo.id)) return 'selected';
-        if (superLikedPhotos.some(p => p.id === photo.id)) return 'superLiked';
-        if (maybePhotos.some(p => p.id === photo.id)) return 'maybe';
-        if (rejectedPhotos.some(p => p.id === photo.id)) return 'rejected';
+        if (selectedSet.has(photo.id)) return 'selected';
+        if (superLikedSet.has(photo.id)) return 'superLiked';
+        if (maybeSet.has(photo.id)) return 'maybe';
+        if (rejectedSet.has(photo.id)) return 'rejected';
         return 'source';
     };
 
@@ -58,6 +56,31 @@ export function GridView({ setViewMode }: GridViewProps) {
         movePhoto(photo.id, fromStatus, toStatus);
     };
 
+    // Helper to optimize Google Drive thumbnail URLs for grid view
+    const getOptimizedThumbnailUrl = (url: string) => {
+        if (url.includes('drive.google.com/thumbnail')) {
+            // Replace existing sz parameter or append it
+            return url.replace(/sz=w\d+/, 'sz=w400');
+        }
+        return url;
+    };
+
+    // Pagination State
+    const [visibleCount, setVisibleCount] = useState(30);
+
+    // Reset pagination when filter changes
+    const handleFilterChange = (newFilter: FilterType) => {
+        setFilter(newFilter);
+        setVisibleCount(30);
+    };
+
+    const handleLoadMore = () => {
+        setVisibleCount(prev => prev + 30);
+    };
+
+    const hasMore = filteredPhotos.length > visibleCount;
+    const visiblePhotos = filteredPhotos.slice(0, visibleCount);
+
     return (
         <div className="px-3 pb-24 pt-4">
             {/* Full Image Preview */}
@@ -69,7 +92,7 @@ export function GridView({ setViewMode }: GridViewProps) {
                     {tabs.map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => setFilter(tab.id)}
+                            onClick={() => handleFilterChange(tab.id)}
                             className={cn(
                                 "flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all text-xs font-medium whitespace-nowrap",
                                 filter === tab.id
@@ -149,11 +172,9 @@ export function GridView({ setViewMode }: GridViewProps) {
 
             {/* Photo Grids */}
             <div className="space-y-8">
-                {/* Status Sections logic removed for brevity in this replace call, will use previous successful logic for categories */}
-
                 {/* Photo Grid Logic - Re-implementing correctly */}
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
-                    {filteredPhotos.map(photo => {
+                    {visiblePhotos.map(photo => {
                         const status = getPhotoStatus(photo);
                         const isSource = status === 'source';
                         const isRejected = status === 'rejected';
@@ -170,7 +191,7 @@ export function GridView({ setViewMode }: GridViewProps) {
                                 )}
                             >
                                 <Image
-                                    src={photo.url}
+                                    src={getOptimizedThumbnailUrl(photo.url)}
                                     alt={photo.name || photo.id}
                                     fill
                                     className={cn(
@@ -254,6 +275,19 @@ export function GridView({ setViewMode }: GridViewProps) {
                         );
                     })}
                 </div>
+
+                {/* Load More Button */}
+                {hasMore && (
+                    <div className="flex justify-center pt-8">
+                        <Button
+                            onClick={handleLoadMore}
+                            variant="outline"
+                            className="h-12 px-8 rounded-full border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
+                            Load More Photos ({filteredPhotos.length - visibleCount} remaining)
+                        </Button>
+                    </div>
+                )}
             </div>
         </div >
     );

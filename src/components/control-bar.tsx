@@ -44,14 +44,14 @@ export function ControlBar({ onUndo, canUndo, onReject, onSuperLike, onSelect, o
                 </div>
 
                 {/* Super Like */}
-                <div className="flex flex-col items-center gap-1 bg-blue-500/10 p-1.5 rounded-2xl border border-blue-500/30 -translate-y-4">
+                <div className="flex flex-col items-center gap-1">
                     <button
                         onClick={onSuperLike}
-                        className="w-12 h-12 rounded-xl bg-blue-500 text-white flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-[0_0_20px_rgba(59,130,246,0.5)]"
+                        className="w-14 h-14 rounded-full bg-black/60 backdrop-blur-md border border-blue-500/50 text-blue-500 flex items-center justify-center transition-all hover:scale-110 active:scale-95 hover:bg-blue-500 hover:text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]"
                     >
-                        <Star size={24} fill="white" />
+                        <Star size={28} fill="currentColor" strokeWidth={3} />
                     </button>
-                    <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wide">Super</span>
+                    <span className="text-[10px] font-medium text-blue-500/80 uppercase tracking-wide">Super</span>
                 </div>
 
                 {/* Select */}

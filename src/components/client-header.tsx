@@ -41,7 +41,7 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
 
     // Filename only list (for Lightroom/Finder filter)
     const filenameList = useMemo(() => {
-        return [...superLikedPhotos, ...selectedPhotos].map(p => p.name || p.id).join('\n');
+        return [...superLikedPhotos, ...selectedPhotos].map(p => p.name || p.id).join(' OR ');
     }, [selectedPhotos, superLikedPhotos]);
 
     const generateMessage = () => {
@@ -52,7 +52,16 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
         if (superLikedPhotos.length > 0) names += `${superLikeNames}\n`;
         if (selectedPhotos.length > 0) names += `${selectedNames}`;
 
-        return `Hi! 👋\n\nCode: ${submissionCode}\nTotal: ${count} photos\n\n${names}\n\nThank you!`;
+        let message = `Hi! 👋\n\nCode: ${submissionCode}\nTotal: ${count} photos\n\n${names}\n\n`;
+
+        // Add PC Search String
+        if (filenameList) {
+            message += `🖥️ *PC SEARCH STRING (For Lightroom Import):*\n\n${filenameList}\n\n`;
+        }
+
+        message += `Thank you! 📸`;
+
+        return message;
     };
 
     const generateWhatsAppLink = () => {

@@ -96,8 +96,8 @@ export function SwipeCard({ photo, onSwipe, index }: SwipeCardProps) {
                     draggable={false}
                 />
 
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/60 pointer-events-none" />
+                {/* Gradient Overlay - Stronger at bottom for text readability */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/90 pointer-events-none" />
 
                 {/* Re-Swipe Indicator */}
                 {isFront && useAppStore.getState().restartingFrom && (
@@ -111,9 +111,9 @@ export function SwipeCard({ photo, onSwipe, index }: SwipeCardProps) {
                     </div>
                 )}
 
-                {/* Photo Name */}
-                <div className="absolute bottom-6 left-6 right-6 text-white z-20">
-                    <h3 className="font-bold text-lg drop-shadow-lg">{photo.name || photo.id}</h3>
+                {/* Photo Name - Moved up to avoid overlap with Control Bar */}
+                <div className="absolute bottom-28 left-6 right-6 text-white z-20 pointer-events-none">
+                    <h3 className="font-bold text-lg drop-shadow-lg truncate">{photo.name || photo.id}</h3>
                 </div>
             </div>
         </motion.div>

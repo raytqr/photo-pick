@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Copy, Check, ExternalLink } from "lucide-react";
 
@@ -10,13 +10,20 @@ interface ClientLinkCopyProps {
 
 export function ClientLinkCopy({ slug }: ClientLinkCopyProps) {
     const [copied, setCopied] = useState(false);
+    const [origin, setOrigin] = useState('');
 
-    // In production, this would use the real domain
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    useEffect(() => {
+        setOrigin(window.location.origin);
+    }, []);
+
+    // Initial render (SSR & Hydration) uses relative path (empty origin)
+    // After mount, origin is populated
     const url = `${origin}/client/${slug}`;
 
     const handleCopy = () => {
-        navigator.clipboard.writeText(url);
+        // Always use fresh window origin for the action
+        const fullUrl = `${window.location.origin}/client/${slug}`;
+        navigator.clipboard.writeText(fullUrl);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };

@@ -54,11 +54,11 @@ export async function createEvent(formData: {
         .from('events')
         .select('*', { count: 'exact', head: true })
         .eq('photographer_id', user.id)
-        .gte('created_at', firstDayOfMonth)
-        .eq('is_deleted', false); // Only count active events
+        .gte('created_at', firstDayOfMonth);
 
     if (countError) {
-        return { success: false, error: "Failed to verify event quota." };
+        console.error("Quota Check Error:", countError);
+        return { success: false, error: "Failed to verify event quota: " + countError.message };
     }
 
     const currentCount = count || 0;

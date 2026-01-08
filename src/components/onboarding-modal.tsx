@@ -17,6 +17,7 @@ import {
     Grip,
     ChevronRight
 } from "lucide-react";
+import { AnimatedSwipeDemo } from "./animated-swipe-demo";
 
 interface OnboardingModalProps {
     eventSlug: string;
@@ -54,23 +55,11 @@ export function OnboardingModal({ eventSlug }: OnboardingModalProps) {
             title: "Gestur Swipe",
             description: "Geser foto ke arah yang sesuai:",
             content: (
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 text-center">
-                        <ArrowRight className="mx-auto text-green-500 mb-2" size={28} />
-                        <p className="font-medium text-green-500">Kanan = Pilih</p>
-                    </div>
-                    <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center">
-                        <ArrowLeft className="mx-auto text-red-500 mb-2" size={28} />
-                        <p className="font-medium text-red-500">Kiri = Lewati</p>
-                    </div>
-                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 text-center">
-                        <ArrowUp className="mx-auto text-blue-500 mb-2" size={28} />
-                        <p className="font-medium text-blue-500">Atas = Super Like</p>
-                    </div>
-                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 text-center">
-                        <ArrowDown className="mx-auto text-yellow-500 mb-2" size={28} />
-                        <p className="font-medium text-yellow-500">Bawah = Mungkin</p>
-                    </div>
+                <div className="flex flex-col items-center">
+                    <AnimatedSwipeDemo />
+                    <p className="text-xs text-center text-gray-500 mt-2 max-w-xs">
+                        Geser Kanan untuk <b>Like</b>, Kiri untuk <b>Lewati</b>, atau Atas untuk <b>Super Like</b>.
+                    </p>
                 </div>
             )
         },

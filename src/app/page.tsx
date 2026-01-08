@@ -25,6 +25,7 @@ import {
   X,
   AtSign
 } from "lucide-react";
+import { AnimatedSwipeDemo } from "@/components/animated-swipe-demo";
 
 const fadeInUp = {
   initial: { opacity: 0, y: 30 },
@@ -48,7 +49,7 @@ const features = [
   },
   {
     icon: MessageCircle,
-    title: "WA Reporting",
+    title: "Instant WA Report",
     description: "Results delivered instantly to your WhatsApp. One tap for the client, zero hassle for you.",
     color: "from-green-500 to-emerald-500"
   },
@@ -375,20 +376,18 @@ export default function LandingPage() {
           className="mt-24 relative max-w-6xl mx-auto"
         >
           <div className="absolute inset-0 bg-gradient-to-t from-[#030014] via-transparent to-transparent z-10 pointer-events-none" />
-          <div className="glass rounded-[40px] p-4 sm:p-8 shadow-[0_0_80px_rgba(168,85,247,0.15)]">
-            <img
-              src="https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&q=80&w=2070"
-              alt="Dashboard Preview"
-              className="rounded-[30px] border border-white/5 shadow-2xl w-full h-[300px] sm:h-[500px] object-cover opacity-80"
-            />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 sm:w-32 sm:h-32 rounded-full bg-white/10 backdrop-blur-3xl flex items-center justify-center border border-white/20">
-              <motion.div
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-white flex items-center justify-center"
-              >
-                <Sparkles size={28} className="text-purple-600" />
-              </motion.div>
+          <div className="glass rounded-[40px] p-4 sm:p-8 shadow-[0_0_80px_rgba(168,85,247,0.15)] overflow-hidden relative min-h-[400px] sm:min-h-[600px] flex items-center justify-center">
+            {/* Background Ambience */}
+            <div className="absolute inset-0 bg-gradient-to-b from-gray-900/50 to-black/80 z-0" />
+
+            {/* Animated Demo - Scaled Up for Hero */}
+            <div className="relative z-10 transform scale-125 sm:scale-[2.0]">
+              <AnimatedSwipeDemo />
+            </div>
+
+            {/* Overlay Text/Context */}
+            <div className="absolute bottom-8 left-0 right-0 text-center z-20 pointer-events-none">
+              <p className="text-gray-400 text-sm font-medium tracking-widest uppercase opacity-60">Interactive Preview</p>
             </div>
           </div>
         </motion.div>
@@ -699,6 +698,6 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-    </div>
+    </div >
   );
 }
