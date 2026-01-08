@@ -236,21 +236,8 @@ export default function LoginPage() {
                 </div>
 
                 {/* Footer text */}
-                <div className="mt-8 sm:mt-12 text-center flex flex-col items-center justify-center gap-2">
-                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-600">
-                        <Sparkles size={12} /> Powered by SatSetPic Studio
-                    </div>
-
-                    {/* DEBUGGER: Temporary check for Env Vars */}
-                    <div className="mt-4 p-4 rounded-xl bg-gray-900/50 border border-gray-800 text-[10px] font-mono text-left space-y-1 opacity-70">
-                        <p className="font-bold text-gray-400 border-b border-gray-700 pb-1 mb-1">SYSTEM CHECK (Debug)</p>
-                        <p className={process.env.NEXT_PUBLIC_SUPABASE_URL ? "text-green-400" : "text-red-500"}>
-                            URL: {process.env.NEXT_PUBLIC_SUPABASE_URL ? "✅ Loaded" : "❌ MISSING"}
-                        </p>
-                        <p className={process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "text-green-400" : "text-red-500"}>
-                            KEY: {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "✅ Loaded" : "❌ MISSING (Check Vercel)"}
-                        </p>
-                    </div>
+                <div className="mt-8 sm:mt-12 text-center flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-600">
+                    <Sparkles size={12} /> Powered by SatSetPic Studio
                 </div>
             </motion.div>
         </div>
