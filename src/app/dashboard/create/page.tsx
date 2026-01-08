@@ -210,11 +210,21 @@ export default function CreateEventPage() {
                                     <Input
                                         placeholder="wedding-sarah-dimas"
                                         value={slug}
-                                        onChange={(e) => setSlug(e.target.value)}
-                                        className="rounded-l-none h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-600"
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setSlug(val);
+                                        }}
+                                        className={`rounded-l-none h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-600 ${slug && !/^[a-z0-9-]+$/.test(slug) ? "border-red-500 focus-visible:ring-red-500" : ""
+                                            }`}
                                     />
                                 </div>
-                                <p className="text-xs text-gray-500">Leave blank to auto-generate.</p>
+                                {slug && !/^[a-z0-9-]+$/.test(slug) ? (
+                                    <p className="text-xs text-red-500 animate-pulse">
+                                        Format invalid: use lowercase letters, numbers, and hyphens only.
+                                    </p>
+                                ) : (
+                                    <p className="text-xs text-gray-500">Leave blank to auto-generate.</p>
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-gray-400">Photo Limit</label>
@@ -255,8 +265,8 @@ export default function CreateEventPage() {
 
                     <Button
                         type="submit"
-                        disabled={loading}
-                        className="w-full h-14 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-lg hover:scale-105 transition-all"
+                        disabled={loading || (slug.length > 0 && !/^[a-z0-9-]+$/.test(slug))}
+                        className="w-full h-14 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-lg hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100"
                     >
                         {loading ? "Creating..." : "Create Event"}
                     </Button>
