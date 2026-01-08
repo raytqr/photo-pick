@@ -28,6 +28,10 @@ export default async function ClientSelectPage({ params }: { params: { slug: str
         return notFound();
     }
 
+    if (!event.is_active) {
+        return notFound();
+    }
+
     // 2. Fetch Photos
     const { data: photosData } = await supabase
         .from('photos')

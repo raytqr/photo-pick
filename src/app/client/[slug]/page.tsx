@@ -39,6 +39,10 @@ export default async function ClientLandingPage({ params }: { params: { slug: st
         return notFound();
     }
 
+    if (!event.is_active) {
+        return notFound();
+    }
+
     const profile = event.profiles;
 
     return (
