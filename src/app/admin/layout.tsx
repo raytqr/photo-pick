@@ -10,7 +10,9 @@ import {
     Ticket,
     ArrowLeft,
     Shield,
-    Loader2
+    Loader2,
+    Menu,
+    X
 } from "lucide-react";
 
 const navItems = [
@@ -41,6 +43,7 @@ export default function AdminLayout({
 }: {
     children: React.ReactNode;
 }) {
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
     const [checking, setChecking] = useState(true);
@@ -63,6 +66,8 @@ export default function AdminLayout({
 
         setAuthorized(true);
         setChecking(false);
+        // Close mobile menu on route change
+        setMobileMenuOpen(false);
     }, [pathname, router]);
 
     // Show loading while checking
@@ -88,11 +93,32 @@ export default function AdminLayout({
     }
 
     return (
-        <div className="min-h-screen bg-[#0a0a0f] text-white flex">
+        <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col md:flex-row">
+
+            {/* Mobile Header */}
+            <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#0a0a0f]/95 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-between px-6 z-50">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-orange-500 rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/20">
+                        <Shield size={16} className="text-white" />
+                    </div>
+                    <span className="font-bold text-sm tracking-tight">Admin Panel</span>
+                </div>
+                <button
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white rounded-xl hover:bg-white/5 transition-colors"
+                >
+                    {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+                </button>
+            </div>
+
             {/* Sidebar */}
-            <aside className="w-72 bg-gradient-to-b from-gray-900/80 to-gray-950/90 border-r border-white/[0.06] flex flex-col backdrop-blur-xl">
-                {/* Logo Section */}
-                <div className="p-6 border-b border-white/[0.06]">
+            <aside className={`
+                fixed top-0 left-0 bottom-0 width-72 bg-[#0a0a0f] border-r border-white/[0.06] flex flex-col z-40 transition-transform duration-300
+                md:translate-x-0 w-72 md:relative md:inset-auto md:bg-gradient-to-b md:from-gray-900/80 md:to-gray-950/90
+                ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
+            `}>
+                {/* Logo Section (Desktop Only) */}
+                <div className="p-6 border-b border-white/[0.06] hidden md:block">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-gradient-to-br from-red-500 via-orange-500 to-amber-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/20">
                             <Shield size={22} className="text-white" />
@@ -104,8 +130,11 @@ export default function AdminLayout({
                     </div>
                 </div>
 
+                {/* Mobile Header Spacer */}
+                <div className="h-16 md:hidden" />
+
                 {/* Navigation */}
-                <nav className="flex-1 p-4 space-y-1">
+                <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
                     <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">
                         Main Menu
                     </p>
@@ -117,9 +146,10 @@ export default function AdminLayout({
                             <Link
                                 key={item.href}
                                 href={item.href}
+                                onClick={() => setMobileMenuOpen(false)}
                                 className={`group flex items-center gap-3 px-4 py-3 rounded-xl text-[14px] font-medium transition-all duration-200 ${isActive
-                                        ? "bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-white border border-purple-500/20 shadow-lg shadow-purple-500/5"
-                                        : "text-gray-400 hover:text-white hover:bg-white/[0.04]"
+                                    ? "bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-white border border-purple-500/20 shadow-lg shadow-purple-500/5"
+                                    : "text-gray-400 hover:text-white hover:bg-white/[0.04]"
                                     }`}
                             >
                                 <div className={`${isActive ? "text-purple-400" : "text-gray-500 group-hover:text-gray-300"} transition-colors`}>
@@ -157,25 +187,31 @@ export default function AdminLayout({
                 </div>
             </aside>
 
+            {/* Overlay */}
+            {mobileMenuOpen && (
+                <div
+                    className="fixed inset-0 bg-black/80 backdrop-blur-sm z-30 md:hidden animate-in fade-in duration-200"
+                    onClick={() => setMobileMenuOpen(false)}
+                />
+            )}
+
             {/* Main Content */}
-            <main className="flex-1 overflow-auto">
-                {/* Top Bar */}
-                <header className="sticky top-0 z-10 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/[0.06] px-8 py-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-[13px] text-gray-500">Welcome back,</p>
-                            <p className="font-semibold">Administrator</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-sm font-bold">
-                                A
-                            </div>
+            <main className="flex-1 min-h-screen overflow-x-hidden md:ml-0 pt-16 md:pt-0">
+                {/* Top Bar (Desktop Only) */}
+                <header className="hidden md:flex sticky top-0 z-10 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/[0.06] px-8 py-4 items-center justify-between">
+                    <div>
+                        <p className="text-[13px] text-gray-500">Welcome back,</p>
+                        <p className="font-semibold">Administrator</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-sm font-bold">
+                            A
                         </div>
                     </div>
                 </header>
 
                 {/* Page Content */}
-                <div className="p-8">
+                <div className="p-4 md:p-8">
                     {children}
                 </div>
             </main>
