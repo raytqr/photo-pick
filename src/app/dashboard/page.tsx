@@ -145,10 +145,10 @@ export default async function DashboardPage() {
                 <div className="flex flex-col md:flex-row justify-between items-end gap-6">
                     <div>
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass border-white/5 text-[10px] font-black uppercase tracking-widest text-purple-400 mb-3">
-                            <Sparkles size={12} /> Photographer Hub
+                            <Sparkles size={12} /> System Overview
                         </div>
-                        <h2 className="text-4xl font-black tracking-tight text-white mb-2">Welcome Back, <span className="text-gradient">{profile?.photographer_name || profile?.email}</span></h2>
-                        <p className="text-gray-500 font-medium">Manage your event galleries and client selections.</p>
+                        <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-2">Welcome Back, <span className="text-gradient">{profile?.photographer_name || profile?.email}</span></h2>
+                        <p className="text-gray-500 font-medium">Here's what's happening with your galleries today.</p>
                     </div>
 
                     <div className="flex items-center gap-3">

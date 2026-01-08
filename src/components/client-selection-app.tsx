@@ -19,7 +19,7 @@ export function ClientSelectionApp() {
     const [isInfoOpen, setIsInfoOpen] = useState(false);
 
     const store = useAppStore();
-    const { sourceImages, selectedPhotos, superLikedPhotos, maybePhotos, photoLimit, whatsappNumber, eventSlug, movePhoto } = store;
+    const { sourceImages, selectedPhotos, superLikedPhotos, maybePhotos, photoLimit, whatsappNumber, eventSlug, movePhoto, undoLastAction, history } = store;
 
     const visibleCards = sourceImages.slice(0, 3);
     const isDeckEmpty = sourceImages.length === 0;
@@ -126,8 +126,12 @@ export function ClientSelectionApp() {
                         </div>
 
                         <ControlBar
-                            onSwipe={handleSwipe}
-                            canSwipe={visibleCards.length > 0}
+                            onUndo={undoLastAction}
+                            canUndo={history.length > 0}
+                            onReject={() => handleSwipe('left')}
+                            onSuperLike={() => handleSwipe('up')}
+                            onSelect={() => handleSwipe('right')}
+                            onMaybe={() => handleSwipe('down')}
                         />
                     </div>
                 )}
