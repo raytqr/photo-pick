@@ -71,7 +71,7 @@ export default async function DashboardPage() {
     const eventsRemaining = isSubscribed ? (profile?.events_remaining || '∞') : '0';
 
     return (
-        <div className="min-h-screen bg-[#030014] text-white selection:bg-purple-500/30">
+        <div className="text-white selection:bg-purple-500/30">
 
             {/* Mesh Background */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
@@ -79,24 +79,10 @@ export default async function DashboardPage() {
                 <div className="absolute bottom-0 left-0 w-[50%] h-[50%] bg-blue-900/10 blur-[120px]" />
             </div>
 
-            {/* Dashboard Content Header */}
-            <header className="w-full h-16 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    {/* Breadcrumb removed as requested */}
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full glass border-white/10">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-xs font-semibold text-gray-400">System Online</span>
-                    </div>
-                </div>
-            </header>
-
-            <main className="max-w-7xl mx-auto px-4 py-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <main className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
                 {/* Status Banners */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                     {isExpired && expiresAt && (
                         <div className="glass rounded-2xl border-red-500/30 overflow-hidden">
                             <div className="bg-red-500/10 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">

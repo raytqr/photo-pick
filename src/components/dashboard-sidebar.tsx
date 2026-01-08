@@ -67,46 +67,54 @@ export function DashboardSidebar({
 
     return (
         <>
-            {/* Mobile Header */}
-            <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#0a0a0a] border-b border-white/5 flex items-center justify-between px-4 z-50">
-                <Link href="/dashboard" className="flex items-center gap-2">
-                    <Image src="/logo-premium.png" alt="SatSetPic" width={32} height={32} className="rounded-lg" />
-                    <span className="font-bold text-white">SatSetPic</span>
+            {/* Mobile Header - Fixed consistent padding */}
+            <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[#0a0a0a]/95 backdrop-blur-lg border-b border-white/5 flex items-center justify-between px-4 z-50">
+                <Link href="/dashboard" className="flex items-center gap-2.5">
+                    <Image src="/logo-premium.png" alt="SatSetPic" width={28} height={28} className="rounded-lg" />
+                    <span className="font-bold text-white text-sm">SatSetPic</span>
                 </Link>
                 <button
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    className="p-2 text-gray-400 hover:text-white"
+                    className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white rounded-xl hover:bg-white/5 transition-colors"
+                    aria-label="Toggle menu"
                 >
-                    {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                    {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
                 </button>
             </div>
 
-            {/* Sidebar Container */}
+            {/* Sidebar Container - Consistent spacing */}
             <aside className={cn(
-                "fixed top-0 left-0 bottom-0 w-64 bg-[#0a0a0a] border-r border-white/5 flex flex-col z-40 transition-transform duration-300 md:translate-x-0 pt-16 md:pt-0",
+                "fixed top-0 left-0 bottom-0 w-64 bg-[#0a0a0a] border-r border-white/5 flex flex-col z-40 transition-transform duration-300 md:translate-x-0",
                 mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
             )}>
-                {/* Branding (Desktop) */}
-                <div className="h-24 hidden md:flex items-center px-6">
+                {/* Branding (Desktop) - Consistent height and padding */}
+                <div className="h-16 hidden md:flex items-center px-5 border-b border-white/5">
                     <Link href="/dashboard" className="flex items-center gap-3 group">
-                        <div className="w-12 h-12 rounded-xl glass border-white/10 flex items-center justify-center shadow-lg shadow-purple-500/20 group-hover:scale-110 transition-all duration-500">
-                            <Image src="/logo-premium.png" alt="SatSetPic" width={48} height={48} className="rounded-lg object-contain" />
-                        </div>
-                        <span className="text-xl font-black tracking-tighter text-white">SatSetPic</span>
+                        <Image
+                            src="/logo-premium.png"
+                            alt="SatSetPic"
+                            width={32}
+                            height={32}
+                            className="rounded-lg group-hover:scale-110 transition-transform duration-300"
+                        />
+                        <span className="text-lg font-bold text-white">SatSetPic</span>
                     </Link>
                 </div>
 
-                {/* Subscription Info */}
+                {/* Mobile Header Spacer */}
+                <div className="h-14 md:hidden" />
+
+                {/* Subscription Info - Consistent margin */}
                 {subscriptionTier && (
-                    <div className="mx-4 mb-4 p-3 rounded-2xl glass border-white/10 mt-4 md:mt-0">
+                    <div className="mx-4 my-4 p-3 rounded-xl bg-white/[0.03] border border-white/5">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <Crown size={14} className="text-amber-500" />
-                                <span className="text-xs font-bold text-white uppercase">{subscriptionTier}</span>
+                                <span className="text-xs font-bold text-white uppercase tracking-wide">{subscriptionTier}</span>
                             </div>
                             {formatExpiry() && (
                                 <span className={cn(
-                                    "text-[10px] font-bold px-2 py-1 rounded-full",
+                                    "text-[10px] font-bold px-2 py-0.5 rounded-full",
                                     formatExpiry() === "Expired" ? "bg-red-500/20 text-red-400" :
                                         formatExpiry()?.includes("days left") ? "bg-amber-500/20 text-amber-400" :
                                             "text-gray-500"
@@ -118,12 +126,13 @@ export function DashboardSidebar({
                     </div>
                 )}
 
-                {/* Navigation */}
-                <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
-                    <div>
-                        <div className="px-4 mb-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                {/* Navigation - Consistent padding throughout */}
+                <nav className="flex-1 px-3 py-2 overflow-y-auto">
+                    {/* Main Menu */}
+                    <div className="mb-6">
+                        <p className="px-3 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                             Menu
-                        </div>
+                        </p>
                         <div className="space-y-1">
                             {links.map((link) => {
                                 const isLinkDisabled = restricted && (link.href.includes('/create') || link.href.includes('/profile'));
@@ -141,21 +150,27 @@ export function DashboardSidebar({
                                             setMobileMenuOpen(false);
                                         }}
                                         className={cn(
-                                            "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium group",
+                                            "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 font-medium group",
                                             pathname === link.href
-                                                ? "bg-white/10 text-white shadow-lg border border-white/5"
-                                                : "text-gray-400 hover:text-white hover:bg-white/5 hover:translate-x-1",
-                                            isLinkDisabled && "opacity-50 cursor-not-allowed hover:bg-transparent hover:translate-x-0"
+                                                ? "bg-white/10 text-white"
+                                                : "text-gray-400 hover:text-white hover:bg-white/5",
+                                            isLinkDisabled && "opacity-50 cursor-not-allowed hover:bg-transparent"
                                         )}
                                     >
                                         <div className={cn(
-                                            "p-2 rounded-lg transition-all duration-300",
-                                            pathname === link.href ? "bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg" : "bg-white/5 group-hover:bg-white/10"
+                                            "w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200",
+                                            pathname === link.href
+                                                ? "bg-gradient-to-br from-purple-500 to-pink-500 text-white"
+                                                : "bg-white/5 group-hover:bg-white/10"
                                         )}>
-                                            <link.icon size={18} />
+                                            <link.icon size={16} />
                                         </div>
-                                        <span>{link.label}</span>
-                                        {isLinkDisabled && <span className="ml-auto text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full">Locked</span>}
+                                        <span className="text-sm">{link.label}</span>
+                                        {isLinkDisabled && (
+                                            <span className="ml-auto text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full font-bold">
+                                                Locked
+                                            </span>
+                                        )}
                                     </Link>
                                 );
                             })}
@@ -164,20 +179,20 @@ export function DashboardSidebar({
 
                     {/* Support Section */}
                     <div>
-                        <div className="px-4 mb-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        <p className="px-3 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                             Support
-                        </div>
+                        </p>
                         <div className="space-y-1">
                             <Link
                                 href="https://chat.whatsapp.com/H7Ys4utow3c4Vya6TKUAih"
                                 target="_blank"
                                 onClick={() => setMobileMenuOpen(false)}
-                                className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 hover:translate-x-1 transition-all duration-300 font-medium group"
+                                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-200 font-medium group"
                             >
-                                <div className="p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-all duration-300">
-                                    <UserPlus size={18} />
+                                <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 group-hover:bg-white/10 transition-all duration-200">
+                                    <UserPlus size={16} />
                                 </div>
-                                <span>Join Community</span>
+                                <span className="text-sm">Join Community</span>
                             </Link>
 
                             {(subscriptionTier === 'Pro' || subscriptionTier === 'Unlimited') && !restricted && (
@@ -185,31 +200,31 @@ export function DashboardSidebar({
                                     href="https://wa.me/6285159993427"
                                     target="_blank"
                                     onClick={() => setMobileMenuOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 hover:translate-x-1 transition-all duration-300 font-medium group"
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 transition-all duration-200 font-medium group"
                                 >
-                                    <div className="p-2 rounded-lg bg-amber-500/10 group-hover:bg-amber-500/20 transition-all duration-300">
-                                        <MessageCircle size={18} />
+                                    <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-amber-500/10 group-hover:bg-amber-500/20 transition-all duration-200">
+                                        <MessageCircle size={16} />
                                     </div>
-                                    <span>Premium Support</span>
+                                    <span className="text-sm">Premium Support</span>
                                 </Link>
                             )}
                         </div>
                     </div>
                 </nav>
 
-                {/* User Profile */}
-                <div className="p-4 border-t border-white/5 bg-white/[0.02]">
-                    <div className="flex items-center gap-3 p-2 rounded-2xl glass border-white/5">
-                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-tr from-purple-600 to-pink-600 text-white flex items-center justify-center font-black text-lg shadow-lg shadow-purple-500/10 shrink-0">
+                {/* User Profile - Consistent padding */}
+                <div className="p-3 border-t border-white/5">
+                    <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.03]">
+                        <div className="w-9 h-9 rounded-lg overflow-hidden bg-gradient-to-tr from-purple-600 to-pink-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
                             {displayLogo ? (
-                                <Image src={displayLogo} alt={displayName} width={40} height={40} className="w-full h-full object-cover" />
+                                <Image src={displayLogo} alt={displayName} width={36} height={36} className="w-full h-full object-cover" />
                             ) : (
                                 userEmail?.charAt(0).toUpperCase()
                             )}
                         </div>
                         <div className="overflow-hidden min-w-0 flex-1">
-                            <p className="text-sm font-black truncate text-white">{displayName}</p>
-                            <p className="text-[10px] text-gray-500 truncate font-medium">{userEmail}</p>
+                            <p className="text-sm font-bold truncate text-white">{displayName}</p>
+                            <p className="text-[10px] text-gray-500 truncate">{userEmail}</p>
                         </div>
                     </div>
                 </div>
