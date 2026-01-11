@@ -38,6 +38,9 @@ export async function redeemCode(code: string) {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + redeemCode.duration_days);
 
+    // Calculate billing day (cap at 28 to be safe across all months)
+    const billingDay = Math.min(new Date().getDate(), 28);
+
     // Update user profile with subscription (Bypass RLS)
     const { error: updateError } = await adminSupabase
         .from('profiles')
@@ -45,6 +48,9 @@ export async function redeemCode(code: string) {
             subscription_tier: redeemCode.tier,
             subscription_expires_at: expiresAt.toISOString(),
             events_remaining: redeemCode.events_granted,
+            monthly_credits: redeemCode.events_granted, // For monthly reset
+            billing_day: billingDay,
+            last_credit_reset_at: new Date().toISOString(),
         })
         .eq('id', user.id);
 

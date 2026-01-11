@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase-server";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { FreeTrialPopup } from "@/components/free-trial-popup";
+import { SubscriptionReminderPopup } from "@/components/subscription-reminder-popup";
 import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({
@@ -18,7 +19,7 @@ export default async function DashboardLayout({
     // Fetch profile with photographer name and subscription info
     const { data: profile } = await supabase
         .from('profiles')
-        .select('photographer_name, logo_url, subscription_tier, subscription_expires_at')
+        .select('photographer_name, logo_url, subscription_tier, subscription_expires_at, events_remaining')
         .eq('id', user.id)
         .single();
 
@@ -33,6 +34,12 @@ export default async function DashboardLayout({
             />
 
             <FreeTrialPopup tier={profile?.subscription_tier} />
+
+            <SubscriptionReminderPopup
+                tier={profile?.subscription_tier}
+                expiresAt={profile?.subscription_expires_at}
+                eventsRemaining={profile?.events_remaining}
+            />
 
             {/* Main content - consistent padding: p-4 mobile, p-6 desktop */}
             <div className="flex-1 md:ml-64 pt-14 md:pt-0 transition-all duration-300 p-4 md:p-6">
