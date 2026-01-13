@@ -9,10 +9,61 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "SatSetPic — Photo Selection Made Fast",
-  description: "The fastest way for photographers to share and select photos. SatSet, done.",
+  metadataBase: new URL("https://satsetpic.com"),
+  title: {
+    default: "SatSetPic — Photo Selection Made Fast",
+    template: "%s | SatSetPic",
+  },
+  description:
+    "The fastest way for photographers to share and select photos. Let clients swipe to choose their favorites. SatSet, done.",
+  keywords: [
+    "photo selection",
+    "photographer tool",
+    "client gallery",
+    "photo proofing",
+    "swipe photos",
+    "SatSetPic",
+    "Google Drive sync",
+  ],
+  authors: [{ name: "SatSetPic Team" }],
   icons: {
     icon: "/logo.png",
+    apple: "/logo.png",
+  },
+  openGraph: {
+    title: "SatSetPic — Photo Selection Made Fast",
+    description:
+      "The fastest way for photographers to share and select photos. Let clients swipe to choose their favorites.",
+    url: "https://satsetpic.com",
+    siteName: "SatSetPic",
+    images: [
+      {
+        url: "/hero-mockup.png",
+        width: 1200,
+        height: 630,
+        alt: "SatSetPic - Photo Selection App",
+      },
+    ],
+    locale: "id_ID",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SatSetPic — Photo Selection Made Fast",
+    description:
+      "The fastest way for photographers to share and select photos. Let clients swipe to choose their favorites.",
+    images: ["/hero-mockup.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
