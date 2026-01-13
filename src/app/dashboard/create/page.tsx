@@ -6,9 +6,10 @@ import { createClient } from "@/lib/supabase";
 import { isRestricted, getPlanLimits, PLAN_LIMITS } from "@/lib/subscription-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Cloud, Sparkles, Lock, Crown, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Cloud, Sparkles, Lock, Crown, AlertTriangle, Check, X, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { checkSlugAvailability } from "@/actions/check-slug";
 
 export default function CreateEventPage() {
     const router = useRouter();
@@ -25,6 +26,11 @@ export default function CreateEventPage() {
     const [driveLink, setDriveLink] = useState("");
     const [photoLimit, setPhotoLimit] = useState("50");
     const [slug, setSlug] = useState("");
+
+    // URL Availability State
+    const [slugChecking, setSlugChecking] = useState(false);
+    const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
+    const [slugError, setSlugError] = useState<string | null>(null);
 
     // Check subscription status & limits
     useEffect(() => {
@@ -83,8 +89,47 @@ export default function CreateEventPage() {
         checkSubscription();
     }, [supabase, router]);
 
+    // Check slug availability
+    const handleCheckSlug = async () => {
+        if (!slug || slug.trim() === "") {
+            setSlugError("Please enter a URL slug first");
+            setSlugAvailable(null);
+            return;
+        }
+
+        if (!/^[a-z0-9-]+$/.test(slug)) {
+            setSlugError("Invalid format. Use lowercase letters, numbers, and hyphens only.");
+            setSlugAvailable(false);
+            return;
+        }
+
+        setSlugChecking(true);
+        setSlugError(null);
+        setSlugAvailable(null);
+
+        try {
+            const result = await checkSlugAvailability(slug);
+            setSlugAvailable(result.available);
+            if (!result.available && result.error) {
+                setSlugError(result.error);
+            }
+        } catch (err) {
+            setSlugError("Failed to check availability");
+            setSlugAvailable(false);
+        } finally {
+            setSlugChecking(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // If slug is provided but not checked/available, prevent submission
+        if (slug && slugAvailable !== true) {
+            setSlugError("Please check URL availability first");
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -203,27 +248,63 @@ export default function CreateEventPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-gray-400">URL Slug</label>
-                                <div className="flex">
-                                    <span className="inline-flex items-center px-4 rounded-l-2xl border border-r-0 border-white/10 bg-white/5 text-gray-500 text-sm">
-                                        /client/
-                                    </span>
-                                    <Input
-                                        placeholder="wedding-sarah-dimas"
-                                        value={slug}
-                                        onChange={(e) => {
-                                            const val = e.target.value;
-                                            setSlug(val);
-                                        }}
-                                        className={`rounded-l-none h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-600 ${slug && !/^[a-z0-9-]+$/.test(slug) ? "border-red-500 focus-visible:ring-red-500" : ""
+                                <div className="flex gap-2">
+                                    <div className="flex flex-1">
+                                        <span className="inline-flex items-center px-4 rounded-l-2xl border border-r-0 border-white/10 bg-white/5 text-gray-500 text-sm">
+                                            /client/
+                                        </span>
+                                        <Input
+                                            placeholder="wedding-sarah-dimas"
+                                            value={slug}
+                                            onChange={(e) => {
+                                                const val = e.target.value.toLowerCase();
+                                                setSlug(val);
+                                                // Reset availability when slug changes
+                                                setSlugAvailable(null);
+                                                setSlugError(null);
+                                            }}
+                                            className={`rounded-l-none h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-600 ${slugAvailable === false ? "border-red-500 focus-visible:ring-red-500" :
+                                                    slugAvailable === true ? "border-green-500 focus-visible:ring-green-500" :
+                                                        slug && !/^[a-z0-9-]+$/.test(slug) ? "border-red-500 focus-visible:ring-red-500" : ""
+                                                }`}
+                                        />
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        onClick={handleCheckSlug}
+                                        disabled={slugChecking || !slug || !/^[a-z0-9-]+$/.test(slug)}
+                                        className={`h-12 px-4 rounded-2xl font-semibold transition-all ${slugAvailable === true
+                                                ? "bg-green-600 hover:bg-green-700"
+                                                : slugAvailable === false
+                                                    ? "bg-red-600 hover:bg-red-700"
+                                                    : "bg-white/10 hover:bg-white/20"
                                             }`}
-                                    />
+                                    >
+                                        {slugChecking ? (
+                                            <Loader2 size={18} className="animate-spin" />
+                                        ) : slugAvailable === true ? (
+                                            <Check size={18} />
+                                        ) : slugAvailable === false ? (
+                                            <X size={18} />
+                                        ) : (
+                                            "Check"
+                                        )}
+                                    </Button>
                                 </div>
-                                {slug && !/^[a-z0-9-]+$/.test(slug) ? (
+                                {slugError ? (
+                                    <p className="text-xs text-red-500 animate-pulse">
+                                        {slugError}
+                                    </p>
+                                ) : slugAvailable === true ? (
+                                    <p className="text-xs text-green-500">
+                                        ✓ This URL is available!
+                                    </p>
+                                ) : slug && !/^[a-z0-9-]+$/.test(slug) ? (
                                     <p className="text-xs text-red-500 animate-pulse">
                                         Format invalid: use lowercase letters, numbers, and hyphens only.
                                     </p>
                                 ) : (
-                                    <p className="text-xs text-gray-500">Leave blank to auto-generate.</p>
+                                    <p className="text-xs text-gray-500">Leave blank to auto-generate, or enter a custom URL and click Check.</p>
                                 )}
                             </div>
                             <div className="space-y-2">
@@ -265,11 +346,16 @@ export default function CreateEventPage() {
 
                     <Button
                         type="submit"
-                        disabled={loading || (slug.length > 0 && !/^[a-z0-9-]+$/.test(slug))}
+                        disabled={loading || (slug.length > 0 && (!/^[a-z0-9-]+$/.test(slug) || slugAvailable !== true))}
                         className="w-full h-14 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-lg hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100"
                     >
                         {loading ? "Creating..." : "Create Event"}
                     </Button>
+                    {slug && slugAvailable !== true && slugAvailable !== null && (
+                        <p className="text-center text-sm text-amber-400">
+                            Please use a different URL or check availability first.
+                        </p>
+                    )}
 
                 </form>
             </div>
