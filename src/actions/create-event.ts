@@ -37,36 +37,25 @@ export async function createEvent(formData: {
 
     // 4. Quota Enforcement (Server-Side)
     const tierLimits = getPlanLimits(profile.subscription_tier);
+    const isUnlimited = profile.subscription_tier?.toLowerCase() === 'unlimited';
 
     // 4a. Photo Limit Check
-    if (formData.photoLimit > tierLimits.maxPhotos) {
+    if (formData.photoLimit > tierLimits.maxPhotos && !isUnlimited) {
         return {
             success: false,
             error: `Photo limit ${formData.photoLimit} exceeds your plan's maximum (${tierLimits.maxPhotos}).`
         };
     }
 
-    // 4b. Monthly Event Count Check
-    const now = new Date();
-    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-
-    const { count, error: countError } = await supabase
-        .from('events')
-        .select('*', { count: 'exact', head: true })
-        .eq('photographer_id', user.id)
-        .gte('created_at', firstDayOfMonth);
-
-    if (countError) {
-        console.error("Quota Check Error:", countError);
-        return { success: false, error: "Failed to verify event quota: " + countError.message };
-    }
-
-    const currentCount = count || 0;
-    if (currentCount >= tierLimits.maxEvents) {
-        return {
-            success: false,
-            error: `Monthly event limit reached (${currentCount}/${tierLimits.maxEvents}). Please upgrade your plan.`
-        };
+    // 4b. Events Remaining Check (skip for Unlimited tier)
+    if (!isUnlimited) {
+        const eventsRemaining = profile.events_remaining ?? 0;
+        if (eventsRemaining <= 0) {
+            return {
+                success: false,
+                error: `No events remaining in your monthly quota. Please wait for reset or upgrade your plan.`
+            };
+        }
     }
 
     // 5. Slug Validation
@@ -96,7 +85,17 @@ export async function createEvent(formData: {
         return { success: false, error: insertError.message };
     }
 
-    // 7. Success
+    // 7. Decrement events_remaining (skip for Unlimited tier)
+    if (!isUnlimited && profile.events_remaining !== null) {
+        const newEventsRemaining = Math.max(0, (profile.events_remaining || 0) - 1);
+        await supabase
+            .from('profiles')
+            .update({ events_remaining: newEventsRemaining })
+            .eq('id', user.id);
+    }
+
+    // 8. Success
     revalidatePath('/dashboard');
     return { success: true, eventId: event.id };
 }
+

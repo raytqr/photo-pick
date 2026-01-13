@@ -41,14 +41,18 @@ export async function redeemCode(code: string) {
     // Calculate billing day (cap at 28 to be safe across all months)
     const billingDay = Math.min(new Date().getDate(), 28);
 
+    // Check if this is an Unlimited tier
+    const isUnlimited = redeemCode.tier?.toLowerCase() === 'unlimited';
+
     // Update user profile with subscription (Bypass RLS)
     const { error: updateError } = await adminSupabase
         .from('profiles')
         .update({
             subscription_tier: redeemCode.tier,
             subscription_expires_at: expiresAt.toISOString(),
-            events_remaining: redeemCode.events_granted,
-            monthly_credits: redeemCode.events_granted, // For monthly reset
+            // For Unlimited tier, set events_remaining to null (infinite)
+            events_remaining: isUnlimited ? null : redeemCode.events_granted,
+            monthly_credits: isUnlimited ? null : redeemCode.events_granted,
             billing_day: billingDay,
             last_credit_reset_at: new Date().toISOString(),
         })

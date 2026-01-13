@@ -69,7 +69,10 @@ export default async function DashboardPage() {
         .order('created_at', { ascending: false });
 
     const totalEvents = events?.length || 0;
-    const eventsRemaining = isSubscribed ? (profile?.events_remaining || '∞') : '0';
+    const isUnlimitedTier = tier?.toLowerCase() === 'unlimited';
+    const eventsRemaining = isSubscribed
+        ? (isUnlimitedTier ? '∞' : (profile?.events_remaining ?? '0'))
+        : '0';
 
     return (
         <div className="text-white selection:bg-purple-500/30">

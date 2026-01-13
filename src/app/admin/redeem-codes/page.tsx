@@ -38,11 +38,17 @@ interface RedeemCode {
 }
 
 const TIERS = [
-    { value: "Trial", color: "from-green-500 to-emerald-500", label: "Trial/Free" },
-    { value: "Starter", color: "from-gray-500 to-slate-500", label: "Starter" },
-    { value: "Basic", color: "from-blue-500 to-cyan-500", label: "Basic" },
-    { value: "Pro", color: "from-purple-500 to-pink-500", label: "Pro" },
-    { value: "Unlimited", color: "from-orange-500 to-red-500", label: "Unlimited" },
+    { value: "Trial", color: "from-green-500 to-emerald-500", label: "Trial/Free", defaultEvents: 3 },
+    { value: "Starter", color: "from-gray-500 to-slate-500", label: "Starter", defaultEvents: 10 },
+    { value: "Basic", color: "from-blue-500 to-cyan-500", label: "Basic", defaultEvents: 20 },
+    { value: "Pro", color: "from-purple-500 to-pink-500", label: "Pro", defaultEvents: 50 },
+    { value: "Unlimited", color: "from-orange-500 to-red-500", label: "Unlimited", defaultEvents: -1 }, // -1 = unlimited
+];
+
+const DURATION_PRESETS = [
+    { label: "Monthly", days: 30 },
+    { label: "3 Months", days: 90 },
+    { label: "Yearly", days: 365 },
 ];
 
 function getTierStyle(tier: string) {
@@ -86,11 +92,21 @@ export default function AdminRedeemCodesPage() {
     const [formData, setFormData] = useState({
         code: "",
         tier: "Starter",
-        events_granted: 5,
+        events_granted: 10,
         duration_days: 30,
         max_uses: 1,
         discount_percentage: 0,
     });
+
+    // Auto-update events when tier changes
+    const handleTierChange = (tierValue: string) => {
+        const selectedTier = TIERS.find(t => t.value === tierValue);
+        setFormData(prev => ({
+            ...prev,
+            tier: tierValue,
+            events_granted: selectedTier?.defaultEvents === -1 ? 0 : (selectedTier?.defaultEvents ?? 10)
+        }));
+    };
 
     const loadCodes = async () => {
         setLoading(true);
@@ -194,8 +210,8 @@ export default function AdminRedeemCodesPage() {
                         <button
                             onClick={() => setCodeType("subscription")}
                             className={`flex-1 h-12 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${codeType === "subscription"
-                                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg"
-                                    : "bg-white/[0.03] border border-white/10 text-gray-400 hover:bg-white/[0.06]"
+                                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg"
+                                : "bg-white/[0.03] border border-white/10 text-gray-400 hover:bg-white/[0.06]"
                                 }`}
                         >
                             <Gift size={16} />
@@ -204,8 +220,8 @@ export default function AdminRedeemCodesPage() {
                         <button
                             onClick={() => setCodeType("discount")}
                             className={`flex-1 h-12 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${codeType === "discount"
-                                    ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg"
-                                    : "bg-white/[0.03] border border-white/10 text-gray-400 hover:bg-white/[0.06]"
+                                ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg"
+                                : "bg-white/[0.03] border border-white/10 text-gray-400 hover:bg-white/[0.06]"
                                 }`}
                         >
                             <Percent size={16} />
@@ -232,10 +248,10 @@ export default function AdminRedeemCodesPage() {
                                         {TIERS.map((tier) => (
                                             <button
                                                 key={tier.value}
-                                                onClick={() => setFormData({ ...formData, tier: tier.value })}
+                                                onClick={() => handleTierChange(tier.value)}
                                                 className={`h-11 rounded-xl text-xs font-medium transition-all ${formData.tier === tier.value
-                                                        ? `bg-gradient-to-r ${tier.color} text-white shadow-lg`
-                                                        : "bg-white/[0.03] border border-white/10 text-gray-400 hover:bg-white/[0.06]"
+                                                    ? `bg-gradient-to-r ${tier.color} text-white shadow-lg`
+                                                    : "bg-white/[0.03] border border-white/10 text-gray-400 hover:bg-white/[0.06]"
                                                     }`}
                                             >
                                                 {tier.label}
@@ -246,12 +262,18 @@ export default function AdminRedeemCodesPage() {
 
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-gray-300">Events Granted</label>
-                                    <Input
-                                        type="number"
-                                        value={formData.events_granted}
-                                        onChange={(e) => setFormData({ ...formData, events_granted: parseInt(e.target.value) || 0 })}
-                                        className="bg-white/[0.03] border-white/10 h-11 rounded-xl"
-                                    />
+                                    {formData.tier === "Unlimited" ? (
+                                        <div className="h-11 rounded-xl bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400 font-bold">
+                                            ∞ Unlimited
+                                        </div>
+                                    ) : (
+                                        <Input
+                                            type="number"
+                                            value={formData.events_granted}
+                                            onChange={(e) => setFormData({ ...formData, events_granted: parseInt(e.target.value) || 0 })}
+                                            className="bg-white/[0.03] border-white/10 h-11 rounded-xl"
+                                        />
+                                    )}
                                 </div>
                             </>
                         ) : (
@@ -272,12 +294,27 @@ export default function AdminRedeemCodesPage() {
                         )}
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-300">Duration (Days)</label>
+                            <label className="text-sm font-medium text-gray-300">Duration</label>
+                            <div className="flex gap-2">
+                                {DURATION_PRESETS.map((preset) => (
+                                    <button
+                                        key={preset.days}
+                                        onClick={() => setFormData({ ...formData, duration_days: preset.days })}
+                                        className={`flex-1 h-11 rounded-xl text-xs font-medium transition-all ${formData.duration_days === preset.days
+                                            ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg"
+                                            : "bg-white/[0.03] border border-white/10 text-gray-400 hover:bg-white/[0.06]"
+                                            }`}
+                                    >
+                                        {preset.label}
+                                    </button>
+                                ))}
+                            </div>
                             <Input
                                 type="number"
                                 value={formData.duration_days}
                                 onChange={(e) => setFormData({ ...formData, duration_days: parseInt(e.target.value) || 0 })}
-                                className="bg-white/[0.03] border-white/10 h-11 rounded-xl"
+                                placeholder="Custom days"
+                                className="bg-white/[0.03] border-white/10 h-11 rounded-xl mt-2"
                             />
                         </div>
 
@@ -300,7 +337,12 @@ export default function AdminRedeemCodesPage() {
                             <span className="text-gray-500">→</span>
                             {codeType === "subscription" ? (
                                 <span className="text-gray-300">
-                                    {formData.tier} tier • {formData.events_granted} events • {formData.duration_days} days
+                                    {formData.tier} tier • {formData.tier === "Unlimited" ? "∞" : formData.events_granted} events • {
+                                        formData.duration_days === 30 ? "1 month" :
+                                            formData.duration_days === 90 ? "3 months" :
+                                                formData.duration_days === 365 ? "1 year" :
+                                                    `${formData.duration_days} days`
+                                    }
                                 </span>
                             ) : (
                                 <span className="text-green-400 font-semibold">
@@ -419,8 +461,8 @@ export default function AdminRedeemCodesPage() {
                                         <button
                                             onClick={() => handleToggleActive(code.id, code.is_active)}
                                             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold transition-all ${code.is_active
-                                                    ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20"
-                                                    : "bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20"
+                                                ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20"
+                                                : "bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20"
                                                 }`}
                                         >
                                             {code.is_active ? <Check size={14} /> : <X size={14} />}
@@ -445,8 +487,8 @@ export default function AdminRedeemCodesPage() {
                                     <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
                                         <div
                                             className={`h-full rounded-full transition-all ${usagePercent >= 90 ? "bg-red-500" :
-                                                    usagePercent >= 50 ? "bg-yellow-500" :
-                                                        "bg-green-500"
+                                                usagePercent >= 50 ? "bg-yellow-500" :
+                                                    "bg-green-500"
                                                 }`}
                                             style={{ width: `${Math.min(usagePercent, 100)}%` }}
                                         />
