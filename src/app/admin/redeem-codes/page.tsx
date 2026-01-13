@@ -98,6 +98,26 @@ export default function AdminRedeemCodesPage() {
         discount_percentage: 0,
     });
 
+    // For discount codes - which tiers the discount applies to
+    const [selectedDiscountTiers, setSelectedDiscountTiers] = useState<string[]>(["all"]);
+
+    const toggleDiscountTier = (tierValue: string) => {
+        if (tierValue === "all") {
+            setSelectedDiscountTiers(["all"]);
+        } else {
+            setSelectedDiscountTiers(prev => {
+                // Remove "all" if selecting specific tiers
+                const withoutAll = prev.filter(t => t !== "all");
+                if (withoutAll.includes(tierValue)) {
+                    const result = withoutAll.filter(t => t !== tierValue);
+                    return result.length === 0 ? ["all"] : result;
+                } else {
+                    return [...withoutAll, tierValue];
+                }
+            });
+        }
+    };
+
     // Auto-update events when tier changes
     const handleTierChange = (tierValue: string) => {
         const selectedTier = TIERS.find(t => t.value === tierValue);
@@ -127,9 +147,9 @@ export default function AdminRedeemCodesPage() {
         setSaving(true);
         const dataToSend = {
             ...formData,
-            // For discount codes, set trial tier and 0 events
+            // For discount codes, store applicable tiers
             ...(codeType === "discount" ? {
-                tier: "Discount",
+                tier: selectedDiscountTiers.includes("all") ? "Discount:All" : `Discount:${selectedDiscountTiers.join(",")}`,
                 events_granted: 0,
             } : {
                 discount_percentage: 0,
@@ -277,46 +297,77 @@ export default function AdminRedeemCodesPage() {
                                 </div>
                             </>
                         ) : (
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-300">Discount Percentage (%)</label>
-                                <div className="relative">
-                                    <Input
-                                        type="number"
-                                        min="1"
-                                        max="100"
-                                        value={formData.discount_percentage}
-                                        onChange={(e) => setFormData({ ...formData, discount_percentage: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) })}
-                                        className="bg-white/[0.03] border-white/10 h-11 rounded-xl pr-10"
-                                    />
-                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">%</span>
+                            <>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-300">Discount Percentage (%)</label>
+                                    <div className="relative">
+                                        <Input
+                                            type="number"
+                                            min="1"
+                                            max="100"
+                                            value={formData.discount_percentage}
+                                            onChange={(e) => setFormData({ ...formData, discount_percentage: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) })}
+                                            className="bg-white/[0.03] border-white/10 h-11 rounded-xl pr-10"
+                                        />
+                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">%</span>
+                                    </div>
                                 </div>
+
+                                <div className="space-y-2 md:col-span-2">
+                                    <label className="text-sm font-medium text-gray-300">Applicable Tiers</label>
+                                    <p className="text-xs text-gray-500 mb-2">Select which subscription tiers can use this discount</p>
+                                    <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                                        <button
+                                            onClick={() => toggleDiscountTier("all")}
+                                            className={`h-11 rounded-xl text-xs font-medium transition-all ${selectedDiscountTiers.includes("all")
+                                                ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg"
+                                                : "bg-white/[0.03] border border-white/10 text-gray-400 hover:bg-white/[0.06]"
+                                                }`}
+                                        >
+                                            All Tiers
+                                        </button>
+                                        {TIERS.filter(t => t.value !== "Trial").map((tier) => (
+                                            <button
+                                                key={tier.value}
+                                                onClick={() => toggleDiscountTier(tier.value)}
+                                                className={`h-11 rounded-xl text-xs font-medium transition-all ${selectedDiscountTiers.includes(tier.value)
+                                                    ? `bg-gradient-to-r ${tier.color} text-white shadow-lg`
+                                                    : "bg-white/[0.03] border border-white/10 text-gray-400 hover:bg-white/[0.06]"
+                                                    }`}
+                                            >
+                                                {tier.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>)}
+
+                        {codeType === "subscription" && (
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-300">Duration</label>
+                                <div className="flex gap-2">
+                                    {DURATION_PRESETS.map((preset) => (
+                                        <button
+                                            key={preset.days}
+                                            onClick={() => setFormData({ ...formData, duration_days: preset.days })}
+                                            className={`flex-1 h-11 rounded-xl text-xs font-medium transition-all ${formData.duration_days === preset.days
+                                                ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg"
+                                                : "bg-white/[0.03] border border-white/10 text-gray-400 hover:bg-white/[0.06]"
+                                                }`}
+                                        >
+                                            {preset.label}
+                                        </button>
+                                    ))}
+                                </div>
+                                <Input
+                                    type="number"
+                                    value={formData.duration_days}
+                                    onChange={(e) => setFormData({ ...formData, duration_days: parseInt(e.target.value) || 0 })}
+                                    placeholder="Custom days"
+                                    className="bg-white/[0.03] border-white/10 h-11 rounded-xl mt-2"
+                                />
                             </div>
                         )}
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-300">Duration</label>
-                            <div className="flex gap-2">
-                                {DURATION_PRESETS.map((preset) => (
-                                    <button
-                                        key={preset.days}
-                                        onClick={() => setFormData({ ...formData, duration_days: preset.days })}
-                                        className={`flex-1 h-11 rounded-xl text-xs font-medium transition-all ${formData.duration_days === preset.days
-                                            ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg"
-                                            : "bg-white/[0.03] border border-white/10 text-gray-400 hover:bg-white/[0.06]"
-                                            }`}
-                                    >
-                                        {preset.label}
-                                    </button>
-                                ))}
-                            </div>
-                            <Input
-                                type="number"
-                                value={formData.duration_days}
-                                onChange={(e) => setFormData({ ...formData, duration_days: parseInt(e.target.value) || 0 })}
-                                placeholder="Custom days"
-                                className="bg-white/[0.03] border-white/10 h-11 rounded-xl mt-2"
-                            />
-                        </div>
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-300">Max Uses</label>
@@ -346,7 +397,7 @@ export default function AdminRedeemCodesPage() {
                                 </span>
                             ) : (
                                 <span className="text-green-400 font-semibold">
-                                    {formData.discount_percentage}% discount
+                                    {formData.discount_percentage}% discount • Applies to: {selectedDiscountTiers.includes("all") ? "All Tiers" : selectedDiscountTiers.join(", ")}
                                 </span>
                             )}
                         </div>
