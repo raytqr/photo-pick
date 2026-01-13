@@ -4,7 +4,8 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase";
 import {
   Camera,
   Sparkles,
@@ -144,7 +145,7 @@ const pricingPlans = [
   }
 ];
 
-function MobileNav() {
+function MobileNav({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -167,12 +168,22 @@ function MobileNav() {
               <a href="#how-it-works" onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white">Process</a>
               <a href="#pricing" onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white">Pricing</a>
               <hr className="border-white/10 my-4" />
-              <Link href="/login" onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white">Login</Link>
-              <Link href="/register" onClick={() => setIsOpen(false)}>
-                <Button className="w-full h-14 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-lg font-bold">
-                  Start Free Trial
-                </Button>
-              </Link>
+              {isLoggedIn ? (
+                <Link href="/dashboard" onClick={() => setIsOpen(false)}>
+                  <Button className="w-full h-14 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-lg font-bold">
+                    Go to Dashboard
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/login" onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white">Login</Link>
+                  <Link href="/register" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full h-14 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-lg font-bold">
+                      Start Free Trial
+                    </Button>
+                  </Link>
+                </>
+              )}
             </nav>
           </div>
         </div>
@@ -259,6 +270,18 @@ export default function LandingPage() {
   const scale = useTransform(scrollYProgress, [0, 0.5], [1, 0.8]);
   const y = useTransform(scrollYProgress, [0, 0.5], [0, -100]);
 
+  // Auth state
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsLoggedIn(!!user);
+    };
+    checkAuth();
+  }, []);
+
   // Pricing billing cycle state - default to yearly
   const [billingCycle, setBillingCycle] = useState<'monthly' | '3month' | 'yearly'>('yearly');
 
@@ -278,7 +301,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-[#030014] text-white selection:bg-purple-500/30">
 
       {/* Nav */}
-      <MobileNav />
+      <MobileNav isLoggedIn={isLoggedIn} />
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-black/20 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
@@ -293,14 +316,24 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Link href="/login" className="hidden sm:block text-sm font-medium text-gray-400 hover:text-white transition-colors">
-              Login
-            </Link>
-            <Link href="/register" className="hidden sm:block">
-              <Button className="rounded-full bg-white text-black hover:bg-gray-200 px-6 font-semibold transition-all hover:scale-105 active:scale-95">
-                Start Free
-              </Button>
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/dashboard" className="hidden sm:block">
+                <Button className="rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 font-semibold transition-all hover:scale-105 active:scale-95">
+                  Go to Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="hidden sm:block text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                  Login
+                </Link>
+                <Link href="/register" className="hidden sm:block">
+                  <Button className="rounded-full bg-white text-black hover:bg-gray-200 px-6 font-semibold transition-all hover:scale-105 active:scale-95">
+                    Start Free
+                  </Button>
+                </Link>
+              </>
+            )}
             <button
               onClick={() => document.getElementById('mobile-nav-trigger')?.click()}
               className="md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors"
