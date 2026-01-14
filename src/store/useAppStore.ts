@@ -18,6 +18,8 @@ interface AppState {
     driveLink: string;
     photoLimit: number;
     whatsappNumber: string;
+    waHeader: string;
+    waFooter: string;
 
     logoUrl: string | null;
     bio: string;
@@ -99,6 +101,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
     driveLink: '',
     photoLimit: 50,
     whatsappNumber: '',
+    waHeader: 'Halo! Berikut pilihan foto dari client:',
+    waFooter: 'Terima kasih telah memilih kami!',
     logoUrl: null,
     bio: '',
     portfolio: [],

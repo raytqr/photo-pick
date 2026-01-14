@@ -13,18 +13,8 @@ interface HeaderProps {
     onInfoClick: () => void;
 }
 
-// Generate unique code from photo IDs
-function generateSubmissionCode(photoIds: string[]): string {
-    const hash = photoIds.join('').split('').reduce((a, b) => {
-        a = ((a << 5) - a) + b.charCodeAt(0);
-        return a & a;
-    }, 0);
-    const code = Math.abs(hash).toString(36).toUpperCase().slice(0, 6);
-    return `SEL-${code}`;
-}
-
 export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
-    const { eventName, eventSlug, logoUrl, selectedPhotos, maybePhotos, rejectedPhotos, superLikedPhotos, sourceImages, photoLimit, whatsappNumber } = useAppStore();
+    const { eventName, eventSlug, logoUrl, selectedPhotos, maybePhotos, rejectedPhotos, superLikedPhotos, sourceImages, photoLimit, whatsappNumber, waHeader, waFooter } = useAppStore();
     const [showRestartConfirm, setShowRestartConfirm] = useState(false);
     const [showSendModal, setShowSendModal] = useState(false);
     const [copiedType, setCopiedType] = useState<string | null>(null);
@@ -34,32 +24,35 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
     const totalPhotos = sourceImages.length + selectedPhotos.length + maybePhotos.length + rejectedPhotos.length + superLikedPhotos.length;
     const reviewedCount = selectedPhotos.length + maybePhotos.length + rejectedPhotos.length + superLikedPhotos.length;
 
-    // Generate unique code
-    const submissionCode = useMemo(() => {
-        return generateSubmissionCode([...selectedPhotos, ...superLikedPhotos].map(p => p.id));
-    }, [selectedPhotos, superLikedPhotos]);
-
     // Filename only list (for Lightroom/Finder filter)
     const filenameList = useMemo(() => {
         return [...superLikedPhotos, ...selectedPhotos].map(p => p.name || p.id).join(' OR ');
     }, [selectedPhotos, superLikedPhotos]);
 
     const generateMessage = () => {
-        const superLikeNames = superLikedPhotos.map(p => `⭐ ${p.name || p.id}`).join('\n');
-        const selectedNames = selectedPhotos.map(p => `✅ ${p.name || p.id}`).join('\n');
+        const superLikeNames = superLikedPhotos.map(p => p.name || p.id).join(', ');
+        const selectedNames = selectedPhotos.map(p => p.name || p.id).join(', ');
 
-        let names = '';
-        if (superLikedPhotos.length > 0) names += `${superLikeNames}\n`;
-        if (selectedPhotos.length > 0) names += `${selectedNames}`;
+        // Use waHeader from profile settings
+        let message = `${waHeader || 'Halo! Berikut pilihan foto dari client:'}\n\n`;
 
-        let message = `Hi! 👋\n\nCode: ${submissionCode}\nTotal: ${count} photos\n\n${names}\n\n`;
-
-        // Add PC Search String
-        if (filenameList) {
-            message += `🖥️ *PC SEARCH STRING (For Lightroom Import):*\n\n${filenameList}\n\n`;
+        // Add photo lists without emojis
+        if (superLikedPhotos.length > 0) {
+            message += `Super Like: ${superLikeNames}\n`;
+        }
+        if (selectedPhotos.length > 0) {
+            message += `Selected: ${selectedNames}\n`;
         }
 
-        message += `Thank you! 📸`;
+        message += `\nTotal: ${count} photos\n\n`;
+
+        // Add PC Search String without emoji
+        if (filenameList) {
+            message += `PC SEARCH STRING (For Lightroom Import):\n\n${filenameList}\n\n`;
+        }
+
+        // Use waFooter from profile settings
+        message += waFooter || 'Terima kasih telah memilih kami!';
 
         return message;
     };
@@ -70,12 +63,11 @@ export function Header({ viewMode, setViewMode, onInfoClick }: HeaderProps) {
         return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
     };
 
-    const handleCopy = async (type: 'message' | 'filenames' | 'code') => {
+    const handleCopy = async (type: 'message' | 'filenames') => {
         try {
             let text = '';
             if (type === 'message') text = generateMessage();
             if (type === 'filenames') text = filenameList;
-            if (type === 'code') text = submissionCode;
 
             await navigator.clipboard.writeText(text);
             setCopiedType(type);

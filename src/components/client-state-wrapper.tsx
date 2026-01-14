@@ -11,6 +11,8 @@ interface ClientStateWrapperProps {
         driveLink: string;
         photoLimit: number;
         whatsappNumber: string;
+        waHeader: string;
+        waFooter: string;
         logoUrl: string | null;
         bio: string;
     };

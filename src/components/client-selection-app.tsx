@@ -62,30 +62,34 @@ export function ClientSelectionApp() {
     const remainingCards = sourceImages.length;
 
     const generateWhatsAppLink = () => {
-        let text = `Hi! 👋\n\nI've finished selecting my photos:\n\n`;
+        const { waHeader, waFooter } = useAppStore.getState();
 
-        // Super Liked (most important)
+        // Use waHeader from profile settings
+        let text = `${waHeader || 'Halo! Berikut pilihan foto dari client:'}\n\n`;
+
+        // Super Liked (most important) - without emojis
         if (superLikedPhotos.length > 0) {
-            const superLikeNames = superLikedPhotos.map(p => p.name || p.id).join('\n⭐ ');
-            text += `⭐ SUPER LIKE (${superLikedPhotos.length}):\n⭐ ${superLikeNames}\n\n`;
+            const superLikeNames = superLikedPhotos.map(p => p.name || p.id).join(', ');
+            text += `Super Like: ${superLikeNames}\n`;
         }
 
-        // Regular Selected
+        // Regular Selected - without emojis
         if (selectedPhotos.length > 0) {
-            const selectedNames = selectedPhotos.map(p => p.name || p.id).join('\n✅ ');
-            text += `✅ Selected (${selectedPhotos.length}):\n✅ ${selectedNames}\n\n`;
+            const selectedNames = selectedPhotos.map(p => p.name || p.id).join(', ');
+            text += `Selected: ${selectedNames}\n`;
         }
 
-        text += `Total: ${totalSelected} photos selected\n\n`;
+        text += `\nTotal: ${totalSelected} photos\n\n`;
 
-        // PC COPY PASTE STRING (For Search & Drag workflow)
+        // PC COPY PASTE STRING (For Search & Drag workflow) - without emojis
         const allSelected = [...superLikedPhotos, ...selectedPhotos];
         if (allSelected.length > 0) {
             const searchString = allSelected.map(p => p.name || p.id).join(' OR ');
-            text += `🖥️ *PC SEARCH STRING (For Lightroom Import):*\n\n${searchString}\n\n`;
+            text += `PC SEARCH STRING (For Lightroom Import):\n\n${searchString}\n\n`;
         }
 
-        text += `Thank you! 📸`;
+        // Use waFooter from profile settings
+        text += waFooter || 'Terima kasih telah memilih kami!';
 
         const phone = whatsappNumber.replace(/\D/g, '');
         return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;

@@ -18,7 +18,9 @@ export default async function ClientSelectPage({ params }: { params: { slug: str
         profiles:photographer_id (
             logo_url,
             bio,
-            whatsapp_number
+            whatsapp_number,
+            wa_header,
+            wa_footer
         )
     `)
         .eq('slug', slug)
@@ -56,6 +58,8 @@ export default async function ClientSelectPage({ params }: { params: { slug: str
         driveLink: event.drive_link || '',
         photoLimit: event.photo_limit || 50,
         whatsappNumber: profile?.whatsapp_number || '', // From profile, not event
+        waHeader: profile?.wa_header || 'Halo! Berikut pilihan foto dari client:',
+        waFooter: profile?.wa_footer || 'Terima kasih telah memilih kami!',
         logoUrl: profile?.logo_url || null,
         bio: profile?.bio || '',
     };

@@ -305,11 +305,16 @@ export default function ProfilePage() {
                             <div className="text-sm text-gray-300 whitespace-pre-line">
                                 {waHeader || "Halo! Berikut pilihan foto dari client:"}{"\n"}
                                 {"\n"}
-                                ✅ Selected: IMG_001.jpg, IMG_002.jpg{"\n"}
-                                ⭐ Super Like: IMG_003.jpg{"\n"}
-                                🤔 Maybe: IMG_004.jpg{"\n"}
+                                Super Like: IMG_003.jpg{"\n"}
+                                Selected: IMG_001.jpg, IMG_002.jpg{"\n"}
                                 {"\n"}
-                                {waFooter || "Terima kasih telah memilih kami! 📸"}
+                                Total: 3 photos{"\n"}
+                                {"\n"}
+                                PC SEARCH STRING (For Lightroom Import):{"\n"}
+                                {"\n"}
+                                IMG_003.jpg OR IMG_001.jpg OR IMG_002.jpg{"\n"}
+                                {"\n"}
+                                {waFooter || "Terima kasih telah memilih kami!"}
                             </div>
                         </div>
                     </div>
