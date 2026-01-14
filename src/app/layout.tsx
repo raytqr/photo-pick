@@ -28,15 +28,20 @@ export const metadata: Metadata = {
   authors: [{ name: "SatSetPic Team" }],
   icons: {
     icon: [
-      { url: "/logo.png", type: "image/png" },
-      { url: "/favicon.ico", type: "image/x-icon" },
+      { url: "/logo.png", type: "image/png", sizes: "512x512" },
+      { url: "/favicon.png", type: "image/png", sizes: "48x48" },
     ],
-    shortcut: "/logo.png",
-    apple: "/logo.png",
-    other: {
-      rel: "icon",
-      url: "/logo.png",
-    },
+    shortcut: "/favicon.png",
+    apple: [
+      { url: "/logo.png", sizes: "180x180", type: "image/png" },
+    ],
+    other: [
+      {
+        rel: "icon",
+        url: "/logo.png",
+        sizes: "192x192",
+      },
+    ],
   },
   verification: {
     google: "r5BGQwN18XHamZGMtxtnglQGvAOUI7GBUQCzc47-QZY",
