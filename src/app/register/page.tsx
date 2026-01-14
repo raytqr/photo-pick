@@ -9,6 +9,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Camera, Sparkles, ArrowRight, Zap, Mail, Eye, EyeOff, ShieldAlert } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { validateEmailForRegistration } from "@/lib/email-validator";
 
 // Generate a simple device fingerprint
 function getDeviceFingerprint(): string {
@@ -61,6 +62,14 @@ export default function RegisterPage() {
         e.preventDefault();
         setLoading(true);
         setError(null);
+
+        // Check for disposable/temp email
+        const emailError = validateEmailForRegistration(email);
+        if (emailError) {
+            setError(emailError);
+            setLoading(false);
+            return;
+        }
 
         // Double check device limit
         const registeredDevice = localStorage.getItem('vs_registered_device');

@@ -9,6 +9,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Camera, Sparkles, ArrowRight, Eye, EyeOff, Mail } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { checkAuthRateLimit } from "@/actions/rate-limit";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -24,6 +25,14 @@ export default function LoginPage() {
         e.preventDefault();
         setLoading(true);
         setError(null);
+
+        // Check rate limit first
+        const rateLimitResult = await checkAuthRateLimit();
+        if (!rateLimitResult.allowed) {
+            setError(rateLimitResult.message || "Too many attempts. Please try again later.");
+            setLoading(false);
+            return;
+        }
 
         const supabase = createClient();
         const { error } = await supabase.auth.signInWithPassword({
