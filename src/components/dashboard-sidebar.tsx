@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { isRestricted } from "@/lib/subscription-utils";
+import { LogoutButton } from "@/components/logout-button";
 
 interface DashboardSidebarProps {
     userEmail: string | undefined;
@@ -216,8 +217,8 @@ export function DashboardSidebar({
                     </div>
                 </nav>
 
-                {/* User Profile - Consistent padding */}
-                <div className="p-3 border-t border-white/5">
+                {/* User Profile with Logout - Consistent padding */}
+                <div className="p-3 border-t border-white/5 space-y-2">
                     <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.03]">
                         <div className="w-9 h-9 rounded-lg overflow-hidden bg-gradient-to-tr from-purple-600 to-pink-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
                             {displayLogo ? (
@@ -231,6 +232,9 @@ export function DashboardSidebar({
                             <p className="text-[10px] text-gray-500 truncate">{userEmail}</p>
                         </div>
                     </div>
+
+                    {/* Logout Button */}
+                    <LogoutButton onLogout={() => setMobileMenuOpen(false)} />
                 </div>
             </aside>
 

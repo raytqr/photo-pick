@@ -27,8 +27,16 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "SatSetPic Team" }],
   icons: {
-    icon: "/logo.png",
+    icon: [
+      { url: "/logo.png", type: "image/png" },
+      { url: "/favicon.ico", type: "image/x-icon" },
+    ],
+    shortcut: "/logo.png",
     apple: "/logo.png",
+    other: {
+      rel: "icon",
+      url: "/logo.png",
+    },
   },
   verification: {
     google: "r5BGQwN18XHamZGMtxtnglQGvAOUI7GBUQCzc47-QZY",
