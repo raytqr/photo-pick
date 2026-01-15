@@ -27,12 +27,19 @@ export default async function EventDetailPage({ params }: { params: { id: string
         return <div className="p-8 text-white">Event not found</div>;
     }
 
-    // Fetch Photos
+    // Fetch Photos Count (Exact count for stats)
+    const { count: photoCount } = await supabase
+        .from('photos')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_id', id);
+
+    // Fetch Photos Data (Limit to 2000 for performance, but show newest first)
     const { data: photos } = await supabase
         .from('photos')
         .select('*')
         .eq('event_id', id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(2000); // Increase limit to show more photos
 
     // Fetch Submissions (if table exists)
     let submissions: any[] = [];
@@ -86,7 +93,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 <div className="glass rounded-2xl p-4 border-white/5">
                     <p className="text-gray-500 text-xs font-medium mb-1">Photos</p>
-                    <p className="text-2xl font-bold">{photos?.length || 0}</p>
+                    <p className="text-2xl font-bold">{photoCount || 0}</p>
                 </div>
                 <div className="glass rounded-2xl p-4 border-white/5">
                     <p className="text-gray-500 text-xs font-medium mb-1">Limit</p>
@@ -117,7 +124,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
             {/* Photo Grid */}
             <div className="space-y-4">
                 <h2 className="text-lg font-bold flex items-center gap-2">
-                    <ImageIcon size={20} /> Gallery Photos ({photos?.length || 0})
+                    <ImageIcon size={20} /> Gallery Photos ({photoCount || 0})
                 </h2>
 
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
