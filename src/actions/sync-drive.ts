@@ -161,22 +161,51 @@ async function fetchDriveFiles(folderId: string, apiKey: string): Promise<DriveF
     let allFiles: DriveFile[] = [];
     let pageToken: string | undefined = undefined;
     let pageCount = 0;
-    const MAX_PAGES = 50;
+    const MAX_PAGES = 100; // Increased limit to support up to 100k photos
+
+    console.log(`[Drive Sync] Starting fetch for folder: ${folderId}`);
 
     while (true) {
-        if (pageCount >= MAX_PAGES) break;
-        const url: string = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+(mimeType+contains+'image/')&fields=nextPageToken,files(id,name,mimeType,thumbnailLink)&pageSize=1000&key=${apiKey}${pageToken ? `&pageToken=${pageToken}` : ''}`;
+        if (pageCount >= MAX_PAGES) {
+            console.warn(`[Drive Sync] Hit max pages limit (${MAX_PAGES})`);
+            break;
+        }
 
-        const res = await fetch(url);
+        // Use URL object for safe parameter encoding
+        const url = new URL('https://www.googleapis.com/drive/v3/files');
+        url.searchParams.append('q', `'${folderId}' in parents and (mimeType contains 'image/') and trashed = false`);
+        url.searchParams.append('fields', 'nextPageToken,files(id,name,mimeType,thumbnailLink)');
+        url.searchParams.append('pageSize', '1000');
+        url.searchParams.append('key', apiKey);
+
+        if (pageToken) {
+            url.searchParams.append('pageToken', pageToken);
+        }
+
+        // Disable cache to ensure fresh results
+        const res = await fetch(url.toString(), { cache: 'no-store' });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`Drive API Error (${res.status}): ${errorText}`);
+        }
+
         const json = await res.json();
 
         if (json.error) throw new Error(json.error.message);
 
-        allFiles = allFiles.concat(json.files || []);
+        const files = json.files || [];
+        allFiles = allFiles.concat(files);
+
+        console.log(`[Drive Sync] Page ${pageCount + 1}: Fetched ${files.length} files. Total so far: ${allFiles.length}`);
+
         pageToken = json.nextPageToken;
         pageCount++;
 
-        if (!pageToken) break;
+        if (!pageToken) {
+            console.log(`[Drive Sync] Finished fetching. Total files: ${allFiles.length}`);
+            break;
+        }
     }
     return allFiles;
 }
