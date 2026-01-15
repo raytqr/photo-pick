@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase-server";
 import { getPlanLimits, isRestricted, PLAN_LIMITS } from "@/lib/subscription-utils";
 import { revalidatePath } from "next/cache";
+import { syncPhotosFromDrive } from "./sync-drive";
 
 export async function createEvent(formData: {
     name: string;
@@ -94,8 +95,22 @@ export async function createEvent(formData: {
             .eq('id', user.id);
     }
 
-    // 8. Success
-    revalidatePath('/dashboard');
-    return { success: true, eventId: event.id };
-}
+    // 8. Auto-sync photos from Google Drive (if drive link provided)
+    let syncResult = null;
+    if (formData.driveLink) {
+        try {
+            syncResult = await syncPhotosFromDrive(event.id, formData.driveLink);
+        } catch (syncError: any) {
+            // Don't fail the event creation if sync fails - user can manually sync later
+            console.error("Auto-sync failed:", syncError.message);
+        }
+    }
 
+    // 9. Success
+    revalidatePath('/dashboard');
+    return {
+        success: true,
+        eventId: event.id,
+        syncResult: syncResult // Include sync result for feedback
+    };
+}

@@ -1,0 +1,87 @@
+﻿
+> photo-selector@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 6.9s
+  Running TypeScript ...
+  Collecting page data using 11 workers ...
+node.exe : ΓÜá Using 
+edge runtime on a 
+page currently 
+disables static 
+generation for that 
+page
+At line:1 char:1
++ & "C:\Program Files
+\nodejs/node.exe" "C:
+\Users\rayha\AppData\
+Roaming\ ...
++ ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo   
+           : 
+NotSpecified: (ΓÜá U 
+   sing edge ...n 
+for that     
+page:String) [], 
+Remot    eException
+    + FullyQualifiedE
+rrorId     : 
+NativeCommandError
+ 
+  Generating static pages using 11 workers (0/28) ...
+  Generating static pages using 11 workers (7/28) 
+  Generating static pages using 11 workers (14/28) 
+  Generating static pages using 11 workers (21/28) 
+Γ£ô Generating static pages using 11 workers (28/28) in 530.4ms
+  Finalizing page optimization ...
+
+Route (app)
+Γöî Γùï /
+Γö£ Γùï /_not-found
+Γö£ ╞Æ /admin
+Γö£ Γùï /admin/login
+Γö£ Γùï /admin/pricing
+Γö£ Γùï /admin/redeem-codes
+Γö£ Γùï /admin/users
+Γö£ ╞Æ /api/cron/reset-credits
+Γö£ Γùï /auth/auth-code-error
+Γö£ ╞Æ /auth/callback
+Γö£ ╞Æ /client/[slug]
+Γö£ ╞Æ /client/[slug]/select
+Γö£ Γùï /contact
+Γö£ ╞Æ /dashboard
+Γö£ ╞Æ /dashboard/create
+Γö£ ╞Æ /dashboard/event/[id]
+Γö£ ╞Æ /dashboard/guide
+Γö£ ╞Æ /dashboard/portfolio
+Γö£ ╞Æ /dashboard/portfolio/gallery
+Γö£ ╞Æ /dashboard/portfolio/packages
+Γö£ ╞Æ /dashboard/portfolio/sections
+Γö£ ╞Æ /dashboard/portfolio/settings
+Γö£ ╞Æ /dashboard/pricing
+Γö£ ╞Æ /dashboard/profile
+Γö£ Γùï /guide
+Γö£ Γùï /icon.png
+Γö£ Γùï /login
+Γö£ ╞Æ /portfolio/[slug]
+Γö£ Γùï /pricing
+Γö£ Γùï /privacy
+Γö£ Γùï /register
+Γö£ Γùï /reset-password
+Γö£ Γùï /robots.txt
+Γö£ Γùï /sitemap.xml
+Γöö Γùï /terms
+
+
+╞Æ Proxy (Middleware)
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

@@ -19,6 +19,7 @@
 - **Google Drive Sync** — Link a public folder and import photos instantly
 - **WhatsApp Integration** — Send final selections directly via WhatsApp
 - **Photographer Dashboard** — Manage events, branding, and client links
+- **Portfolio Website** — Create a stunning personal landing page with gallery, pricing, and contact info
 - **Dark Mode** — Full dark theme support
 
 ## 🛠 Tech Stack

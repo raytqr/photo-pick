@@ -24,7 +24,8 @@ import {
   Workflow,
   Menu,
   X,
-  AtSign
+  AtSign,
+  Globe
 } from "lucide-react";
 import { AnimatedSwipeDemo } from "@/components/animated-swipe-demo";
 
@@ -55,10 +56,10 @@ const features = [
     color: "from-green-500 to-emerald-500"
   },
   {
-    icon: Zap,
-    title: "Sat-Set Speed",
-    description: "Optimized delivery engine ensures high-res previews load instantly even on slow connections.",
-    color: "from-amber-500 to-orange-500"
+    icon: Globe,
+    title: "Portfolio Website",
+    description: "Create a stunning personal landing page with gallery, pricing packages, and contact info.",
+    color: "from-violet-500 to-purple-500"
   },
   {
     icon: Shield,

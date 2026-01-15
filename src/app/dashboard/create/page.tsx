@@ -148,8 +148,16 @@ export default function CreateEventPage() {
                 return;
             }
 
-            // Success redirect moved to Server Action? 
-            // Better to keep redirect here for client-side navigation experience
+            // Show sync feedback if applicable
+            if (result.syncResult) {
+                if (result.syncResult.success && 'count' in result.syncResult) {
+                    console.log(`Auto-sync complete: ${result.syncResult.count} photos imported`);
+                } else if (!result.syncResult.success) {
+                    console.warn(`Auto-sync warning: ${result.syncResult.error}`);
+                }
+            }
+
+            // Success redirect
             if (result.eventId) {
                 router.push(`/dashboard/event/${result.eventId}`);
                 router.refresh(); // Refresh to update limits in navbar/sidebar
@@ -264,8 +272,8 @@ export default function CreateEventPage() {
                                                 setSlugError(null);
                                             }}
                                             className={`rounded-l-none h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-600 ${slugAvailable === false ? "border-red-500 focus-visible:ring-red-500" :
-                                                    slugAvailable === true ? "border-green-500 focus-visible:ring-green-500" :
-                                                        slug && !/^[a-z0-9-]+$/.test(slug) ? "border-red-500 focus-visible:ring-red-500" : ""
+                                                slugAvailable === true ? "border-green-500 focus-visible:ring-green-500" :
+                                                    slug && !/^[a-z0-9-]+$/.test(slug) ? "border-red-500 focus-visible:ring-red-500" : ""
                                                 }`}
                                         />
                                     </div>
@@ -274,10 +282,10 @@ export default function CreateEventPage() {
                                         onClick={handleCheckSlug}
                                         disabled={slugChecking || !slug || !/^[a-z0-9-]+$/.test(slug)}
                                         className={`h-12 px-4 rounded-2xl font-semibold transition-all ${slugAvailable === true
-                                                ? "bg-green-600 hover:bg-green-700"
-                                                : slugAvailable === false
-                                                    ? "bg-red-600 hover:bg-red-700"
-                                                    : "bg-white/10 hover:bg-white/20"
+                                            ? "bg-green-600 hover:bg-green-700"
+                                            : slugAvailable === false
+                                                ? "bg-red-600 hover:bg-red-700"
+                                                : "bg-white/10 hover:bg-white/20"
                                             }`}
                                     >
                                         {slugChecking ? (
