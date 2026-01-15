@@ -2,10 +2,15 @@
 
 import { createClient, createAdminClient } from "@/lib/supabase-server";
 
-const ADMIN_EMAIL = "rayhanwahyut27@gmail.com";
+// Admin email from environment variable (set in Vercel/local .env)
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 // Helper to check if current user is admin
 async function isAdmin() {
+    if (!ADMIN_EMAIL) {
+        console.warn("ADMIN_EMAIL env variable not set");
+        return false;
+    }
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     return user?.email === ADMIN_EMAIL;

@@ -3,6 +3,20 @@
 import { createClient, createAdminClient } from "@/lib/supabase-server";
 import { revalidatePath } from "next/cache";
 
+// Tier hierarchy - higher number = higher tier
+const TIER_HIERARCHY: Record<string, number> = {
+    'free': 0,
+    'starter': 1,
+    'basic': 2,
+    'pro': 3,
+    'unlimited': 4,
+};
+
+function getTierLevel(tier: string | null): number {
+    if (!tier) return 0;
+    return TIER_HIERARCHY[tier.toLowerCase()] ?? 0;
+}
+
 export async function redeemCode(code: string) {
     const supabase = await createClient();
 
@@ -34,28 +48,107 @@ export async function redeemCode(code: string) {
         return { success: false, error: "This code has reached its maximum uses" };
     }
 
-    // Calculate new expiration date
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + redeemCode.duration_days);
+    // Get current user profile
+    const { data: profile } = await adminSupabase
+        .from('profiles')
+        .select('subscription_tier, subscription_expires_at, events_remaining, monthly_credits, stacked_tier, stacked_expires_at')
+        .eq('id', user.id)
+        .single();
+
+    const currentTier = profile?.subscription_tier;
+    const currentExpiresAt = profile?.subscription_expires_at ? new Date(profile.subscription_expires_at) : null;
+    const newTier = redeemCode.tier;
+    const now = new Date();
+
+    // Check if current subscription is still active
+    const isCurrentActive = currentExpiresAt && currentExpiresAt > now;
+
+    // Determine tier levels
+    const currentLevel = getTierLevel(currentTier);
+    const newLevel = getTierLevel(newTier);
 
     // Calculate billing day (cap at 28 to be safe across all months)
-    const billingDay = Math.min(new Date().getDate(), 28);
+    const billingDay = Math.min(now.getDate(), 28);
+    const isUnlimited = newTier?.toLowerCase() === 'unlimited';
 
-    // Check if this is an Unlimited tier
-    const isUnlimited = redeemCode.tier?.toLowerCase() === 'unlimited';
+    let updateData: Record<string, any>;
+    let actionType: 'extend' | 'upgrade' | 'downgrade' | 'new' = 'new';
+
+    if (isCurrentActive) {
+        if (newLevel === currentLevel) {
+            // SAME TIER: Extend from current expiry
+            actionType = 'extend';
+            const newExpiresAt = new Date(currentExpiresAt!);
+            newExpiresAt.setDate(newExpiresAt.getDate() + redeemCode.duration_days);
+
+            updateData = {
+                subscription_expires_at: newExpiresAt.toISOString(),
+                // Add credits to existing
+                events_remaining: isUnlimited ? null : (profile?.events_remaining || 0) + redeemCode.events_granted,
+                monthly_credits: isUnlimited ? null : (profile?.monthly_credits || 0) + redeemCode.events_granted,
+            };
+        } else if (newLevel > currentLevel) {
+            // UPGRADE: Stack current subscription, activate new one
+            actionType = 'upgrade';
+
+            // Check if user already has a stacked subscription (prevent double-stack)
+            if (profile?.stacked_tier) {
+                return {
+                    success: false,
+                    error: `Anda sudah memiliki subscription ${profile.stacked_tier} yang menunggu. Tidak bisa melakukan upgrade lagi sampai subscription saat ini (${currentTier}) berakhir. Hubungi support jika butuh bantuan.`
+                };
+            }
+
+            const newExpiresAt = new Date();
+            newExpiresAt.setDate(newExpiresAt.getDate() + redeemCode.duration_days);
+
+            updateData = {
+                // Stack the current subscription
+                stacked_tier: currentTier,
+                stacked_expires_at: currentExpiresAt!.toISOString(),
+                stacked_events_remaining: profile?.events_remaining,
+                stacked_monthly_credits: profile?.monthly_credits,
+                // Activate new subscription
+                subscription_tier: newTier,
+                subscription_expires_at: newExpiresAt.toISOString(),
+                events_remaining: isUnlimited ? null : redeemCode.events_granted,
+                monthly_credits: isUnlimited ? null : redeemCode.events_granted,
+                billing_day: billingDay,
+                last_credit_reset_at: now.toISOString(),
+            };
+        } else {
+            // DOWNGRADE: Block - cannot downgrade while subscription is active
+            actionType = 'downgrade';
+            return {
+                success: false,
+                error: `Tidak bisa downgrade dari ${currentTier} ke ${newTier} selama subscription masih aktif. Silakan tunggu sampai subscription Anda berakhir atau pilih paket yang sama atau lebih tinggi.`
+            };
+        }
+    } else {
+        // No active subscription - treat as new
+        actionType = 'new';
+        const newExpiresAt = new Date();
+        newExpiresAt.setDate(newExpiresAt.getDate() + redeemCode.duration_days);
+
+        updateData = {
+            subscription_tier: newTier,
+            subscription_expires_at: newExpiresAt.toISOString(),
+            events_remaining: isUnlimited ? null : redeemCode.events_granted,
+            monthly_credits: isUnlimited ? null : redeemCode.events_granted,
+            billing_day: billingDay,
+            last_credit_reset_at: now.toISOString(),
+            // Clear any stacked subscription
+            stacked_tier: null,
+            stacked_expires_at: null,
+            stacked_events_remaining: null,
+            stacked_monthly_credits: null,
+        };
+    }
 
     // Update user profile with subscription (Bypass RLS)
     const { error: updateError } = await adminSupabase
         .from('profiles')
-        .update({
-            subscription_tier: redeemCode.tier,
-            subscription_expires_at: expiresAt.toISOString(),
-            // For Unlimited tier, set events_remaining to null (infinite)
-            events_remaining: isUnlimited ? null : redeemCode.events_granted,
-            monthly_credits: isUnlimited ? null : redeemCode.events_granted,
-            billing_day: billingDay,
-            last_credit_reset_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', user.id);
 
     if (updateError) {
@@ -72,9 +165,15 @@ export async function redeemCode(code: string) {
 
     return {
         success: true,
-        tier: redeemCode.tier,
+        tier: newTier,
         eventsGranted: redeemCode.events_granted,
-        expiresAt: expiresAt.toISOString()
+        expiresAt: updateData.subscription_expires_at,
+        actionType,
+        message: actionType === 'extend'
+            ? `Subscription ${currentTier} diperpanjang!`
+            : actionType === 'upgrade'
+                ? `Upgrade ke ${newTier}! Subscription ${currentTier} akan dilanjutkan setelah ${newTier} berakhir.`
+                : `Subscription ${newTier} aktif!`
     };
 }
 

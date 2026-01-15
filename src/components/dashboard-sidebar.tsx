@@ -15,7 +15,8 @@ import {
     Menu,
     X,
     BookOpen,
-    Globe
+    Globe,
+    Lock
 } from "lucide-react";
 import Image from "next/image";
 import { isRestricted } from "@/lib/subscription-utils";
@@ -41,10 +42,13 @@ export function DashboardSidebar({
 
     const restricted = isRestricted(subscriptionTier ?? null, subscriptionExpiresAt ?? null);
 
+    // Check if tier is premium (Pro or Unlimited)
+    const isPremiumTier = subscriptionTier && ['pro', 'unlimited'].includes(subscriptionTier.toLowerCase());
+
     const links = [
         { href: "/dashboard", label: "Overview", icon: Grid },
         { href: "/dashboard/create", label: "New Event", icon: PlusCircle },
-        { href: "/dashboard/portfolio", label: "Portfolio Page", icon: Globe },
+        { href: "/dashboard/portfolio", label: "Portfolio Page", icon: Globe, premiumOnly: true },
         { href: "/dashboard/profile", label: "Profile & Branding", icon: User },
         { href: "/dashboard/pricing", label: "Pricing", icon: CreditCard },
         { href: "/dashboard/guide", label: "Guide", icon: BookOpen },
@@ -117,12 +121,14 @@ export function DashboardSidebar({
                         <p className="px-3 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Menu</p>
                         <div className="space-y-1">
                             {links.map((link) => {
-                                const isLinkDisabled = restricted && (link.href.includes('/create') || link.href.includes('/profile'));
+                                const isPremiumLocked = link.premiumOnly && !isPremiumTier;
+                                const isLinkDisabled = (restricted && (link.href.includes('/create') || link.href.includes('/profile'))) || isPremiumLocked;
                                 return (
                                     <Link
                                         key={link.href}
                                         href={isLinkDisabled ? "#" : link.href}
                                         onClick={(e) => {
+                                            if (isPremiumLocked) { e.preventDefault(); alert("Fitur ini hanya tersedia untuk pengguna Pro dan Unlimited."); return; }
                                             if (isLinkDisabled) { e.preventDefault(); alert("Your subscription has expired."); return; }
                                             setMobileMenuOpen(false);
                                         }}
@@ -139,7 +145,8 @@ export function DashboardSidebar({
                                             <link.icon size={16} />
                                         </div>
                                         <span className="text-sm">{link.label}</span>
-                                        {isLinkDisabled && <span className="ml-auto text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full font-bold">Locked</span>}
+                                        {isPremiumLocked && <span className="ml-auto flex items-center gap-1 text-[9px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded-full font-bold"><Crown size={10} /> Pro</span>}
+                                        {!isPremiumLocked && isLinkDisabled && <span className="ml-auto text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full font-bold">Locked</span>}
                                     </Link>
                                 );
                             })}

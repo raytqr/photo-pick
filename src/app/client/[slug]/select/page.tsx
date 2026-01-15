@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ClientStateWrapper } from "@/components/client-state-wrapper";
 import { ClientSelectionApp } from "@/components/client-selection-app";
 import { Photo } from "@/store/useAppStore";
+import { Camera } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
 
@@ -49,6 +50,21 @@ export default async function ClientSelectPage({ params }: { params: { slug: str
         width: p.width,
         height: p.height
     })) || [];
+
+    // 3. Check if photos exist - show friendly message if empty
+    if (photos.length === 0) {
+        return (
+            <div className="min-h-screen bg-gray-50 dark:bg-black flex flex-col items-center justify-center p-6">
+                <div className="w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center mb-6">
+                    <Camera size={32} className="text-gray-400" />
+                </div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Foto Belum Tersedia</h1>
+                <p className="text-gray-500 text-center max-w-sm">
+                    Fotografer belum mengunggah foto untuk event ini. Silakan hubungi fotografer Anda.
+                </p>
+            </div>
+        );
+    }
 
     // Prepare Event Details - WhatsApp now comes from PROFILE
     const profile = event.profiles;

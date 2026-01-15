@@ -383,6 +383,7 @@ export async function deletePricingPackage(packageId: string) {
 export async function getPublicPortfolioData(slug: string) {
     const supabase = await createClient();
 
+    // First get the portfolio
     const { data: portfolio } = await supabase
         .from('fg_portfolios')
         .select('*')
@@ -391,6 +392,31 @@ export async function getPublicPortfolioData(slug: string) {
         .single();
 
     if (!portfolio) return null;
+
+    // Check owner's subscription status
+    const { data: ownerProfile } = await supabase
+        .from('profiles')
+        .select('subscription_tier, subscription_expires_at')
+        .eq('id', portfolio.user_id)
+        .single();
+
+    // Check if owner has valid subscription
+    if (ownerProfile) {
+        const tier = ownerProfile.subscription_tier?.toLowerCase();
+        const isPremium = tier === 'pro' || tier === 'unlimited';
+
+        // If not premium tier, don't show portfolio
+        if (!isPremium) return null;
+
+        // Check if subscription expired
+        if (ownerProfile.subscription_expires_at) {
+            const expiresAt = new Date(ownerProfile.subscription_expires_at);
+            if (expiresAt < new Date()) return null;
+        }
+    } else {
+        // No profile found, don't show
+        return null;
+    }
 
     const [sectionsResult, itemsResult, pricingResult] = await Promise.all([
         supabase.from('fg_portfolio_sections').select('*').eq('portfolio_id', portfolio.id).order('display_order'),
