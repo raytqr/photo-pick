@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
-import { ClientStateWrapper } from "@/components/client-state-wrapper";
-import { ClientSelectionApp } from "@/components/client-selection-app";
+import { ClientSelectWrapper } from "@/components/client-select-wrapper";
 import { Photo } from "@/store/useAppStore";
 import { Camera } from "lucide-react";
 
@@ -11,7 +10,7 @@ export default async function ClientSelectPage({ params }: { params: { slug: str
     const supabase = await createClient();
     const { slug } = await params;
 
-    // 1. Fetch Event with Profile (including WhatsApp)
+    // 1. Fetch Event with Profile (including WhatsApp) and password
     const { data: event, error } = await supabase
         .from('events')
         .select(`
@@ -81,8 +80,10 @@ export default async function ClientSelectPage({ params }: { params: { slug: str
     };
 
     return (
-        <ClientStateWrapper photos={photos} eventDetails={eventDetails}>
-            <ClientSelectionApp />
-        </ClientStateWrapper>
+        <ClientSelectWrapper
+            photos={photos}
+            eventDetails={eventDetails}
+            eventPassword={event.password}
+        />
     );
 }

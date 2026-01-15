@@ -2,6 +2,7 @@
 
 import { createClient, createAdminClient } from "@/lib/supabase-server";
 import { revalidatePath } from "next/cache";
+import { logActivity } from "@/lib/activity-logger";
 
 // Tier hierarchy - higher number = higher tier
 const TIER_HIERARCHY: Record<string, number> = {
@@ -160,6 +161,19 @@ export async function redeemCode(code: string) {
         .from('redeem_codes')
         .update({ times_used: redeemCode.times_used + 1 })
         .eq('id', redeemCode.id);
+
+    // Log activity
+    await logActivity({
+        userId: user.id,
+        action: "redeem_code",
+        status: "success",
+        metadata: {
+            tier: newTier,
+            actionType,
+            code: code.substring(0, 3) + "***", // Partial code for privacy
+            eventsGranted: redeemCode.events_granted,
+        },
+    });
 
     revalidatePath('/dashboard');
 

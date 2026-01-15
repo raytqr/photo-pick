@@ -4,12 +4,14 @@ import { createClient } from "@/lib/supabase-server";
 import { getPlanLimits, isRestricted, PLAN_LIMITS } from "@/lib/subscription-utils";
 import { revalidatePath } from "next/cache";
 import { syncPhotosFromDrive } from "./sync-drive";
+import { logActivity } from "@/lib/activity-logger";
 
 export async function createEvent(formData: {
     name: string;
     slug: string;
     driveLink: string;
     photoLimit: number;
+    password?: string | null;
 }) {
     const supabase = await createClient();
 
@@ -80,6 +82,7 @@ export async function createEvent(formData: {
         slug: safeSlug,
         drive_link: formData.driveLink,
         photo_limit: formData.photoLimit,
+        password: formData.password || null,
     }).select().single();
 
     if (insertError) {
@@ -106,7 +109,20 @@ export async function createEvent(formData: {
         }
     }
 
-    // 9. Success
+    // 9. Log activity
+    await logActivity({
+        userId: user.id,
+        action: "create_event",
+        status: "success",
+        metadata: {
+            eventId: event.id,
+            eventName: formData.name,
+            hasPassword: !!formData.password,
+            photoLimit: formData.photoLimit,
+        },
+    });
+
+    // 10. Success
     revalidatePath('/dashboard');
     return {
         success: true,

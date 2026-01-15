@@ -78,7 +78,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <ClientLinkCopy slug={event.slug} />
+                    <ClientLinkCopy slug={event.slug} password={event.password} />
                 </div>
             </div>
 

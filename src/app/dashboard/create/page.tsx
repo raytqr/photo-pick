@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase";
 import { isRestricted, getPlanLimits, PLAN_LIMITS } from "@/lib/subscription-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Cloud, Sparkles, Lock, Crown, AlertTriangle, Check, X, Loader2 } from "lucide-react";
+import { ArrowLeft, Cloud, Sparkles, Lock, Crown, AlertTriangle, Check, X, Loader2, Eye, EyeOff, Shield } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { checkSlugAvailability } from "@/actions/check-slug";
@@ -26,6 +26,8 @@ export default function CreateEventPage() {
     const [driveLink, setDriveLink] = useState("");
     const [photoLimit, setPhotoLimit] = useState("50");
     const [slug, setSlug] = useState("");
+    const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
 
     // URL Availability State
     const [slugChecking, setSlugChecking] = useState(false);
@@ -141,6 +143,7 @@ export default function CreateEventPage() {
                 slug,
                 driveLink,
                 photoLimit: parseInt(photoLimit),
+                password: password.trim() || null,
             });
 
             if (!result.success) {
@@ -348,6 +351,36 @@ export default function CreateEventPage() {
                             />
                             <p className="text-xs text-blue-400">
                                 Ensure the folder is set to <strong>"Anyone with the link"</strong>.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Password Protection Section */}
+                    <div className="glass rounded-[32px] p-6 space-y-4 border-green-500/20 bg-green-500/5">
+                        <h2 className="font-bold text-green-300 flex items-center gap-2 text-lg">
+                            <Shield size={18} /> Password Protection (Optional)
+                        </h2>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-green-300">Event Password</label>
+                            <div className="relative">
+                                <Input
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Leave empty for no password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="h-14 bg-white/5 border-green-500/20 rounded-2xl px-6 pr-12 text-white placeholder:text-gray-600"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
+                            <p className="text-xs text-green-400">
+                                {password ? "🔐 Client will need this password to access the gallery." : "Leave empty if you don't need password protection."}
                             </p>
                         </div>
                     </div>

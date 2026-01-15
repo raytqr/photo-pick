@@ -147,6 +147,25 @@ export async function GET(request: Request) {
             }
         }
 
+        // ============================================
+        // PART 3: Cleanup Old Activity Logs (7 days)
+        // ============================================
+        let logsDeleted = 0;
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const { error: deleteError } = await supabase
+            .from("activity_logs")
+            .delete()
+            .lt("created_at", sevenDaysAgo.toISOString());
+
+        if (deleteError) {
+            console.error("Error deleting old logs:", deleteError);
+        } else {
+            logsDeleted = 1; // Flag that cleanup ran successfully
+            console.log("Old activity logs cleanup completed");
+        }
+
         return NextResponse.json({
             message: "Daily cron job completed",
             day: currentDay,
@@ -158,6 +177,9 @@ export async function GET(request: Request) {
             stackedRestore: {
                 processed: stackedRestoreSuccess,
                 errors: stackedRestoreErrors,
+            },
+            logsCleanup: {
+                deleted: logsDeleted,
             },
         });
     } catch (error) {
