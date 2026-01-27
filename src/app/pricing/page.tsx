@@ -357,14 +357,16 @@ export default function PricingPage() {
                                     )}
                                 </ul>
 
-                                <Button
-                                    className={`w-full h-10 rounded-full font-bold text-sm ${plan.popular
-                                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
-                                        : 'bg-white/10 hover:bg-white/20'
-                                        }`}
-                                >
-                                    {plan.cta}
-                                </Button>
+                                <Link href={`/checkout?tier=${plan.name.toLowerCase()}&cycle=${billingCycle}`} className="block w-full">
+                                    <Button
+                                        className={`w-full h-10 rounded-full font-bold text-sm ${plan.popular
+                                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
+                                            : 'bg-white/10 hover:bg-white/20'
+                                            }`}
+                                    >
+                                        {plan.cta}
+                                    </Button>
+                                </Link>
                             </motion.div>
                         );
                     })}

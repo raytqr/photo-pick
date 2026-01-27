@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Check, Gift, Sparkles, Crown, Zap, Rocket, Globe } from "lucide-react";
 import { redeemCode } from "@/actions/subscription";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type BillingCycle = 'monthly' | '3-month' | 'yearly';
 
@@ -19,11 +20,10 @@ const pricingTiers = [
         color: "from-gray-500 to-gray-600",
         popular: false,
         events: "10 Events/month",
-        // Yearly is BASE: 30k/mo, Monthly is MORE expensive
         yearly: { pricePerMonth: 30000, totalPrice: 360000, bonusMonths: 2 },
         threeMonth: { pricePerMonth: 35000, totalPrice: 105000, bonusWeeks: 1 },
         monthly: { price: 40000 },
-        originalMonthly: 50000, // Crossed out "original" price
+        originalMonthly: 50000,
         features: [
             "10 Events per month",
             "Up to 300 photos/event",
@@ -282,12 +282,14 @@ export default function PricingPage() {
                                 )}
                             </div>
 
-                            <Button className={`w-full h-10 rounded-xl font-bold text-sm ${plan.popular
-                                ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-105 shadow-lg shadow-purple-500/25'
-                                : 'bg-white/10 hover:bg-white/20'
-                                } transition-all`}>
-                                {plan.cta}
-                            </Button>
+                            <Link href={`/checkout?tier=${plan.name.toLowerCase()}&cycle=${billingCycle}`} className="block w-full">
+                                <Button className={`w-full h-10 rounded-xl font-bold text-sm ${plan.popular
+                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-105 shadow-lg shadow-purple-500/25'
+                                    : 'bg-white/10 hover:bg-white/20'
+                                    } transition-all`}>
+                                    {plan.cta}
+                                </Button>
+                            </Link>
                         </motion.div>
                     );
                 })}
