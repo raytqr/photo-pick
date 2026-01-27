@@ -59,8 +59,12 @@ export async function POST(request: Request) {
         });
 
         if (midtransResult.status_code !== '201') {
-            console.error("Midtrans Error:", midtransResult);
-            return NextResponse.json({ error: "Failed to create transaction with Midtrans" }, { status: 500 });
+            console.error("Midtrans Error:", JSON.stringify(midtransResult));
+            const errorMsg = midtransResult.status_message || midtransResult.message || "Failed to create transaction with Midtrans";
+            return NextResponse.json({
+                error: errorMsg,
+                details: midtransResult
+            }, { status: 500 });
         }
 
         // 4. Save to Database
