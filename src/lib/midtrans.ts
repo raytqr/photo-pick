@@ -62,7 +62,7 @@ export async function createQrisTransaction(params: ChargeParams) {
     const authString = Buffer.from(SERVER_KEY + ':').toString('base64');
 
     const payload = {
-        payment_type: 'qris',
+        payment_type: 'gopay',
         transaction_details: {
             order_id: params.orderId,
             gross_amount: params.amount // Must be the TOTAL amount
@@ -79,8 +79,9 @@ export async function createQrisTransaction(params: ChargeParams) {
             email: params.email || '',
             phone: params.phone || ''
         },
-        qris: {
-            // Acquirer options can be configured here if needed, default is fine
+        gopay: {
+            enable_callback: true,
+            callback_url: 'https://satsetpic.com/dashboard'
         }
     };
 
