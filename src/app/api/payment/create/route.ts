@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase-server";
 import { format } from "date-fns";
 import { NextResponse } from "next/server";
-import { calculateTotalWithFee, createQrisTransaction } from "@/lib/midtrans";
+import { calculateTotalWithFee, createSnapTransaction } from "@/lib/midtrans";
 
 // Pricing configuration (Must match frontend!)
 const PRICING = {
@@ -45,49 +45,27 @@ export async function POST(request: Request) {
         const { total, fee } = calculateTotalWithFee(basePrice);
 
         // 2. Generate Order ID
-        // Format: PAY-USERID_PREFIX-TIMESTAMP
         const shortUserId = user.id.substring(0, 8);
         const timestamp = format(new Date(), "yyyyMMddHHmmss");
         const orderId = `PAY-${shortUserId}-${timestamp}`;
 
-        // 3. Create Transaction in Midtrans
-        const midtransResult = await createQrisTransaction({
+        // 3. Create Snap Transaction
+        const snapResult = await createSnapTransaction({
             orderId: orderId,
             amount: total,
             email: user.email,
             itemName: `${tier.toUpperCase()} Plan (${cycle})`,
         });
 
-        if (midtransResult.status_code !== '201') {
-            console.error("Midtrans Error:", JSON.stringify(midtransResult));
-            const errorMsg = midtransResult.status_message || midtransResult.message || "Failed to create transaction with Midtrans";
+        if (snapResult.status_code !== '201') {
+            console.error("Snap Error:", JSON.stringify(snapResult));
             return NextResponse.json({
-                error: errorMsg,
-                details: midtransResult
+                error: snapResult.status_message || "Failed to create payment",
+                details: snapResult
             }, { status: 500 });
         }
 
         // 4. Save to Database
-        // Use service role to write to payments table if needed, strictly we can use authenticated user
-        // but let's be safe with DB policies. Assuming user has insert rights? 
-        // We defined policy 'Service role can manage all payments'.
-        // If user policy only SELECT, we need admin client here.
-        // Let's assume we need admin client for insert to be safe or update policy.
-        // For now, let's try with user client if policy allows INSERT?
-        // Wait, migration only had SELECT policy for user. 
-        // So we MUST use admin client to insert.
-
-        // Dynamic import to avoid circular dep issues in some setups, but here it's fine.
-        /* 
-           Using simple supabase client (user context) might fail INSERT if policy not set.
-           Let's use a quick admin client if available in context or just use createClient() and ensure RLS allows INSERT.
-           Actually, let's update migration to allow INSERT for auth.users?
-           Or just use Service Role key.
-        */
-
-        // Since we don't have easy ad-hoc admin client here without importing, 
-        // and 'supabase-server' usually returns user client...
-        // Let's create a temporary admin client using process.env
         const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
         const adminClient = createSupabaseClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -105,8 +83,8 @@ export async function POST(request: Request) {
                 base_price: basePrice,
                 fee_amount: fee,
                 status: 'pending',
-                midtrans_response: midtransResult,
-                qr_url: midtransResult.actions?.[0]?.url // Midtrans usually returns actions list for QR
+                midtrans_response: snapResult,
+                qr_url: snapResult.redirect_url // Store redirect URL
             });
 
         if (dbError) {
@@ -118,7 +96,8 @@ export async function POST(request: Request) {
             success: true,
             orderId: orderId,
             amount: total,
-            qrUrl: midtransResult.actions?.[0]?.url
+            token: snapResult.token,
+            redirectUrl: snapResult.redirect_url
         });
 
     } catch (error: any) {

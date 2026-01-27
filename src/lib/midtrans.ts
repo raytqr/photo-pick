@@ -1,10 +1,10 @@
-// Midtrans Helper Library
+// Midtrans Helper Library - Using Snap API
+
+const midtransClient = require('midtrans-client');
 
 const IS_PRODUCTION = process.env.MIDTRANS_IS_PRODUCTION === 'true';
 const SERVER_KEY = process.env.MIDTRANS_SERVER_KEY || '';
-const BASE_URL = IS_PRODUCTION
-    ? 'https://api.midtrans.com/v2'
-    : 'https://api.sandbox.midtrans.com/v2';
+const CLIENT_KEY = process.env.MIDTRANS_CLIENT_KEY || '';
 
 // 0.7% MDR for Retail/Shopping (QRIS)
 const QRIS_MDR_PERCENT = 0.007;
@@ -21,29 +21,8 @@ export interface ChargeParams {
 
 /**
  * Calculate the total price including QRIS fee (0.7%)
- * Formula: Total = Amount / (1 - MDR)
- * Example: 10000 / (1 - 0.007) = 10070.49 -> 10071
  */
 export function calculateTotalWithFee(amount: number): { base: number, fee: number, total: number } {
-    // We want the merchant to receive the full 'amount'.
-    // So the customer pays 'total' such that 'total' * (1 - 0.7%) = 'amount' is INCORRECT if we just want to ADD the fee.
-    // User requested "biaya ditanggung client".
-    // If we simply add fee: Total = Amount + (Amount * 0.7%) = Amount * 1.007
-    //   Then user pays Amount * 1.007.
-    //   Midtrans deducts 0.7% of Total.
-    //   Net received = Total * (1 - 0.007) = Amount * 1.007 * 0.993 = Amount * 0.999951 (Approx Amount).
-    // This is the standard way to pass fee to customer.
-
-    // Exact calculation to ensure net received is AT LEAST amount:
-    // Net = Total * (1 - MDR) >= Amount
-    // Total >= Amount / (1 - MDR)
-
-    // Using simple addition (User's request "plus biaya potongan"):
-    // Usually customers prefer simple addition, but for exact settlement, division is better.
-    // Let's use the division formula to be safe for the merchant.
-
-    // Formula: Total = Math.ceil(Amount / (1 - QRIS_MDR_PERCENT));
-
     const total = Math.ceil(amount / (1 - QRIS_MDR_PERCENT));
     const fee = total - amount;
 
@@ -54,24 +33,31 @@ export function calculateTotalWithFee(amount: number): { base: number, fee: numb
     };
 }
 
-export async function createQrisTransaction(params: ChargeParams) {
+/**
+ * Create Snap transaction and return redirect URL
+ * Uses Snap API instead of Core API for better compatibility
+ */
+export async function createSnapTransaction(params: ChargeParams) {
     if (!SERVER_KEY) {
         throw new Error("Midtrans Server Key is missing");
     }
 
-    const authString = Buffer.from(SERVER_KEY + ':').toString('base64');
+    const snap = new midtransClient.Snap({
+        isProduction: IS_PRODUCTION,
+        serverKey: SERVER_KEY,
+        clientKey: CLIENT_KEY
+    });
 
-    const payload = {
-        payment_type: 'gopay',
+    const parameter = {
         transaction_details: {
             order_id: params.orderId,
-            gross_amount: params.amount // Must be the TOTAL amount
+            gross_amount: params.amount
         },
         item_details: [{
             id: 'REF-' + params.orderId,
             price: params.amount,
             quantity: 1,
-            name: params.itemName
+            name: params.itemName.substring(0, 50) // Max 50 chars
         }],
         customer_details: {
             first_name: params.firstName || 'Customer',
@@ -79,41 +65,50 @@ export async function createQrisTransaction(params: ChargeParams) {
             email: params.email || '',
             phone: params.phone || ''
         },
-        gopay: {
-            enable_callback: true,
-            callback_url: 'https://satsetpic.com/dashboard'
+        // Enable only QRIS-compatible payment methods
+        enabled_payments: ['gopay', 'shopeepay', 'other_qris'],
+        callbacks: {
+            finish: 'https://satsetpic.com/dashboard?payment=success'
         }
     };
 
-    const response = await fetch(`${BASE_URL}/charge`, {
-        method: 'POST',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Authorization': `Basic ${authString}`
-        },
-        body: JSON.stringify(payload)
-    });
-
-    const data = await response.json();
-    return data;
+    try {
+        const transaction = await snap.createTransaction(parameter);
+        return {
+            token: transaction.token,
+            redirect_url: transaction.redirect_url,
+            status_code: '201'
+        };
+    } catch (error: any) {
+        console.error("Snap Error:", error);
+        return {
+            status_code: '500',
+            status_message: error.message || 'Failed to create Snap transaction'
+        };
+    }
 }
 
+/**
+ * Check transaction status
+ */
 export async function checkTransactionStatus(orderId: string) {
     if (!SERVER_KEY) {
         throw new Error("Midtrans Server Key is missing");
     }
 
-    const authString = Buffer.from(SERVER_KEY + ':').toString('base64');
-
-    const response = await fetch(`${BASE_URL}/${orderId}/status`, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Authorization': `Basic ${authString}`
-        }
+    const core = new midtransClient.CoreApi({
+        isProduction: IS_PRODUCTION,
+        serverKey: SERVER_KEY,
+        clientKey: CLIENT_KEY
     });
 
-    return await response.json();
+    try {
+        const response = await core.transaction.status(orderId);
+        return response;
+    } catch (error: any) {
+        return {
+            transaction_status: 'unknown',
+            status_message: error.message
+        };
+    }
 }
