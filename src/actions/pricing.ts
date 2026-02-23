@@ -79,6 +79,21 @@ const FALLBACK_TIERS: PricingTier[] = [
 
 export async function getPricingTiers(): Promise<PricingTier[]> {
     try {
+        // Use admin client first (always works, bypasses RLS)
+        const adminSupabase = createAdminClient();
+        if (adminSupabase) {
+            const { data, error } = await adminSupabase
+                .from("pricing_tiers")
+                .select("*")
+                .eq("is_active", true)
+                .order("display_order", { ascending: true });
+
+            if (!error && data && data.length > 0) {
+                return data as PricingTier[];
+            }
+        }
+
+        // Fallback to regular client
         const supabase = await createClient();
         const { data, error } = await supabase
             .from("pricing_tiers")
@@ -100,6 +115,21 @@ export async function getPricingTiers(): Promise<PricingTier[]> {
 
 export async function getPricingTier(tierId: string): Promise<PricingTier | null> {
     try {
+        // Use admin client first (always works, bypasses RLS)
+        const adminSupabase = createAdminClient();
+        if (adminSupabase) {
+            const { data, error } = await adminSupabase
+                .from("pricing_tiers")
+                .select("*")
+                .eq("id", tierId.toLowerCase())
+                .single();
+
+            if (!error && data) {
+                return data as PricingTier;
+            }
+        }
+
+        // Fallback to regular client
         const supabase = await createClient();
         const { data, error } = await supabase
             .from("pricing_tiers")
@@ -108,7 +138,6 @@ export async function getPricingTier(tierId: string): Promise<PricingTier | null
             .single();
 
         if (error || !data) {
-            // Fallback
             return FALLBACK_TIERS.find(t => t.id === tierId.toLowerCase()) || null;
         }
 
