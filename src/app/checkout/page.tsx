@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, AlertCircle, CreditCard } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Loader2, AlertCircle, CreditCard, Tag, Percent, Gift } from "lucide-react";
+import { getPricingTier, validateDiscountCode } from "@/actions/pricing";
 import Link from "next/link";
 
 // Helper format price
@@ -12,36 +14,97 @@ const formatPrice = (amount: number) => new Intl.NumberFormat('id-ID', { style: 
 // 0.7% Fee
 const FEE_PERCENT = 0.007;
 
-const PRICING = {
-    starter: { name: "Starter", monthly: 40000, threeMonth: 105000, yearly: 360000 },
-    basic: { name: "Basic", monthly: 70000, threeMonth: 180000, yearly: 600000 },
-    pro: { name: "Pro", monthly: 150000, threeMonth: 360000, yearly: 1200000 },
-    unlimited: { name: "Unlimited", monthly: 300000, threeMonth: 720000, yearly: 2400000 },
-};
-
 function CheckoutContent() {
     const searchParams = useSearchParams();
     const tierParam = searchParams.get('tier');
-    const cycleParam = searchParams.get('cycle');
+    const cycleParam = searchParams.get('cycle') as 'monthly' | '3-month' | 'yearly';
+    const codeParam = searchParams.get('code');
     const router = useRouter();
 
     const [loading, setLoading] = useState(false);
+    const [pageLoading, setPageLoading] = useState(true);
     const [error, setError] = useState("");
+    const [tierName, setTierName] = useState("");
+    const [basePrice, setBasePrice] = useState(0);
 
-    // Calculate details
-    const tier = PRICING[tierParam?.toLowerCase() as keyof typeof PRICING];
-    const cycle = cycleParam as 'monthly' | '3-month' | 'yearly';
+    // Discount state
+    const [discountCode, setDiscountCode] = useState(codeParam || "");
+    const [discountPercentage, setDiscountPercentage] = useState(0);
+    const [discountApplied, setDiscountApplied] = useState(false);
+    const [discountLoading, setDiscountLoading] = useState(false);
+    const [discountError, setDiscountError] = useState("");
 
-    let basePrice = 0;
-    if (tier && cycle) {
-        if (cycle === 'monthly') basePrice = tier.monthly;
-        else if (cycle === '3-month') basePrice = tier.threeMonth;
-        else if (cycle === 'yearly') basePrice = tier.yearly;
-    }
+    useEffect(() => {
+        loadPricing();
+    }, [tierParam, cycleParam]);
 
-    // Fee calculation
-    const total = basePrice > 0 ? Math.ceil(basePrice / (1 - FEE_PERCENT)) : 0;
-    const fee = total - basePrice;
+    // Auto-validate code from URL on load
+    useEffect(() => {
+        if (codeParam && basePrice > 0) {
+            applyDiscountCode(codeParam);
+        }
+    }, [codeParam, basePrice]);
+
+    const loadPricing = async () => {
+        if (!tierParam || !cycleParam) {
+            setPageLoading(false);
+            return;
+        }
+
+        const tier = await getPricingTier(tierParam);
+        if (!tier) {
+            setPageLoading(false);
+            return;
+        }
+
+        setTierName(tier.name);
+
+        let price = 0;
+        if (cycleParam === 'monthly') price = tier.total_monthly || tier.price_monthly;
+        else if (cycleParam === '3-month') price = tier.total_three_month;
+        else if (cycleParam === 'yearly') price = tier.total_yearly;
+
+        setBasePrice(price);
+        setPageLoading(false);
+    };
+
+    const applyDiscountCode = async (code?: string) => {
+        const codeToValidate = code || discountCode;
+        if (!codeToValidate) return;
+
+        setDiscountLoading(true);
+        setDiscountError("");
+
+        try {
+            const result = await validateDiscountCode(codeToValidate, tierParam || undefined);
+            if (result.valid) {
+                setDiscountPercentage(result.discount_percentage);
+                setDiscountApplied(true);
+                setDiscountCode(result.code);
+            } else {
+                setDiscountError(result.error || "Invalid code");
+                setDiscountApplied(false);
+                setDiscountPercentage(0);
+            }
+        } catch {
+            setDiscountError("Failed to validate code");
+        } finally {
+            setDiscountLoading(false);
+        }
+    };
+
+    const removeDiscount = () => {
+        setDiscountApplied(false);
+        setDiscountPercentage(0);
+        setDiscountCode("");
+        setDiscountError("");
+    };
+
+    // Calculate prices
+    const discountAmount = discountApplied ? Math.round(basePrice * discountPercentage / 100) : 0;
+    const priceAfterDiscount = basePrice - discountAmount;
+    const total = priceAfterDiscount > 0 ? Math.ceil(priceAfterDiscount / (1 - FEE_PERCENT)) : 0;
+    const fee = total - priceAfterDiscount;
 
     const handlePayment = async () => {
         setLoading(true);
@@ -51,14 +114,17 @@ function CheckoutContent() {
             const res = await fetch('/api/payment/create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tier: tierParam, cycle: cycleParam }),
+                body: JSON.stringify({
+                    tier: tierParam,
+                    cycle: cycleParam,
+                    discountCode: discountApplied ? discountCode : undefined,
+                }),
             });
 
             const data = await res.json();
 
             if (!res.ok) throw new Error(data.error || "Failed to create payment");
 
-            // Redirect to Midtrans payment page
             if (data.redirectUrl) {
                 window.location.href = data.redirectUrl;
             } else {
@@ -71,7 +137,15 @@ function CheckoutContent() {
         }
     };
 
-    if (!tier || !basePrice) {
+    if (pageLoading) {
+        return (
+            <div className="min-h-screen bg-black text-white flex items-center justify-center">
+                <Loader2 className="animate-spin" size={32} />
+            </div>
+        );
+    }
+
+    if (!tierName || !basePrice) {
         return (
             <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
                 <div className="text-center">
@@ -85,7 +159,7 @@ function CheckoutContent() {
     return (
         <div className="min-h-screen bg-black text-white p-4 md:p-8">
             <div className="max-w-md mx-auto">
-                <Link href="/pricing" className="text-gray-400 hover:text-white flex items-center gap-2 mb-8 text-sm">
+                <Link href="/dashboard/pricing" className="text-gray-400 hover:text-white flex items-center gap-2 mb-8 text-sm">
                     <ArrowLeft size={16} /> Cancel & Back
                 </Link>
 
@@ -95,20 +169,32 @@ function CheckoutContent() {
                     <h1 className="text-2xl font-bold mb-6">Checkout</h1>
 
                     {/* Order Summary */}
-                    <div className="space-y-4 mb-8">
+                    <div className="space-y-4 mb-6">
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-gray-400">Plan</span>
-                            <span className="font-bold text-lg">{tier.name}</span>
+                            <span className="font-bold text-lg">{tierName}</span>
                         </div>
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-gray-400">Duration</span>
-                            <span className="capitalize">{cycle.replace('-', ' ')}</span>
+                            <span className="capitalize">{(cycleParam || '').replace('-', ' ')}</span>
                         </div>
                         <div className="h-px bg-white/10 my-4" />
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-gray-400">Price</span>
                             <span>{formatPrice(basePrice)}</span>
                         </div>
+
+                        {/* Discount */}
+                        {discountApplied && (
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-green-400 flex items-center gap-1.5">
+                                    <Tag size={14} />
+                                    Discount ({discountPercentage}%)
+                                </span>
+                                <span className="text-green-400 font-bold">-{formatPrice(discountAmount)}</span>
+                            </div>
+                        )}
+
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-gray-400">Admin Fee (0.7%)</span>
                             <span>{formatPrice(fee)}</span>
@@ -121,6 +207,58 @@ function CheckoutContent() {
                             </span>
                         </div>
                     </div>
+
+                    {/* Discount Code Input */}
+                    {!discountApplied ? (
+                        <div className="mb-6 bg-white/5 rounded-xl p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                                <Gift size={16} className="text-purple-400" />
+                                <span className="text-sm font-bold">Discount Code</span>
+                            </div>
+                            <div className="flex gap-2">
+                                <Input
+                                    placeholder="Enter discount code"
+                                    value={discountCode}
+                                    onChange={(e) => {
+                                        setDiscountCode(e.target.value);
+                                        setDiscountError("");
+                                    }}
+                                    className="bg-white/5 border-white/10 text-sm"
+                                />
+                                <Button
+                                    onClick={() => applyDiscountCode()}
+                                    disabled={discountLoading || !discountCode}
+                                    size="sm"
+                                    className="bg-purple-600 hover:bg-purple-700 font-bold shrink-0"
+                                >
+                                    {discountLoading ? <Loader2 size={14} className="animate-spin" /> : "Apply"}
+                                </Button>
+                            </div>
+                            {discountError && (
+                                <p className="text-red-400 text-xs mt-2">{discountError}</p>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="mb-6 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-xl p-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Percent size={16} className="text-green-400" />
+                                    <span className="text-sm font-bold text-green-300">
+                                        {discountPercentage}% discount applied
+                                    </span>
+                                    <span className="text-xs text-gray-400 bg-white/5 px-2 py-0.5 rounded-full uppercase">
+                                        {discountCode}
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={removeDiscount}
+                                    className="text-xs text-gray-400 hover:text-white"
+                                >
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Error Message */}
                     {error && (

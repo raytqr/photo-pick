@@ -1,111 +1,43 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { Check, ArrowLeft, Gift, Sparkles, Crown, Zap, Rocket, Globe } from "lucide-react";
+import { Check, ArrowLeft, Gift, Sparkles, Crown, Zap, Rocket, Globe, Loader2, Tag, Percent } from "lucide-react";
 import { redeemCode } from "@/actions/subscription";
+import { getPricingTiers, validateDiscountCode, type PricingTier } from "@/actions/pricing";
 import { useRouter } from "next/navigation";
 
 type BillingCycle = 'monthly' | '3-month' | 'yearly';
 
-// Correct pricing: Yearly per-month is the BASE (discounted), Monthly/3-Month are MORE expensive
-const pricingTiers = [
-    {
-        name: "Starter",
-        tagline: "Perfect for beginners",
-        icon: Sparkles,
-        color: "from-gray-500 to-gray-600",
-        popular: false,
-        events: "10 Events/month",
-        // Yearly is BASE: 30k/mo, Monthly is MORE expensive
-        yearly: { pricePerMonth: 30000, totalPrice: 360000, bonusMonths: 2 },
-        threeMonth: { pricePerMonth: 35000, totalPrice: 105000, bonusWeeks: 1 },
-        monthly: { price: 40000 },
-        originalMonthly: 50000, // Crossed out "original" price
-        features: [
-            "10 Events per month",
-            "Up to 300 photos/event",
-            "Google Drive Sync",
-            "WhatsApp Integration",
-            "Email Support",
-        ],
-        cta: "Get Started",
-    },
-    {
-        name: "Basic",
-        tagline: "For growing photographers",
-        icon: Crown,
-        color: "from-blue-500 to-cyan-500",
-        popular: false,
-        events: "20 Events/month",
-        yearly: { pricePerMonth: 50000, totalPrice: 600000, bonusMonths: 2 },
-        threeMonth: { pricePerMonth: 60000, totalPrice: 180000, bonusWeeks: 1 },
-        monthly: { price: 70000 },
-        originalMonthly: 89000,
-        features: [
-            "20 Events per month",
-            "Up to 500 photos/event",
-            "Everything in Starter",
-            "Email Support",
-        ],
-        cta: "Get Started",
-    },
-    {
-        name: "Pro",
-        tagline: "Most popular choice",
-        icon: Zap,
-        color: "from-purple-500 to-pink-500",
-        popular: true,
-        events: "50 Events/month",
-        yearly: { pricePerMonth: 100000, totalPrice: 1200000, bonusMonths: 3 },
-        threeMonth: { pricePerMonth: 120000, totalPrice: 360000, bonusWeeks: 2 },
-        monthly: { price: 150000 },
-        originalMonthly: 199000,
-        features: [
-            "50 Events per month",
-            "Unlimited photos/event",
-            "Everything in Basic",
-            "WhatsApp Support",
-        ],
-        cta: "Go Pro",
-    },
-    {
-        name: "Unlimited",
-        tagline: "For studios & agencies",
-        icon: Rocket,
-        color: "from-orange-500 to-red-500",
-        popular: false,
-        events: "Unlimited Events",
-        hasPortfolio: true,
-        yearly: { pricePerMonth: 200000, totalPrice: 2400000, bonusMonths: 4 },
-        threeMonth: { pricePerMonth: 240000, totalPrice: 720000, bonusWeeks: 2 },
-        monthly: { price: 300000 },
-        originalMonthly: 399000,
-        features: [
-            "Unlimited Events",
-            "Unlimited Photos",
-            "Everything in Pro",
-            "WhatsApp Support",
-        ],
-        portfolioFeature: "Portfolio Website Included",
-        cta: "Contact Sales",
-    },
-];
-
-const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('id-ID').format(price);
+const ICON_MAP: Record<string, any> = {
+    Sparkles, Crown, Zap, Rocket,
 };
+
+const formatPrice = (price: number) => new Intl.NumberFormat('id-ID').format(price);
 
 export default function PricingPage() {
     const [code, setCode] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
-    const [billingCycle, setBillingCycle] = useState<BillingCycle>('yearly'); // Default yearly
+    const [billingCycle, setBillingCycle] = useState<BillingCycle>('yearly');
+    const [tiers, setTiers] = useState<PricingTier[]>([]);
+    const [pageLoading, setPageLoading] = useState(true);
+    const [discountInfo, setDiscountInfo] = useState<{ percentage: number; code: string } | null>(null);
     const router = useRouter();
+
+    useEffect(() => {
+        loadPricing();
+    }, []);
+
+    const loadPricing = async () => {
+        const data = await getPricingTiers();
+        setTiers(data);
+        setPageLoading(false);
+    };
 
     const handleRedeem = async () => {
         if (!code.trim()) {
@@ -116,16 +48,33 @@ export default function PricingPage() {
         setLoading(true);
         setError("");
 
-        const result = await redeemCode(code);
+        try {
+            // First check if it's a discount code
+            const discountResult = await validateDiscountCode(code);
 
-        if (result.success) {
-            setSuccess(true);
-            setTimeout(() => {
-                router.push("/dashboard");
-                router.refresh();
-            }, 1500);
-        } else {
-            setError(result.error || "Failed to redeem code");
+            if (discountResult.valid) {
+                setDiscountInfo({
+                    percentage: discountResult.discount_percentage,
+                    code: discountResult.code,
+                });
+                setError("");
+            } else if (discountResult.error === "This is not a discount code. Use the Redeem Code section instead.") {
+                // It's a subscription code → redeem directly
+                const result = await redeemCode(code);
+                if (result.success) {
+                    setSuccess(true);
+                    setTimeout(() => {
+                        router.push("/dashboard");
+                        router.refresh();
+                    }, 1500);
+                } else {
+                    setError(result.error || "Failed to redeem code");
+                }
+            } else {
+                setError(discountResult.error || "Invalid code");
+            }
+        } catch {
+            setError("Something went wrong");
         }
 
         setLoading(false);
@@ -149,21 +98,39 @@ export default function PricingPage() {
         );
     }
 
-    const getDisplayPrice = (plan: typeof pricingTiers[0]) => {
-        if (billingCycle === 'yearly') return plan.yearly.pricePerMonth;
-        if (billingCycle === '3-month') return plan.threeMonth.pricePerMonth;
-        return plan.monthly.price;
+    const getDisplayPrice = (plan: PricingTier) => {
+        if (billingCycle === 'yearly') return plan.price_yearly;
+        if (billingCycle === '3-month') return plan.price_three_month;
+        return plan.price_monthly;
     };
 
-    const getOriginalPrice = (plan: typeof pricingTiers[0]) => {
-        return plan.originalMonthly; // Always show the same crossed-out "original" price
+    const getTotalPrice = (plan: PricingTier) => {
+        if (billingCycle === 'yearly') return plan.total_yearly;
+        if (billingCycle === '3-month') return plan.total_three_month;
+        return plan.total_monthly || plan.price_monthly;
     };
 
-    const getSavingsPercent = () => {
-        if (billingCycle === 'yearly') return '35%';
-        if (billingCycle === '3-month') return '15%';
-        return '0%';
+    const getSavingsPercent = (plan: PricingTier) => {
+        const monthlyPrice = plan.price_monthly;
+        const currentPrice = getDisplayPrice(plan);
+        return Math.round((1 - currentPrice / monthlyPrice) * 100);
     };
+
+    const getCheckoutUrl = (plan: PricingTier) => {
+        let url = `/checkout?tier=${plan.id}&cycle=${billingCycle}`;
+        if (discountInfo) {
+            url += `&code=${encodeURIComponent(discountInfo.code)}`;
+        }
+        return url;
+    };
+
+    if (pageLoading) {
+        return (
+            <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+                <Loader2 className="animate-spin text-gray-400" size={32} />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white">
@@ -190,7 +157,7 @@ export default function PricingPage() {
                     transition={{ delay: 0.1 }}
                     className="text-gray-400 text-lg max-w-xl mx-auto mb-10"
                 >
-                    Start free, upgrade when you're ready. No hidden fees.
+                    Start free, upgrade when you&apos;re ready. No hidden fees.
                 </motion.p>
 
                 {/* Billing Cycle Toggle */}
@@ -253,7 +220,11 @@ export default function PricingPage() {
                         <Input
                             placeholder="Enter your code"
                             value={code}
-                            onChange={(e) => setCode(e.target.value)}
+                            onChange={(e) => {
+                                setCode(e.target.value);
+                                setError("");
+                                if (discountInfo) setDiscountInfo(null);
+                            }}
                             className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500"
                             onKeyDown={(e) => e.key === 'Enter' && handleRedeem()}
                         />
@@ -262,77 +233,110 @@ export default function PricingPage() {
                             disabled={loading}
                             className="h-12 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                         >
-                            {loading ? "..." : "Redeem"}
+                            {loading ? <Loader2 size={16} className="animate-spin" /> : "Redeem"}
                         </Button>
                     </div>
 
                     {error && <p className="text-red-400 text-sm">{error}</p>}
+
+                    {/* Active Discount Badge */}
+                    {discountInfo && (
+                        <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-xl">
+                            <Tag size={14} className="text-green-400" />
+                            <span className="text-sm font-bold text-green-300">
+                                {discountInfo.percentage}% OFF
+                            </span>
+                            <span className="text-xs text-gray-400">
+                                applied to all plans below
+                            </span>
+                        </div>
+                    )}
                 </motion.div>
             </div>
 
             {/* Pricing Cards */}
             <div className="max-w-7xl mx-auto px-6 pb-24">
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {pricingTiers.map((plan, index) => {
+                    {tiers.map((plan, index) => {
+                        const Icon = ICON_MAP[plan.icon] || Sparkles;
                         const displayPrice = getDisplayPrice(plan);
-                        const originalPrice = getOriginalPrice(plan);
+                        const totalPrice = getTotalPrice(plan);
+                        const savings = getSavingsPercent(plan);
+
+                        // Apply discount
+                        const discountedPrice = discountInfo
+                            ? Math.round(displayPrice * (1 - discountInfo.percentage / 100))
+                            : displayPrice;
+                        const discountedTotal = discountInfo
+                            ? Math.round(totalPrice * (1 - discountInfo.percentage / 100))
+                            : totalPrice;
 
                         return (
                             <motion.div
-                                key={plan.name}
+                                key={plan.id}
                                 initial={{ opacity: 0, y: 40 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.1 * index + 0.3 }}
-                                className={`relative p-6 rounded-3xl border ${plan.popular
+                                className={`relative p-6 rounded-3xl border ${plan.is_popular
                                     ? 'border-purple-500 bg-gradient-to-br from-purple-500/10 to-pink-500/10 scale-[1.02]'
                                     : 'border-white/10 bg-white/5'
                                     }`}
                             >
-                                {plan.popular && (
+                                {plan.is_popular && (
                                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full text-xs font-bold">
                                         BEST VALUE
                                     </div>
                                 )}
 
-                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${plan.color} flex items-center justify-center mb-4`}>
-                                    <plan.icon size={24} className="text-white" />
+                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${plan.gradient} flex items-center justify-center mb-4`}>
+                                    <Icon size={24} className="text-white" />
                                 </div>
 
                                 <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
                                 <p className="text-gray-400 text-xs mb-1">{plan.tagline}</p>
-                                <p className="text-purple-400 text-sm font-bold mb-4">{plan.events}</p>
+                                <p className="text-purple-400 text-sm font-bold mb-4">
+                                    {plan.max_events ? `${plan.max_events} Events/month` : 'Unlimited Events'}
+                                </p>
 
-                                {/* Price Display with Psychology */}
+                                {/* Price Display */}
                                 <div className="mb-1">
                                     <span className="text-gray-500 line-through text-sm">
-                                        Rp {formatPrice(originalPrice)}
+                                        Rp {formatPrice(plan.original_monthly)}
                                     </span>
                                 </div>
                                 <div className="mb-2">
-                                    <span className="text-3xl font-black">Rp {formatPrice(displayPrice)}</span>
+                                    {discountInfo ? (
+                                        <>
+                                            <span className="text-gray-500 line-through text-lg mr-2">
+                                                Rp {formatPrice(displayPrice)}
+                                            </span>
+                                            <span className="text-3xl font-black text-green-400">Rp {formatPrice(discountedPrice)}</span>
+                                        </>
+                                    ) : (
+                                        <span className="text-3xl font-black">Rp {formatPrice(displayPrice)}</span>
+                                    )}
                                     <span className="text-gray-400 text-sm">/mo</span>
                                 </div>
 
-                                {/* Bonus for 3-month */}
+                                {/* Billing info */}
                                 {billingCycle === '3-month' && (
                                     <div className="mb-4">
                                         <span className="inline-block px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-bold">
-                                            +{plan.threeMonth.bonusWeeks} weeks FREE
+                                            Save {savings}%
                                         </span>
                                         <p className="text-[10px] text-gray-500 mt-1">
-                                            Billed Rp {formatPrice(plan.threeMonth.totalPrice)}/3mo
+                                            Billed Rp {formatPrice(discountedTotal)}/3mo
                                         </p>
                                     </div>
                                 )}
 
-                                {/* Bonus for Yearly */}
                                 {billingCycle === 'yearly' && (
                                     <div className="mb-4">
                                         <span className="inline-block px-2 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-bold">
-                                            +{plan.yearly.bonusMonths} months FREE
+                                            Save {savings}%
                                         </span>
                                         <p className="text-[10px] text-gray-500 mt-1">
-                                            Billed Rp {formatPrice(plan.yearly.totalPrice)}/year
+                                            Billed Rp {formatPrice(discountedTotal)}/year
                                         </p>
                                     </div>
                                 )}
@@ -341,25 +345,34 @@ export default function PricingPage() {
                                     <div className="mb-4 h-[44px]" />
                                 )}
 
+                                {discountInfo && (
+                                    <div className="mb-3 flex items-center gap-1.5">
+                                        <Percent size={12} className="text-purple-400" />
+                                        <span className="text-xs font-bold text-purple-400">
+                                            -{discountInfo.percentage}% discount applied
+                                        </span>
+                                    </div>
+                                )}
+
                                 <ul className="space-y-2 mb-6">
-                                    {plan.features.slice(0, 5).map((feature) => (
+                                    {(plan.features as string[]).slice(0, 5).map((feature: string) => (
                                         <li key={feature} className="flex items-start gap-2 text-xs">
                                             <Check size={14} className="text-green-400 shrink-0 mt-0.5" />
                                             <span className="text-gray-300">{feature}</span>
                                         </li>
                                     ))}
 
-                                    {plan.hasPortfolio && plan.portfolioFeature && (
+                                    {plan.portfolio_feature && (
                                         <li className="flex items-start gap-2 text-xs">
                                             <Globe size={14} className="text-purple-400 shrink-0 mt-0.5" />
-                                            <span className="text-purple-400 font-bold">{plan.portfolioFeature}</span>
+                                            <span className="text-purple-400 font-bold">{plan.portfolio_feature}</span>
                                         </li>
                                     )}
                                 </ul>
 
-                                <Link href={`/checkout?tier=${plan.name.toLowerCase()}&cycle=${billingCycle}`} className="block w-full">
+                                <Link href={getCheckoutUrl(plan)} className="block w-full">
                                     <Button
-                                        className={`w-full h-10 rounded-full font-bold text-sm ${plan.popular
+                                        className={`w-full h-10 rounded-full font-bold text-sm ${plan.is_popular
                                             ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
                                             : 'bg-white/10 hover:bg-white/20'
                                             }`}

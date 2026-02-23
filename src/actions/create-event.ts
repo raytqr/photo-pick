@@ -1,7 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase-server";
-import { getPlanLimits, isRestricted, PLAN_LIMITS } from "@/lib/subscription-utils";
+import { isRestricted } from "@/lib/subscription-utils";
+import { getPlanLimitsFromDB } from "@/actions/pricing";
 import { revalidatePath } from "next/cache";
 import { syncPhotosFromDrive } from "./sync-drive";
 import { logActivity } from "@/lib/activity-logger";
@@ -39,7 +40,7 @@ export async function createEvent(formData: {
     }
 
     // 4. Quota Enforcement (Server-Side)
-    const tierLimits = getPlanLimits(profile.subscription_tier);
+    const tierLimits = await getPlanLimitsFromDB(profile.subscription_tier);
     const isUnlimited = profile.subscription_tier?.toLowerCase() === 'unlimited';
 
     // 4a. Photo Limit Check

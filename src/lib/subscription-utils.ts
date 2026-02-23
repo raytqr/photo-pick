@@ -11,6 +11,7 @@ export interface ExtendedSubscriptionInfo extends SubscriptionInfo {
     billingDay: number | null;
 }
 
+// Synchronous fallback limits (DB version: getPlanLimitsFromDB in @/actions/pricing)
 export const PLAN_LIMITS: Record<string, { maxEvents: number; maxPhotos: number }> = {
     'free': { maxEvents: 2, maxPhotos: 100 },
     'Starter': { maxEvents: 10, maxPhotos: 300 },

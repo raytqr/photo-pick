@@ -87,27 +87,32 @@ export async function POST(request: Request) {
         else if (payment.billing_cycle === '3-month') durationDays = 90;
         else if (payment.billing_cycle === 'yearly') durationDays = 365;
 
-        // Calculate Events/Credits
-        // Define limits based on Tier (Sync with `subscription-utils.ts` ideally)
+        // Calculate Events/Credits from DB
         let eventsGranted = 0;
         let isUnlimited = false;
 
-        switch (payment.tier.toLowerCase()) {
-            case 'starter':
-                eventsGranted = 10;
-                break;
-            case 'basic':
-                eventsGranted = 20;
-                break;
-            case 'pro':
-                eventsGranted = 50;
-                break;
-            case 'unlimited':
+        const { data: tierData } = await adminClient
+            .from("pricing_tiers")
+            .select("max_events")
+            .eq("id", payment.tier.toLowerCase())
+            .single();
+
+        if (tierData) {
+            if (tierData.max_events === null) {
                 isUnlimited = true;
                 eventsGranted = 9999;
-                break;
-            default:
-                eventsGranted = 0;
+            } else {
+                eventsGranted = tierData.max_events;
+            }
+        } else {
+            // Fallback if DB not available
+            switch (payment.tier.toLowerCase()) {
+                case 'starter': eventsGranted = 10; break;
+                case 'basic': eventsGranted = 20; break;
+                case 'pro': eventsGranted = 50; break;
+                case 'unlimited': isUnlimited = true; eventsGranted = 9999; break;
+                default: eventsGranted = 0;
+            }
         }
 
         // Bonuses?
@@ -177,6 +182,30 @@ export async function POST(request: Request) {
 
         // Update Profile
         await adminClient.from('profiles').update(updateData).eq('id', payment.user_id);
+
+        // Increment discount code usage if one was used
+        if (payment.discount_code) {
+            await adminClient
+                .from('redeem_codes')
+                .update({
+                    times_used: adminClient.rpc ? undefined : undefined, // handled below
+                })
+                .eq('code', payment.discount_code);
+
+            // Increment times_used safely
+            const { data: codeData } = await adminClient
+                .from('redeem_codes')
+                .select('times_used')
+                .eq('code', payment.discount_code)
+                .single();
+
+            if (codeData) {
+                await adminClient
+                    .from('redeem_codes')
+                    .update({ times_used: (codeData.times_used || 0) + 1 })
+                    .eq('code', payment.discount_code);
+            }
+        }
 
         return NextResponse.json({ success: true });
 
