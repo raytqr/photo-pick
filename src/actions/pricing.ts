@@ -255,6 +255,9 @@ export interface DiscountValidation {
     discount_percentage: number;
     code_id: string;
     code: string;
+    type: "redeem" | "affiliate";
+    affiliate_code_id?: string;
+    affiliate_id?: string;
     error?: string;
 }
 
@@ -264,42 +267,60 @@ export async function validateDiscountCode(
 ): Promise<DiscountValidation> {
     const adminSupabase = createAdminClient();
     if (!adminSupabase) {
-        return { valid: false, discount_percentage: 0, code_id: "", code: "", error: "Server error" };
+        return { valid: false, discount_percentage: 0, code_id: "", code: "", type: "redeem", error: "Server error" };
     }
 
-    const { data: redeemCode, error } = await adminSupabase
+    const trimmedCode = code.toLowerCase().trim();
+
+    // 1. Check redeem_codes first
+    const { data: redeemCode } = await adminSupabase
         .from("redeem_codes")
         .select("*")
-        .eq("code", code.toLowerCase().trim())
+        .eq("code", trimmedCode)
         .eq("is_active", true)
         .single();
 
-    if (error || !redeemCode) {
-        return { valid: false, discount_percentage: 0, code_id: "", code: "", error: "Invalid or expired code" };
-    }
-
-    // Check max uses
-    if (redeemCode.times_used >= redeemCode.max_uses) {
-        return { valid: false, discount_percentage: 0, code_id: "", code: "", error: "Code has reached maximum uses" };
-    }
-
-    // Must have discount_percentage > 0 to be a discount code
-    if (!redeemCode.discount_percentage || redeemCode.discount_percentage <= 0) {
-        return { valid: false, discount_percentage: 0, code_id: "", code: "", error: "This is not a discount code. Use the Redeem Code section instead." };
-    }
-
-    // Check applicable tiers if specified
-    if (tier && redeemCode.tier && redeemCode.tier.toLowerCase() !== 'all') {
-        const applicableTiers = redeemCode.tier.toLowerCase().split(",").map((t: string) => t.trim());
-        if (!applicableTiers.includes(tier.toLowerCase())) {
-            return { valid: false, discount_percentage: 0, code_id: "", code: "", error: `This code is not applicable for the ${tier} plan.` };
+    if (redeemCode) {
+        if (redeemCode.times_used >= redeemCode.max_uses) {
+            return { valid: false, discount_percentage: 0, code_id: "", code: "", type: "redeem", error: "Code has reached maximum uses" };
         }
+        if (!redeemCode.discount_percentage || redeemCode.discount_percentage <= 0) {
+            return { valid: false, discount_percentage: 0, code_id: "", code: "", type: "redeem", error: "This is not a discount code. Use the Redeem Code section instead." };
+        }
+        if (tier && redeemCode.tier && redeemCode.tier.toLowerCase() !== 'all') {
+            const applicableTiers = redeemCode.tier.toLowerCase().split(",").map((t: string) => t.trim());
+            if (!applicableTiers.includes(tier.toLowerCase())) {
+                return { valid: false, discount_percentage: 0, code_id: "", code: "", type: "redeem", error: `This code is not applicable for the ${tier} plan.` };
+            }
+        }
+        return {
+            valid: true,
+            discount_percentage: redeemCode.discount_percentage,
+            code_id: redeemCode.id,
+            code: redeemCode.code,
+            type: "redeem",
+        };
     }
 
-    return {
-        valid: true,
-        discount_percentage: redeemCode.discount_percentage,
-        code_id: redeemCode.id,
-        code: redeemCode.code,
-    };
+    // 2. Check affiliate_codes
+    const { data: affCode } = await adminSupabase
+        .from("affiliate_codes")
+        .select("*, affiliates!inner(id, is_active)")
+        .eq("code", trimmedCode)
+        .eq("is_active", true)
+        .single();
+
+    if (affCode && affCode.affiliates?.is_active) {
+        return {
+            valid: true,
+            discount_percentage: affCode.discount_percentage || 0,
+            code_id: affCode.id,
+            code: affCode.code,
+            type: "affiliate",
+            affiliate_code_id: affCode.id,
+            affiliate_id: affCode.affiliates.id,
+        };
+    }
+
+    return { valid: false, discount_percentage: 0, code_id: "", code: "", type: "redeem", error: "Invalid or expired code" };
 }

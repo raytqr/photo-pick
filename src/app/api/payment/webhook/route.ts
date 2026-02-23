@@ -185,14 +185,7 @@ export async function POST(request: Request) {
 
         // Increment discount code usage if one was used
         if (payment.discount_code) {
-            await adminClient
-                .from('redeem_codes')
-                .update({
-                    times_used: adminClient.rpc ? undefined : undefined, // handled below
-                })
-                .eq('code', payment.discount_code);
-
-            // Increment times_used safely
+            // Check if it's a redeem code
             const { data: codeData } = await adminClient
                 .from('redeem_codes')
                 .select('times_used')
@@ -204,6 +197,56 @@ export async function POST(request: Request) {
                     .from('redeem_codes')
                     .update({ times_used: (codeData.times_used || 0) + 1 })
                     .eq('code', payment.discount_code);
+            }
+        }
+
+        // Handle affiliate commission if affiliate code was used
+        if (payment.affiliate_code_id) {
+            // Get affiliate code details
+            const { data: affCode } = await adminClient
+                .from('affiliate_codes')
+                .select('*, affiliates!inner(id, commission_type, commission_value, total_earned)')
+                .eq('id', payment.affiliate_code_id)
+                .single();
+
+            if (affCode && affCode.affiliates) {
+                // Calculate commission
+                let commissionAmount = 0;
+                const paymentAmount = payment.base_price || payment.amount;
+                const discountGiven = payment.discount_amount || 0;
+
+                if (affCode.affiliates.commission_type === 'percentage') {
+                    commissionAmount = Math.round(paymentAmount * affCode.affiliates.commission_value / 100);
+                } else {
+                    commissionAmount = affCode.affiliates.commission_value;
+                }
+
+                // Insert affiliate transaction
+                await adminClient.from('affiliate_transactions').insert({
+                    affiliate_id: affCode.affiliates.id,
+                    affiliate_code_id: affCode.id,
+                    payment_id: payment.id,
+                    order_id: orderId,
+                    user_id: payment.user_id,
+                    tier: payment.tier,
+                    billing_cycle: payment.billing_cycle,
+                    payment_amount: paymentAmount,
+                    discount_given: discountGiven,
+                    commission_amount: commissionAmount,
+                    status: 'pending',
+                });
+
+                // Update affiliate total_earned
+                await adminClient
+                    .from('affiliates')
+                    .update({ total_earned: (affCode.affiliates.total_earned || 0) + commissionAmount })
+                    .eq('id', affCode.affiliates.id);
+
+                // Increment affiliate code usage
+                await adminClient
+                    .from('affiliate_codes')
+                    .update({ times_used: (affCode.times_used || 0) + 1 })
+                    .eq('id', affCode.id);
             }
         }
 
