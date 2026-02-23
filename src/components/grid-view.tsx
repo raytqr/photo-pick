@@ -18,6 +18,7 @@ export function GridView({ setViewMode }: GridViewProps) {
     const { sourceImages, selectedPhotos, maybePhotos, rejectedPhotos, superLikedPhotos, movePhoto, restartCategory } = useAppStore();
     const [filter, setFilter] = useState<FilterType>('all');
     const [previewPhoto, setPreviewPhoto] = useState<Photo | null>(null);
+    const [previewStatus, setPreviewStatus] = useState<PhotoStatus | 'source'>('source');
 
     // Optimize: Create Sets for O(1) lookup
     const { selectedSet, superLikedSet, maybeSet, rejectedSet } = useMemo(() => ({
@@ -67,10 +68,16 @@ export function GridView({ setViewMode }: GridViewProps) {
         movePhoto(photo.id, fromStatus, toStatus);
     };
 
+    // Opens fullscreen preview with action buttons
+    const openPreview = (photo: Photo) => {
+        const status = getPhotoStatus(photo);
+        setPreviewPhoto(photo);
+        setPreviewStatus(status);
+    };
+
     // Helper to optimize Google Drive thumbnail URLs for grid view
     const getOptimizedThumbnailUrl = (url: string) => {
         if (url.includes('drive.google.com/thumbnail')) {
-            // Replace existing sz parameter or append it
             return url.replace(/sz=w\d+/, 'sz=w400');
         }
         return url;
@@ -79,7 +86,6 @@ export function GridView({ setViewMode }: GridViewProps) {
     // Pagination State
     const [visibleCount, setVisibleCount] = useState(30);
 
-    // Reset pagination when filter changes
     const handleFilterChange = (newFilter: FilterType) => {
         setFilter(newFilter);
         setVisibleCount(30);
@@ -94,8 +100,19 @@ export function GridView({ setViewMode }: GridViewProps) {
 
     return (
         <div className="px-3 pb-24 pt-4">
-            {/* Full Image Preview */}
-            <ImageViewer url={previewPhoto?.url || null} onClose={() => setPreviewPhoto(null)} />
+            {/* Full Image Preview with Action Buttons */}
+            <ImageViewer
+                url={previewPhoto?.url || null}
+                onClose={() => setPreviewPhoto(null)}
+                photoName={previewPhoto?.name || undefined}
+                actions={previewPhoto ? {
+                    status: previewStatus,
+                    onSuperLike: () => previewPhoto && handleMove(previewPhoto, previewStatus, 'superLiked'),
+                    onSelect: () => previewPhoto && handleMove(previewPhoto, previewStatus, 'selected'),
+                    onMaybe: () => previewPhoto && handleMove(previewPhoto, previewStatus, 'maybe'),
+                    onReject: () => previewPhoto && handleMove(previewPhoto, previewStatus, 'rejected'),
+                } : undefined}
+            />
 
             {/* Filter Tabs - Scrollable on mobile */}
             <div className="overflow-x-auto -mx-3 px-3 mb-4">
@@ -134,10 +151,8 @@ export function GridView({ setViewMode }: GridViewProps) {
                     <Button
                         onClick={() => {
                             if (filter === 'pending') {
-                                // Just switch to swipe view
                                 setViewMode('swipe');
                             } else {
-                                // Restart this category
                                 restartCategory(filter as PhotoStatus);
                                 setViewMode('swipe');
                             }
@@ -181,9 +196,8 @@ export function GridView({ setViewMode }: GridViewProps) {
                 </div>
             )}
 
-            {/* Photo Grids */}
+            {/* Photo Grid */}
             <div className="space-y-8">
-                {/* Photo Grid Logic - Re-implementing correctly */}
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
                     {visiblePhotos.map(photo => {
                         const status = getPhotoStatus(photo);
@@ -195,11 +209,12 @@ export function GridView({ setViewMode }: GridViewProps) {
                             <div
                                 key={photo.id}
                                 className={cn(
-                                    "relative group aspect-[3/4] rounded-lg overflow-hidden",
+                                    "relative group aspect-[3/4] rounded-lg overflow-hidden cursor-pointer active:scale-95 transition-transform",
                                     isRejected ? "ring-2 ring-red-500 bg-red-500/20" :
                                         isSuperLiked ? "ring-2 ring-blue-500 bg-blue-500/20" :
                                             "bg-gray-100 dark:bg-gray-900"
                                 )}
+                                onClick={() => openPreview(photo)}
                             >
                                 <Image
                                     src={getOptimizedThumbnailUrl(photo.url)}
@@ -227,29 +242,28 @@ export function GridView({ setViewMode }: GridViewProps) {
                                     {status === 'rejected' && <X size={10} />}
                                 </div>
 
-                                {/* Filename - Mobile visible */}
+                                {/* Filename */}
                                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 pt-6">
                                     <p className="text-[10px] text-white/80 truncate">
                                         {photo.name || photo.id.slice(0, 8)}
                                     </p>
                                 </div>
 
-                                {/* Hover Actions */}
-                                <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-2">
+                                {/* Desktop Hover: Quick Actions (hidden on mobile/touch) */}
+                                <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:flex flex-col items-center justify-center gap-1.5 p-2">
                                     <Button
                                         size="sm"
                                         variant="outline"
                                         className="w-full h-7 text-[10px] border-white/30 text-white hover:bg-white/20"
-                                        onClick={() => setPreviewPhoto(photo)}
+                                        onClick={(e) => { e.stopPropagation(); openPreview(photo); }}
                                     >
                                         <Maximize2 size={10} className="mr-1" /> View
                                     </Button>
-
                                     {status !== 'superLiked' && (
                                         <Button
                                             size="sm"
                                             className="w-full h-7 text-[10px] bg-blue-600 hover:bg-blue-700"
-                                            onClick={() => handleMove(photo, status, 'superLiked')}
+                                            onClick={(e) => { e.stopPropagation(); handleMove(photo, status, 'superLiked'); }}
                                         >
                                             <Star size={10} className="mr-1" /> Super Like
                                         </Button>
@@ -258,7 +272,7 @@ export function GridView({ setViewMode }: GridViewProps) {
                                         <Button
                                             size="sm"
                                             className="w-full h-7 text-[10px] bg-green-600 hover:bg-green-700"
-                                            onClick={() => handleMove(photo, status, 'selected')}
+                                            onClick={(e) => { e.stopPropagation(); handleMove(photo, status, 'selected'); }}
                                         >
                                             <Check size={10} className="mr-1" /> Select
                                         </Button>
@@ -267,7 +281,7 @@ export function GridView({ setViewMode }: GridViewProps) {
                                         <Button
                                             size="sm"
                                             className="w-full h-7 text-[10px] bg-yellow-500 hover:bg-yellow-600"
-                                            onClick={() => handleMove(photo, status, 'maybe')}
+                                            onClick={(e) => { e.stopPropagation(); handleMove(photo, status, 'maybe'); }}
                                         >
                                             <HelpCircle size={10} className="mr-1" /> Maybe
                                         </Button>
@@ -276,7 +290,7 @@ export function GridView({ setViewMode }: GridViewProps) {
                                         <Button
                                             size="sm"
                                             className="w-full h-7 text-[10px] bg-red-600 hover:bg-red-700 text-white"
-                                            onClick={() => handleMove(photo, status, 'rejected')}
+                                            onClick={(e) => { e.stopPropagation(); handleMove(photo, status, 'rejected'); }}
                                         >
                                             <X size={10} className="mr-1" /> Reject
                                         </Button>
@@ -300,7 +314,6 @@ export function GridView({ setViewMode }: GridViewProps) {
                     </div>
                 )}
             </div>
-        </div >
+        </div>
     );
 }
-
