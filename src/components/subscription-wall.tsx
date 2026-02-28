@@ -76,12 +76,12 @@ export function SubscriptionWall({ tier, eventsRemaining, expiresAt }: Subscript
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
                     <div className="flex items-center gap-3 text-white">
                         <Gift size={20} className="text-pink-400" />
-                        <span className="font-semibold">Have a Promo Code?</span>
+                        <span className="font-semibold">Punya Kode Promo?</span>
                     </div>
 
                     <div className="flex gap-3">
                         <Input
-                            placeholder="Enter your code"
+                            placeholder="Masukkan kode promo"
                             value={code}
                             onChange={(e) => setCode(e.target.value)}
                             className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500"
@@ -91,7 +91,7 @@ export function SubscriptionWall({ tier, eventsRemaining, expiresAt }: Subscript
                             disabled={loading}
                             className="h-12 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                         >
-                            {loading ? "..." : "Redeem"}
+                            {loading ? "..." : "Klaim Promo"}
                         </Button>
                     </div>
 
@@ -115,7 +115,7 @@ export function SubscriptionWall({ tier, eventsRemaining, expiresAt }: Subscript
 
                     <Button className="w-full h-12 rounded-full bg-white text-black hover:bg-gray-200">
                         <Sparkles size={18} className="mr-2" />
-                        Subscribe Now
+                        Langganan Sekarang 🚀
                     </Button>
                 </div>
 

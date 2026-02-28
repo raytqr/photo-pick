@@ -213,12 +213,12 @@ export default function PricingPage() {
                 >
                     <div className="flex items-center gap-3">
                         <Gift size={20} className="text-pink-400" />
-                        <span className="font-semibold">Have a Promo Code?</span>
+                        <span className="font-semibold">Punya Kode Promo?</span>
                     </div>
 
                     <div className="flex gap-3">
                         <Input
-                            placeholder="Enter your code"
+                            placeholder="Masukkan kode promo"
                             value={code}
                             onChange={(e) => {
                                 setCode(e.target.value);
@@ -233,7 +233,7 @@ export default function PricingPage() {
                             disabled={loading}
                             className="h-12 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                         >
-                            {loading ? <Loader2 size={16} className="animate-spin" /> : "Redeem"}
+                            {loading ? <Loader2 size={16} className="animate-spin" /> : "Klaim Promo"}
                         </Button>
                     </div>
 
@@ -377,7 +377,7 @@ export default function PricingPage() {
                                             : 'bg-white/10 hover:bg-white/20'
                                             }`}
                                     >
-                                        {plan.cta}
+                                        {plan.id === 'unlimited' ? 'Hubungi Sales 💬' : plan.is_popular ? 'Langganan Sekarang 🚀' : 'Pilih Paket Ini 🚀'}
                                     </Button>
                                 </Link>
                             </motion.div>

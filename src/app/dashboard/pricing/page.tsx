@@ -173,11 +173,11 @@ export default function PricingPage() {
                 <div className="glass rounded-2xl p-6 border-white/10">
                     <div className="flex items-center gap-2 mb-4">
                         <Gift className="text-pink-500" size={20} />
-                        <h3 className="font-bold">Have a Promo Code?</h3>
+                        <h3 className="font-bold">Punya Kode Promo?</h3>
                     </div>
                     <div className="flex gap-2">
                         <Input
-                            placeholder="Enter your code"
+                            placeholder="Masukkan kode promo"
                             value={promoCode}
                             onChange={(e) => {
                                 setPromoCode(e.target.value);
@@ -191,15 +191,15 @@ export default function PricingPage() {
                             disabled={redeemLoading || !promoCode}
                             className="bg-gradient-to-r from-purple-600 to-pink-600 font-bold"
                         >
-                            {redeemLoading ? <Loader2 size={16} className="animate-spin" /> : "Redeem"}
+                            {redeemLoading ? <Loader2 size={16} className="animate-spin" /> : "Klaim Promo"}
                         </Button>
                     </div>
 
                     {/* Promo Message */}
                     {promoMessage && (
                         <div className={`mt-3 p-3 rounded-xl text-sm ${promoMessage.type === 'success'
-                                ? 'bg-green-500/10 border border-green-500/20 text-green-300'
-                                : 'bg-red-500/10 border border-red-500/20 text-red-300'
+                            ? 'bg-green-500/10 border border-green-500/20 text-green-300'
+                            : 'bg-red-500/10 border border-red-500/20 text-red-300'
                             }`}>
                             {promoMessage.text}
                         </div>
@@ -334,7 +334,7 @@ export default function PricingPage() {
                                     ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-105 shadow-lg shadow-purple-500/25'
                                     : 'bg-white/10 hover:bg-white/20'
                                     } transition-all`}>
-                                    {plan.cta}
+                                    {plan.id === 'unlimited' ? 'Hubungi Sales 💬' : plan.is_popular ? 'Langganan Sekarang 🚀' : 'Pilih Paket Ini 🚀'}
                                 </Button>
                             </Link>
                         </motion.div>
